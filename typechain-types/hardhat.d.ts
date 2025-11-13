@@ -14,314 +14,224 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "AccessControl",
+      name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.AccessControl__factory>;
-    getContractFactory(
-      name: "IAccessControl",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IAccessControl__factory>;
-    getContractFactory(
-      name: "IERC1155Errors",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC1155Errors__factory>;
-    getContractFactory(
-      name: "IERC20Errors",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20Errors__factory>;
-    getContractFactory(
-      name: "IERC721Errors",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC721Errors__factory>;
-    getContractFactory(
-      name: "ERC20",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC20__factory>;
-    getContractFactory(
-      name: "ERC20Burnable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC20Burnable__factory>;
-    getContractFactory(
-      name: "IERC20Metadata",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20Metadata__factory>;
+    ): Promise<Contracts.Ownable__factory>;
     getContractFactory(
       name: "IERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: "ERC165",
+      name: "ReentrancyGuard",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC165__factory>;
+    ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
-      name: "IERC165",
+      name: "ActionRouter",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC165__factory>;
+    ): Promise<Contracts.ActionRouter__factory>;
     getContractFactory(
-      name: "Pausable",
+      name: "IUniswapV2Router",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Pausable__factory>;
+    ): Promise<Contracts.IUniswapV2Router__factory>;
     getContractFactory(
-      name: "Escrow",
+      name: "UniswapLimitOrderAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Escrow__factory>;
+    ): Promise<Contracts.UniswapLimitOrderAdapter__factory>;
     getContractFactory(
-      name: "Lock",
+      name: "AggregatorV3Interface",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Lock__factory>;
+    ): Promise<Contracts.AggregatorV3Interface__factory>;
     getContractFactory(
-      name: "MyToken",
+      name: "ConditionChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MyToken__factory>;
+    ): Promise<Contracts.ConditionChecker__factory>;
     getContractFactory(
-      name: "Storage",
+      name: "DynamicTaskRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Storage__factory>;
+    ): Promise<Contracts.DynamicTaskRegistry__factory>;
     getContractFactory(
-      name: "SupplyChainVerifier",
+      name: "ExecutorManager",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SupplyChainVerifier__factory>;
+    ): Promise<Contracts.ExecutorManager__factory>;
+    getContractFactory(
+      name: "PaymentEscrow",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PaymentEscrow__factory>;
+    getContractFactory(
+      name: "ReputationSystem",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ReputationSystem__factory>;
 
     getContractAt(
-      name: "AccessControl",
+      name: "Ownable",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.AccessControl>;
-    getContractAt(
-      name: "IAccessControl",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IAccessControl>;
-    getContractAt(
-      name: "IERC1155Errors",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC1155Errors>;
-    getContractAt(
-      name: "IERC20Errors",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20Errors>;
-    getContractAt(
-      name: "IERC721Errors",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC721Errors>;
-    getContractAt(
-      name: "ERC20",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ERC20>;
-    getContractAt(
-      name: "ERC20Burnable",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ERC20Burnable>;
-    getContractAt(
-      name: "IERC20Metadata",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20Metadata>;
+    ): Promise<Contracts.Ownable>;
     getContractAt(
       name: "IERC20",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: "ERC165",
+      name: "ReentrancyGuard",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ERC165>;
+    ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
-      name: "IERC165",
+      name: "ActionRouter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.IERC165>;
+    ): Promise<Contracts.ActionRouter>;
     getContractAt(
-      name: "Pausable",
+      name: "IUniswapV2Router",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.Pausable>;
+    ): Promise<Contracts.IUniswapV2Router>;
     getContractAt(
-      name: "Escrow",
+      name: "UniswapLimitOrderAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.Escrow>;
+    ): Promise<Contracts.UniswapLimitOrderAdapter>;
     getContractAt(
-      name: "Lock",
+      name: "AggregatorV3Interface",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.Lock>;
+    ): Promise<Contracts.AggregatorV3Interface>;
     getContractAt(
-      name: "MyToken",
+      name: "ConditionChecker",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.MyToken>;
+    ): Promise<Contracts.ConditionChecker>;
     getContractAt(
-      name: "Storage",
+      name: "DynamicTaskRegistry",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.Storage>;
+    ): Promise<Contracts.DynamicTaskRegistry>;
     getContractAt(
-      name: "SupplyChainVerifier",
+      name: "ExecutorManager",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.SupplyChainVerifier>;
+    ): Promise<Contracts.ExecutorManager>;
+    getContractAt(
+      name: "PaymentEscrow",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PaymentEscrow>;
+    getContractAt(
+      name: "ReputationSystem",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ReputationSystem>;
 
     deployContract(
-      name: "AccessControl",
+      name: "Ownable",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.AccessControl>;
-    deployContract(
-      name: "IAccessControl",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IAccessControl>;
-    deployContract(
-      name: "IERC1155Errors",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC1155Errors>;
-    deployContract(
-      name: "IERC20Errors",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20Errors>;
-    deployContract(
-      name: "IERC721Errors",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC721Errors>;
-    deployContract(
-      name: "ERC20",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20>;
-    deployContract(
-      name: "ERC20Burnable",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20Burnable>;
-    deployContract(
-      name: "IERC20Metadata",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20Metadata>;
+    ): Promise<Contracts.Ownable>;
     deployContract(
       name: "IERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "ERC165",
+      name: "ReentrancyGuard",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC165>;
+    ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
-      name: "IERC165",
+      name: "ActionRouter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC165>;
+    ): Promise<Contracts.ActionRouter>;
     deployContract(
-      name: "Pausable",
+      name: "IUniswapV2Router",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Pausable>;
+    ): Promise<Contracts.IUniswapV2Router>;
     deployContract(
-      name: "Escrow",
+      name: "UniswapLimitOrderAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Escrow>;
+    ): Promise<Contracts.UniswapLimitOrderAdapter>;
     deployContract(
-      name: "Lock",
+      name: "AggregatorV3Interface",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Lock>;
+    ): Promise<Contracts.AggregatorV3Interface>;
     deployContract(
-      name: "MyToken",
+      name: "ConditionChecker",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MyToken>;
+    ): Promise<Contracts.ConditionChecker>;
     deployContract(
-      name: "Storage",
+      name: "DynamicTaskRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Storage>;
+    ): Promise<Contracts.DynamicTaskRegistry>;
     deployContract(
-      name: "SupplyChainVerifier",
+      name: "ExecutorManager",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SupplyChainVerifier>;
+    ): Promise<Contracts.ExecutorManager>;
+    deployContract(
+      name: "PaymentEscrow",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PaymentEscrow>;
+    deployContract(
+      name: "ReputationSystem",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ReputationSystem>;
 
     deployContract(
-      name: "AccessControl",
+      name: "Ownable",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.AccessControl>;
-    deployContract(
-      name: "IAccessControl",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IAccessControl>;
-    deployContract(
-      name: "IERC1155Errors",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC1155Errors>;
-    deployContract(
-      name: "IERC20Errors",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20Errors>;
-    deployContract(
-      name: "IERC721Errors",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC721Errors>;
-    deployContract(
-      name: "ERC20",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20>;
-    deployContract(
-      name: "ERC20Burnable",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20Burnable>;
-    deployContract(
-      name: "IERC20Metadata",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20Metadata>;
+    ): Promise<Contracts.Ownable>;
     deployContract(
       name: "IERC20",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "ERC165",
+      name: "ReentrancyGuard",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC165>;
+    ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
-      name: "IERC165",
+      name: "ActionRouter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC165>;
+    ): Promise<Contracts.ActionRouter>;
     deployContract(
-      name: "Pausable",
+      name: "IUniswapV2Router",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Pausable>;
+    ): Promise<Contracts.IUniswapV2Router>;
     deployContract(
-      name: "Escrow",
+      name: "UniswapLimitOrderAdapter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Escrow>;
+    ): Promise<Contracts.UniswapLimitOrderAdapter>;
     deployContract(
-      name: "Lock",
+      name: "AggregatorV3Interface",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Lock>;
+    ): Promise<Contracts.AggregatorV3Interface>;
     deployContract(
-      name: "MyToken",
+      name: "ConditionChecker",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MyToken>;
+    ): Promise<Contracts.ConditionChecker>;
     deployContract(
-      name: "Storage",
+      name: "DynamicTaskRegistry",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Storage>;
+    ): Promise<Contracts.DynamicTaskRegistry>;
     deployContract(
-      name: "SupplyChainVerifier",
+      name: "ExecutorManager",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SupplyChainVerifier>;
+    ): Promise<Contracts.ExecutorManager>;
+    deployContract(
+      name: "PaymentEscrow",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PaymentEscrow>;
+    deployContract(
+      name: "ReputationSystem",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ReputationSystem>;
 
     // default types
     getContractFactory(

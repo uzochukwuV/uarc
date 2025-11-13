@@ -4,19 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/**
- * @title ConditionChecker
- * @notice Evaluates various conditions for task execution
- * @dev Supports price feeds, time-based, balance-based, and custom oracle conditions
- */
-contract ConditionChecker is Ownable {
 
-    // ============ Interfaces ============
-
-    /**
-     * @notice Chainlink-style price feed interface
-     */
-    interface AggregatorV3Interface {
+interface AggregatorV3Interface {
         function latestRoundData() external view returns (
             uint80 roundId,
             int256 answer,
@@ -27,6 +16,18 @@ contract ConditionChecker is Ownable {
 
         function decimals() external view returns (uint8);
     }
+
+/**
+ * @title ConditionChecker
+ * @notice Evaluates various conditions for task execution
+ * @dev Supports price feeds, time-based, balance-based, and custom oracle conditions
+ */
+contract ConditionChecker is Ownable {
+
+    // ============ Interfaces ============
+
+    
+    
 
     // ============ State Variables ============
 

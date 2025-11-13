@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { HDNodeWallet } from "ethers";
 import {
   DynamicTaskRegistry,
   PaymentEscrow,
@@ -11,6 +12,9 @@ import {
 } from "../typechain-types";
 
 describe("Task Automation System", function () {
+  // Increase timeout for testnet operations
+  this.timeout(300000); // 5 minutes
+
   let taskRegistry: DynamicTaskRegistry;
   let paymentEscrow: PaymentEscrow;
   let executorManager: ExecutorManager;
@@ -19,15 +23,41 @@ describe("Task Automation System", function () {
   let conditionChecker: ConditionChecker;
 
   let owner: SignerWithAddress;
-  let feeRecipient: SignerWithAddress;
-  let user: SignerWithAddress;
-  let executor: SignerWithAddress;
+  let feeRecipient: SignerWithAddress | HDNodeWallet;
+  let user: SignerWithAddress | HDNodeWallet;
+  let executor: SignerWithAddress | HDNodeWallet;
 
   const PLATFORM_FEE = 100; // 1%
   const REWARD = ethers.parseEther("1");
 
   beforeEach(async function () {
-    [owner, feeRecipient, user, executor] = await ethers.getSigners();
+    const signers = await ethers.getSigners();
+
+    // Handle case where we don't have enough signers (e.g., on testnet with single account)
+    if (signers.length < 4) {
+      // Create temporary wallets for testing
+      owner = signers[0];
+
+      // Create funded wallets
+      const feeRecipientWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+      const userWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+      const executorWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+
+      // Fund the wallets from the main account
+      const fundingAmount = ethers.parseEther("0.0005");
+      // const tx1 = await owner.sendTransaction({ to: feeRecipientWallet.address, value: fundingAmount });
+      // await tx1.wait();
+      // const tx2 = await owner.sendTransaction({ to: userWallet.address, value: fundingAmount });
+      // await tx2.wait();
+      // const tx3 = await owner.sendTransaction({ to: executorWallet.address, value: fundingAmount });
+      // await tx3.wait();
+
+      feeRecipient = feeRecipientWallet;
+      user = userWallet;
+      executor = executorWallet;
+    } else {
+      [owner, feeRecipient, user, executor] = signers;
+    }
 
     // Deploy contracts
     const PaymentEscrow = await ethers.getContractFactory("PaymentEscrow");
@@ -178,9 +208,13 @@ describe("Task Automation System", function () {
 
   describe("Executor Registration", function () {
     it("Should register executor", async function () {
-      await expect(executorManager.connect(executor).registerExecutor())
+      const tx = await executorManager.connect(executor).registerExecutor();
+      const receipt = await tx.wait();
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+
+      await expect(tx)
         .to.emit(executorManager, "ExecutorRegistered")
-        .withArgs(executor.address, await ethers.provider.getBlock("latest").then(b => b?.timestamp));
+        .withArgs(executor.address, block!.timestamp);
 
       const executorData = await executorManager.getExecutor(executor.address);
       expect(executorData.isRegistered).to.be.true;
@@ -334,7 +368,19 @@ describe("Task Automation System", function () {
     it("Should lock funds for task", async function () {
       const taskId = 0;
 
-      const tx = await paymentEscrow.lockFunds(taskId, user.address, REWARD, {
+      // Impersonate the task registry to call lockFunds
+      const taskRegistryAddress = await taskRegistry.getAddress();
+      await ethers.provider.send("hardhat_impersonateAccount", [taskRegistryAddress]);
+
+      // Set balance directly for the impersonated account (avoids needing receive function)
+      await ethers.provider.send("hardhat_setBalance", [
+        taskRegistryAddress,
+        ethers.toBeHex(ethers.parseEther("10"))
+      ]);
+
+      const taskRegistrySigner = await ethers.getSigner(taskRegistryAddress);
+
+      const tx = await paymentEscrow.connect(taskRegistrySigner).lockFunds(taskId, user.address, REWARD, {
         value: REWARD,
       });
 
@@ -345,18 +391,32 @@ describe("Task Automation System", function () {
       const escrow = await paymentEscrow.getEscrow(taskId);
       expect(escrow.totalLocked).to.equal(REWARD);
       expect(escrow.isActive).to.be.true;
+
+      await ethers.provider.send("hardhat_stopImpersonatingAccount", [taskRegistryAddress]);
     });
 
     it("Should release payment to executor", async function () {
       const taskId = 0;
 
-      await paymentEscrow.lockFunds(taskId, user.address, REWARD, {
+      // Impersonate the task registry
+      const taskRegistryAddress = await taskRegistry.getAddress();
+      await ethers.provider.send("hardhat_impersonateAccount", [taskRegistryAddress]);
+
+      // Set balance directly for the impersonated account
+      await ethers.provider.send("hardhat_setBalance", [
+        taskRegistryAddress,
+        ethers.toBeHex(ethers.parseEther("10"))
+      ]);
+
+      const taskRegistrySigner = await ethers.getSigner(taskRegistryAddress);
+
+      await paymentEscrow.connect(taskRegistrySigner).lockFunds(taskId, user.address, REWARD, {
         value: REWARD,
       });
 
       const balanceBefore = await ethers.provider.getBalance(executor.address);
 
-      await paymentEscrow.releasePayment(
+      await paymentEscrow.connect(taskRegistrySigner).releasePayment(
         taskId,
         executor.address,
         REWARD,
@@ -367,6 +427,8 @@ describe("Task Automation System", function () {
 
       const expectedPayout = REWARD - (REWARD * BigInt(PLATFORM_FEE)) / 10000n;
       expect(balanceAfter - balanceBefore).to.equal(expectedPayout);
+
+      await ethers.provider.send("hardhat_stopImpersonatingAccount", [taskRegistryAddress]);
     });
   });
 

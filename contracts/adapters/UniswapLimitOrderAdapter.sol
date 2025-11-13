@@ -5,18 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title UniswapLimitOrderAdapter
- * @notice Adapter for executing limit order swaps on Uniswap V2-compatible DEXes
- * @dev Works with StellaSwap, BeamSwap, and other Uniswap V2 forks on Moonbeam/PassetHub
- */
-contract UniswapLimitOrderAdapter is Ownable {
-
-    // ============ Interfaces ============
-
-    /**
      * @notice Uniswap V2 Router interface
      */
-    interface IUniswapV2Router {
+ interface IUniswapV2Router {
         function swapExactTokensForTokens(
             uint256 amountIn,
             uint256 amountOutMin,
@@ -38,6 +29,18 @@ contract UniswapLimitOrderAdapter is Ownable {
             address[] calldata path
         ) external view returns (uint256[] memory amounts);
     }
+
+/**
+ * @title UniswapLimitOrderAdapter
+ * @notice Adapter for executing limit order swaps on Uniswap V2-compatible DEXes
+ * @dev Works with StellaSwap, BeamSwap, and other Uniswap V2 forks on Moonbeam/PassetHub
+ */
+contract UniswapLimitOrderAdapter is Ownable {
+
+    // ============ Interfaces ============
+
+    
+   
 
     // ============ State Variables ============
 

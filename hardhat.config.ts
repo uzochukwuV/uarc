@@ -2,9 +2,19 @@ import { HardhatUserConfig, vars } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@parity/hardhat-polkadot';
 import "@nomicfoundation/hardhat-verify";
+import path from 'path';
 
 const config: HardhatUserConfig = {
-    solidity: '0.8.28',
+    solidity: {
+        version: '0.8.28',
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
+            viaIR: true,
+        },
+    },
     resolc: {
         compilerSource: 'npm',
         settings: {
@@ -14,19 +24,23 @@ const config: HardhatUserConfig = {
               fallbackOz: true,
               runs: 200,
             },
-            standardJson: true,
         },
     },
     networks: {
         hardhat: {
+            // Standard Hardhat network without PolkaVM for fast local testing
+            // Uses Hardhat's built-in EVM (no external binaries needed)
+        },
+        polkavmLocal: {
             polkavm: true,
+            url: 'http://127.0.0.1:8545',
             nodeConfig: {
-                nodeBinaryPath: '/Users/utkarshbhardwaj/Desktop/Projects/UtkarshBhardwaj007/hardhat-polkadot-example/binaries/substrate-node',
+                nodeBinaryPath: path.join(__dirname, 'binaries', 'substrate-node'),
                 rpcPort: 8000,
                 dev: true,
             },
             adapterConfig: {
-                adapterBinaryPath: '/Users/utkarshbhardwaj/Desktop/Projects/UtkarshBhardwaj007/hardhat-polkadot-example/binaries/eth-rpc',
+                adapterBinaryPath: path.join(__dirname, 'binaries', 'eth-rpc'),
                 dev: true,
             },
         },
