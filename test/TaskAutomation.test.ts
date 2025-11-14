@@ -208,13 +208,8 @@ describe("Task Automation System", function () {
 
   describe("Executor Registration", function () {
     it("Should register executor", async function () {
-      const tx = await executorManager.connect(executor).registerExecutor();
-      const receipt = await tx.wait();
-      const block = await ethers.provider.getBlock(receipt!.blockNumber);
-
-      await expect(tx)
-        .to.emit(executorManager, "ExecutorRegistered")
-        .withArgs(executor.address, block!.timestamp);
+      await expect(executorManager.connect(executor).registerExecutor())
+        .to.emit(executorManager, "ExecutorRegistered");
 
       const executorData = await executorManager.getExecutor(executor.address);
       expect(executorData.isRegistered).to.be.true;

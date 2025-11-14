@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title ReputationSystem
@@ -59,6 +60,15 @@ contract ReputationSystem is Ownable {
     /// @notice Total executors with reputation
     uint256 public totalExecutors;
 
+    /// @notice TaskerToken contract for rewards
+    IERC20 public taskerToken;
+
+    /// @notice Token rewards per tier (in tokens, 18 decimals)
+    mapping(uint8 => uint256) public tierTokenRewards;
+
+    /// @notice Whether token rewards are enabled
+    bool public tokenRewardsEnabled;
+
     // ============ Events ============
 
     event ReputationUpdated(
@@ -80,6 +90,12 @@ contract ReputationSystem is Ownable {
 
     event TierPromoted(address indexed executor, uint8 newTier);
 
+    event TokenRewardsPaid(
+        address indexed executor,
+        uint256 amount,
+        uint8 tier
+    );
+
     // ============ Constructor ============
 
     constructor() Ownable(msg.sender) {
@@ -89,6 +105,15 @@ contract ReputationSystem is Ownable {
         tierMultipliers[uint8(Tier.SILVER)] = 11000;   // 110% (+10% bonus)
         tierMultipliers[uint8(Tier.GOLD)] = 11500;     // 115% (+15% bonus)
         tierMultipliers[uint8(Tier.DIAMOND)] = 12000;  // 120% (+20% bonus)
+
+        // Set default token rewards per execution (in TASK tokens)
+        tierTokenRewards[uint8(Tier.ROOKIE)] = 1 * 10**18;     // 1 TASK
+        tierTokenRewards[uint8(Tier.BRONZE)] = 2 * 10**18;     // 2 TASK
+        tierTokenRewards[uint8(Tier.SILVER)] = 5 * 10**18;     // 5 TASK
+        tierTokenRewards[uint8(Tier.GOLD)] = 10 * 10**18;      // 10 TASK
+        tierTokenRewards[uint8(Tier.DIAMOND)] = 20 * 10**18;   // 20 TASK
+
+        tokenRewardsEnabled = false; // Disabled until token is set
     }
 
     // ============ Core Functions ============
@@ -122,6 +147,20 @@ contract ReputationSystem is Ownable {
 
         // Check for tier promotion
         _updateTier(rep);
+
+        // Pay token rewards if enabled
+        if (tokenRewardsEnabled && address(taskerToken) != address(0)) {
+            uint256 tokenReward = tierTokenRewards[rep.tier];
+            if (tokenReward > 0) {
+                try taskerToken.transfer(_executor, tokenReward) returns (bool success) {
+                    if (success) {
+                        emit TokenRewardsPaid(_executor, tokenReward, rep.tier);
+                    }
+                } catch {
+                    // Don't revert if token transfer fails
+                }
+            }
+        }
 
         emit SuccessRecorded(_executor, _taskId, _reward);
         emit ReputationUpdated(_executor, rep.reputationScore, rep.tier);
@@ -357,6 +396,54 @@ contract ReputationSystem is Ownable {
         _updateTier(rep);
 
         emit ReputationUpdated(_executor, _score, rep.tier);
+    }
+
+    /**
+     * @notice Set TaskerToken contract address
+     * @param _taskerToken Token contract address
+     */
+    function setTaskerToken(address _taskerToken) external onlyOwner {
+        require(_taskerToken != address(0), "Invalid token address");
+        taskerToken = IERC20(_taskerToken);
+    }
+
+    /**
+     * @notice Enable or disable token rewards
+     * @param _enabled Whether token rewards are enabled
+     */
+    function setTokenRewardsEnabled(bool _enabled) external onlyOwner {
+        tokenRewardsEnabled = _enabled;
+    }
+
+    /**
+     * @notice Set token reward for a specific tier
+     * @param _tier Tier level
+     * @param _tokenAmount Token amount (in wei, 18 decimals)
+     */
+    function setTierTokenReward(uint8 _tier, uint256 _tokenAmount) external onlyOwner {
+        require(_tier <= uint8(Tier.DIAMOND), "Invalid tier");
+        tierTokenRewards[_tier] = _tokenAmount;
+    }
+
+    /**
+     * @notice Batch set token rewards for all tiers
+     * @param _rewards Array of token rewards [ROOKIE, BRONZE, SILVER, GOLD, DIAMOND]
+     */
+    function batchSetTokenRewards(uint256[5] calldata _rewards) external onlyOwner {
+        tierTokenRewards[uint8(Tier.ROOKIE)] = _rewards[0];
+        tierTokenRewards[uint8(Tier.BRONZE)] = _rewards[1];
+        tierTokenRewards[uint8(Tier.SILVER)] = _rewards[2];
+        tierTokenRewards[uint8(Tier.GOLD)] = _rewards[3];
+        tierTokenRewards[uint8(Tier.DIAMOND)] = _rewards[4];
+    }
+
+    /**
+     * @notice Withdraw tokens from contract (emergency only)
+     * @param _amount Amount to withdraw
+     */
+    function withdrawTokens(uint256 _amount) external onlyOwner {
+        require(address(taskerToken) != address(0), "Token not set");
+        require(taskerToken.transfer(owner(), _amount), "Transfer failed");
     }
 
     // ============ Modifiers ============

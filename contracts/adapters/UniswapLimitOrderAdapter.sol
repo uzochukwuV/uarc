@@ -53,6 +53,17 @@ contract UniswapLimitOrderAdapter is Ownable {
     /// @notice Supported DEX routers on Moonbeam
     mapping(address => bool) public supportedRouters;
 
+    // ============ Structs ============
+
+    struct SwapParams {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 amountOutMin;
+        address recipient;
+        address creator;
+    }
+
     // ============ Events ============
 
     event SwapExecuted(
@@ -91,44 +102,53 @@ contract UniswapLimitOrderAdapter is Ownable {
         require(msg.sender == actionRouter, "Only action router");
         require(supportedRouters[_protocol], "Router not supported");
 
-        // Decode swap parameters
-        (
-            address tokenIn,
-            address tokenOut,
-            uint256 amountIn,
-            uint256 amountOutMin,
-            address recipient,
-            address creator  // Task creator who owns the tokens
-        ) = abi.decode(_params, (address, address, uint256, uint256, address, address));
+        // Decode swap parameters into struct
+        SwapParams memory params = abi.decode(_params, (SwapParams));
 
         // Validate parameters
-        require(tokenIn != address(0), "Invalid tokenIn");
-        require(tokenOut != address(0), "Invalid tokenOut");
-        require(amountIn > 0, "Invalid amountIn");
-        require(amountOutMin > 0, "Invalid amountOutMin");
-        require(recipient != address(0), "Invalid recipient");
-        require(creator != address(0), "Invalid creator");
+        require(params.tokenIn != address(0), "Invalid tokenIn");
+        require(params.tokenOut != address(0), "Invalid tokenOut");
+        require(params.amountIn > 0, "Invalid amountIn");
+        require(params.amountOutMin > 0, "Invalid amountOutMin");
+        require(params.recipient != address(0), "Invalid recipient");
+        require(params.creator != address(0), "Invalid creator");
 
+        // Execute the swap
+        return _executeSwap(_taskId, _protocol, params);
+    }
+
+    /**
+     * @notice Internal function to execute the swap
+     * @param _taskId Task identifier
+     * @param _protocol DEX router address
+     * @param params Swap parameters struct
+     * @return success Whether swap succeeded
+     */
+    function _executeSwap(
+        uint256 _taskId,
+        address _protocol,
+        SwapParams memory params
+    ) internal returns (bool success) {
         // Check current price meets condition
         address[] memory path = new address[](2);
-        path[0] = tokenIn;
-        path[1] = tokenOut;
+        path[0] = params.tokenIn;
+        path[1] = params.tokenOut;
 
         uint256[] memory amountsOut = IUniswapV2Router(_protocol).getAmountsOut(
-            amountIn,
+            params.amountIn,
             path
         );
 
         // Verify we can get at least amountOutMin
-        if (amountsOut[1] < amountOutMin) {
+        if (amountsOut[1] < params.amountOutMin) {
             return false; // Price condition not met
         }
 
         // Transfer tokens from task creator to this adapter
-        bool transferSuccess = IERC20(tokenIn).transferFrom(
-            creator,
+        bool transferSuccess = IERC20(params.tokenIn).transferFrom(
+            params.creator,
             address(this),
-            amountIn
+            params.amountIn
         );
 
         if (!transferSuccess) {
@@ -136,27 +156,27 @@ contract UniswapLimitOrderAdapter is Ownable {
         }
 
         // Approve router to spend tokens
-        IERC20(tokenIn).approve(_protocol, amountIn);
+        IERC20(params.tokenIn).approve(_protocol, params.amountIn);
 
         // Execute swap
         try IUniswapV2Router(_protocol).swapExactTokensForTokens(
-            amountIn,
-            amountOutMin,
+            params.amountIn,
+            params.amountOutMin,
             path,
-            recipient,
+            params.recipient,
             block.timestamp + DEADLINE_EXTENSION
         ) returns (uint256[] memory amounts) {
             emit SwapExecuted(
                 _taskId,
-                tokenIn,
-                tokenOut,
+                params.tokenIn,
+                params.tokenOut,
                 amounts[0],
                 amounts[1]
             );
             return true;
         } catch {
             // Swap failed - return tokens to creator
-            IERC20(tokenIn).transfer(creator, amountIn);
+            IERC20(params.tokenIn).transfer(params.creator, params.amountIn);
             return false;
         }
     }

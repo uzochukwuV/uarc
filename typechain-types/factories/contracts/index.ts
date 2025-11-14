@@ -3,6 +3,8 @@
 /* eslint-disable */
 export * as conditionCheckerSol from "./ConditionChecker.sol";
 export * as adapters from "./adapters";
+export * as governance from "./governance";
+export * as mocks from "./mocks";
 export { ActionRouter__factory } from "./ActionRouter__factory";
 export { DynamicTaskRegistry__factory } from "./DynamicTaskRegistry__factory";
 export { ExecutorManager__factory } from "./ExecutorManager__factory";

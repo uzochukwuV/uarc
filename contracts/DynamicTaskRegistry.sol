@@ -29,6 +29,8 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
      * @param maxExecutions Maximum allowed executions (0 = unlimited recurring)
      * @param lastExecutionTime Timestamp of last successful execution
      * @param recurringInterval Minimum time between executions (for recurring tasks)
+     * @param seedHash Hash of platform seed for bot prevention
+     * @param requiresPlatformSeed Whether task requires platform seed
      */
     struct Task {
         uint256 id;
@@ -47,6 +49,10 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         uint256 maxExecutions;
         uint256 lastExecutionTime;
         uint256 recurringInterval;
+
+        // Platform seed for bot prevention
+        bytes32 seedHash;
+        bool requiresPlatformSeed;
     }
 
     /**
@@ -131,6 +137,9 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     /// @notice Maximum number of actions per task
     uint256 public constant MAX_ACTIONS = 10;
 
+    /// @notice Fee for direct execution (bypassing platform seed)
+    uint256 public directExecutionFee = 0.01 ether;
+
     // ============ Events ============
 
     event TaskCreated(
@@ -167,6 +176,9 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     event ProtocolApproved(address indexed protocol);
     event ProtocolRevoked(address indexed protocol);
 
+    event DirectExecutionFeeUpdated(uint256 newFee);
+    event DirectExecutionUsed(uint256 indexed taskId, address indexed executor, uint256 feePaid);
+
     // ============ Modifiers ============
 
     modifier onlyTaskCreator(uint256 _taskId) {
@@ -191,7 +203,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     // ============ Core Functions ============
 
     /**
-     * @notice Create a new dynamic task
+     * @notice Create a new dynamic task (without platform seed)
      * @param _condition Execution condition
      * @param _actions Array of actions to execute
      * @param _reward Executor reward per execution
@@ -208,6 +220,64 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         uint256 _maxExecutions,
         uint256 _recurringInterval
     ) external payable nonReentrant returns (uint256 taskId) {
+        return _createTask(
+            _condition,
+            _actions,
+            _reward,
+            _expiresAt,
+            _maxExecutions,
+            _recurringInterval,
+            bytes32(0),
+            false
+        );
+    }
+
+    /**
+     * @notice Create a new task with platform seed (bot prevention)
+     * @param _condition Execution condition
+     * @param _actions Array of actions to execute
+     * @param _reward Executor reward per execution
+     * @param _expiresAt Expiration timestamp (0 = no expiry)
+     * @param _maxExecutions Maximum executions (0 = one-time, >0 = recurring)
+     * @param _recurringInterval Minimum time between recurring executions
+     * @param _seedHash Hash of platform seed
+     * @return taskId The created task ID
+     */
+    function createTaskWithSeed(
+        Condition calldata _condition,
+        Action[] calldata _actions,
+        uint256 _reward,
+        uint256 _expiresAt,
+        uint256 _maxExecutions,
+        uint256 _recurringInterval,
+        bytes32 _seedHash
+    ) external payable nonReentrant returns (uint256 taskId) {
+        require(_seedHash != bytes32(0), "Invalid seed hash");
+        return _createTask(
+            _condition,
+            _actions,
+            _reward,
+            _expiresAt,
+            _maxExecutions,
+            _recurringInterval,
+            _seedHash,
+            true
+        );
+    }
+
+    /**
+     * @notice Internal function to create a task
+     */
+    function _createTask(
+        Condition calldata _condition,
+        Action[] calldata _actions,
+        uint256 _reward,
+        uint256 _expiresAt,
+        uint256 _maxExecutions,
+        uint256 _recurringInterval,
+        bytes32 _seedHash,
+        bool _requiresSeed
+    ) internal returns (uint256 taskId) {
         require(_actions.length > 0, "No actions specified");
         require(_actions.length <= MAX_ACTIONS, "Too many actions");
         require(_reward > 0, "Invalid reward amount");
@@ -246,6 +316,8 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         task.maxExecutions = _maxExecutions;
         task.lastExecutionTime = 0;
         task.recurringInterval = _recurringInterval;
+        task.seedHash = _seedHash;
+        task.requiresPlatformSeed = _requiresSeed;
 
         // Store actions
         for (uint256 i = 0; i < _actions.length; i++) {
@@ -343,9 +415,10 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
             if (reputationSystem != address(0)) {
                 (bool repSuccess, ) = reputationSystem.call(
                     abi.encodeWithSignature(
-                        "recordSuccess(address,uint256)",
+                        "recordSuccess(address,uint256,uint256)",
                         _executor,
-                        _taskId
+                        _taskId,
+                        task.reward
                     )
                 );
                 // Don't revert on reputation failure
@@ -372,6 +445,62 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
             emit TaskExecuted(_taskId, _executor, false, gasUsed);
             return false;
         }
+    }
+
+    /**
+     * @notice Execute task with platform seed (called by ExecutorManager)
+     * @param _taskId Task to execute
+     * @param _executor Address of executor
+     * @param _seed Platform seed for verification
+     * @return success Whether execution succeeded
+     */
+    function executeTaskWithSeed(
+        uint256 _taskId,
+        address _executor,
+        bytes32 _seed
+    ) external onlyExecutorManager taskExists(_taskId) nonReentrant returns (bool success) {
+        Task storage task = tasks[_taskId];
+
+        // Verify platform seed if required
+        if (task.requiresPlatformSeed) {
+            bytes32 providedHash = keccak256(abi.encodePacked(_seed));
+            require(providedHash == task.seedHash, "Invalid platform seed");
+        }
+
+        // Execute via standard function
+        return this.executeTask(_taskId, _executor);
+    }
+
+    /**
+     * @notice Execute task directly (bypass platform seed with fee)
+     * @param _taskId Task to execute
+     * @return success Whether execution succeeded
+     */
+    function executeTaskDirect(
+        uint256 _taskId
+    ) external payable nonReentrant taskExists(_taskId) returns (bool success) {
+        Task storage task = tasks[_taskId];
+
+        // If task requires seed, check bypass fee
+        if (task.requiresPlatformSeed) {
+            require(msg.value >= directExecutionFee, "Insufficient bypass fee");
+
+            // Transfer bypass fee to owner
+            (bool feeSuccess, ) = payable(owner()).call{value: msg.value}("");
+            require(feeSuccess, "Fee transfer failed");
+
+            emit DirectExecutionUsed(_taskId, msg.sender, msg.value);
+        }
+
+        // Execute via executor manager
+        (bool execSuccess, ) = executorManager.call(
+            abi.encodeWithSignature(
+                "attemptExecute(uint256)",
+                _taskId
+            )
+        );
+
+        return execSuccess;
     }
 
     /**
@@ -528,7 +657,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < _actions.length; i++) {
             Action storage action = _actions[i];
 
-            (bool success, ) = actionRouter.call(
+            (bool success, ) = actionRouter.call{value: action.value}(
                 abi.encodeWithSignature(
                     "routeAction(uint256,address,bytes4,bytes,uint256)",
                     _taskId,
@@ -722,5 +851,15 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     function setPlatformFee(uint256 _feePercentage) external onlyOwner {
         require(_feePercentage <= MAX_PLATFORM_FEE, "Fee too high");
         platformFeePercentage = _feePercentage;
+    }
+
+    /**
+     * @notice Update direct execution fee
+     * @param _fee New fee in wei
+     */
+    function setDirectExecutionFee(uint256 _fee) external onlyOwner {
+        require(_fee > 0, "Invalid fee");
+        directExecutionFee = _fee;
+        emit DirectExecutionFeeUpdated(_fee);
     }
 }
