@@ -16,21 +16,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     // ============ Type Definitions ============
 
     /**
-     * @notice Task structure containing all task metadata and execution logic
-     * @param id Unique task identifier
-     * @param creator Address that created the task
-     * @param reward Amount paid to executor per successful execution
-     * @param createdAt Block timestamp when task was created
-     * @param expiresAt Expiration timestamp (0 = no expiry)
-     * @param status Current task status
-     * @param condition Execution condition that must be met
-     * @param actions Array of protocol interactions to execute
-     * @param executionCount Number of times task has been executed
-     * @param maxExecutions Maximum allowed executions (0 = unlimited recurring)
-     * @param lastExecutionTime Timestamp of last successful execution
-     * @param recurringInterval Minimum time between executions (for recurring tasks)
-     * @param seedHash Hash of platform seed for bot prevention
-     * @param requiresPlatformSeed Whether task requires platform seed
+     * @notice Core task data (optimized to reduce bytecode size)
      */
     struct Task {
         uint256 id;
@@ -39,18 +25,23 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         uint256 createdAt;
         uint256 expiresAt;
         TaskStatus status;
-
-        // Dynamic components
         Condition condition;
-        Action[] actions;
+    }
 
-        // Execution tracking
+    /**
+     * @notice Task execution tracking data
+     */
+    struct TaskExecution {
         uint256 executionCount;
         uint256 maxExecutions;
         uint256 lastExecutionTime;
         uint256 recurringInterval;
+    }
 
-        // Platform seed for bot prevention
+    /**
+     * @notice Task security data for bot prevention
+     */
+    struct TaskSecurity {
         bytes32 seedHash;
         bool requiresPlatformSeed;
     }
@@ -110,6 +101,15 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
 
     /// @notice Mapping from task ID to Task data
     mapping(uint256 => Task) public tasks;
+
+    /// @notice Mapping from task ID to execution tracking
+    mapping(uint256 => TaskExecution) public taskExecutions;
+
+    /// @notice Mapping from task ID to security data
+    mapping(uint256 => TaskSecurity) public taskSecurity;
+
+    /// @notice Mapping from task ID to actions
+    mapping(uint256 => Action[]) public taskActions;
 
     /// @notice Tasks created by each address
     mapping(address => uint256[]) public creatorTasks;
@@ -303,25 +303,32 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
 
         // Create task
         taskId = nextTaskId++;
-        Task storage task = tasks[taskId];
 
-        task.id = taskId;
-        task.creator = msg.sender;
-        task.reward = _reward;
-        task.createdAt = block.timestamp;
-        task.expiresAt = _expiresAt;
-        task.status = TaskStatus.ACTIVE;
-        task.condition = _condition;
-        task.executionCount = 0;
-        task.maxExecutions = _maxExecutions;
-        task.lastExecutionTime = 0;
-        task.recurringInterval = _recurringInterval;
-        task.seedHash = _seedHash;
-        task.requiresPlatformSeed = _requiresSeed;
+        tasks[taskId] = Task({
+            id: taskId,
+            creator: msg.sender,
+            reward: _reward,
+            createdAt: block.timestamp,
+            expiresAt: _expiresAt,
+            status: TaskStatus.ACTIVE,
+            condition: _condition
+        });
+
+        taskExecutions[taskId] = TaskExecution({
+            executionCount: 0,
+            maxExecutions: _maxExecutions,
+            lastExecutionTime: 0,
+            recurringInterval: _recurringInterval
+        });
+
+        taskSecurity[taskId] = TaskSecurity({
+            seedHash: _seedHash,
+            requiresPlatformSeed: _requiresSeed
+        });
 
         // Store actions
         for (uint256 i = 0; i < _actions.length; i++) {
-            task.actions.push(_actions[i]);
+            taskActions[taskId].push(_actions[i]);
         }
 
         // Add to creator's task list
@@ -352,6 +359,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         address _executor
     ) external onlyExecutorManager taskExists(_taskId) nonReentrant returns (bool success) {
         Task storage task = tasks[_taskId];
+        TaskExecution storage exec = taskExecutions[_taskId];
 
         // Validate task is executable
         require(task.status == TaskStatus.ACTIVE, "Task not active");
@@ -360,14 +368,14 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
             "Task expired"
         );
         require(
-            task.maxExecutions == 0 || task.executionCount < task.maxExecutions,
+            exec.maxExecutions == 0 || exec.executionCount < exec.maxExecutions,
             "Max executions reached"
         );
 
         // Check recurring interval
-        if (task.recurringInterval > 0 && task.lastExecutionTime > 0) {
+        if (exec.recurringInterval > 0 && exec.lastExecutionTime > 0) {
             require(
-                block.timestamp >= task.lastExecutionTime + task.recurringInterval,
+                block.timestamp >= exec.lastExecutionTime + exec.recurringInterval,
                 "Recurring interval not met"
             );
         }
@@ -390,14 +398,14 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         }
 
         // Execute actions
-        bool execSuccess = _executeActions(_taskId, task.actions);
+        bool execSuccess = _executeActions(_taskId, taskActions[_taskId]);
 
         uint256 gasUsed = gasBefore - gasleft();
 
         if (execSuccess) {
             // Update execution tracking
-            task.executionCount++;
-            task.lastExecutionTime = block.timestamp;
+            exec.executionCount++;
+            exec.lastExecutionTime = block.timestamp;
 
             // Release payment to executor
             (bool paySuccess, ) = paymentEscrow.call(
@@ -425,7 +433,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
             }
 
             // Update task status
-            if (task.maxExecutions > 0 && task.executionCount >= task.maxExecutions) {
+            if (exec.maxExecutions > 0 && exec.executionCount >= exec.maxExecutions) {
                 task.status = TaskStatus.COMPLETED;
                 emit TaskStatusChanged(_taskId, TaskStatus.EXECUTING, TaskStatus.COMPLETED);
             } else {
@@ -459,12 +467,12 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         address _executor,
         bytes32 _seed
     ) external onlyExecutorManager taskExists(_taskId) nonReentrant returns (bool success) {
-        Task storage task = tasks[_taskId];
+        TaskSecurity storage security = taskSecurity[_taskId];
 
         // Verify platform seed if required
-        if (task.requiresPlatformSeed) {
+        if (security.requiresPlatformSeed) {
             bytes32 providedHash = keccak256(abi.encodePacked(_seed));
-            require(providedHash == task.seedHash, "Invalid platform seed");
+            require(providedHash == security.seedHash, "Invalid platform seed");
         }
 
         // Execute via standard function
@@ -479,10 +487,10 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
     function executeTaskDirect(
         uint256 _taskId
     ) external payable nonReentrant taskExists(_taskId) returns (bool success) {
-        Task storage task = tasks[_taskId];
+        TaskSecurity storage security = taskSecurity[_taskId];
 
         // If task requires seed, check bypass fee
-        if (task.requiresPlatformSeed) {
+        if (security.requiresPlatformSeed) {
             require(msg.value >= directExecutionFee, "Insufficient bypass fee");
 
             // Transfer bypass fee to owner
@@ -511,6 +519,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         uint256 _taskId
     ) external onlyTaskCreator(_taskId) taskExists(_taskId) nonReentrant {
         Task storage task = tasks[_taskId];
+        TaskExecution storage exec = taskExecutions[_taskId];
 
         require(
             task.status == TaskStatus.ACTIVE || task.status == TaskStatus.PAUSED,
@@ -522,9 +531,9 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         emit TaskStatusChanged(_taskId, oldStatus, TaskStatus.CANCELLED);
 
         // Calculate refund amount
-        uint256 remainingExecutions = task.maxExecutions == 0
+        uint256 remainingExecutions = exec.maxExecutions == 0
             ? 1
-            : task.maxExecutions - task.executionCount;
+            : exec.maxExecutions - exec.executionCount;
         uint256 refundAmount = task.reward * remainingExecutions;
 
         // Process refund from escrow
@@ -551,6 +560,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
         uint256 _newReward
     ) external payable onlyTaskCreator(_taskId) taskExists(_taskId) nonReentrant {
         Task storage task = tasks[_taskId];
+        TaskExecution storage exec = taskExecutions[_taskId];
 
         require(task.status == TaskStatus.ACTIVE, "Task not active");
         require(_newReward > 0, "Invalid reward");
@@ -559,9 +569,9 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
 
         if (_newReward > oldReward) {
             // Increasing reward - need additional funds
-            uint256 remainingExecutions = task.maxExecutions == 0
+            uint256 remainingExecutions = exec.maxExecutions == 0
                 ? 1
-                : task.maxExecutions - task.executionCount;
+                : exec.maxExecutions - exec.executionCount;
             uint256 additionalFunding = (_newReward - oldReward) * remainingExecutions;
 
             require(msg.value >= additionalFunding, "Insufficient additional funding");
@@ -684,7 +694,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
      * @return Action[] Array of actions
      */
     function getTaskActions(uint256 _taskId) external view returns (Action[] memory) {
-        return tasks[_taskId].actions;
+        return taskActions[_taskId];
     }
 
     /**
@@ -700,15 +710,16 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < nextTaskId && count < _limit; i++) {
             Task storage task = tasks[i];
+            TaskExecution storage exec = taskExecutions[i];
 
             if (
                 task.status == TaskStatus.ACTIVE &&
                 (task.expiresAt == 0 || block.timestamp <= task.expiresAt) &&
-                (task.maxExecutions == 0 || task.executionCount < task.maxExecutions)
+                (exec.maxExecutions == 0 || exec.executionCount < exec.maxExecutions)
             ) {
                 // Check recurring interval
-                if (task.recurringInterval > 0 && task.lastExecutionTime > 0) {
-                    if (block.timestamp < task.lastExecutionTime + task.recurringInterval) {
+                if (exec.recurringInterval > 0 && exec.lastExecutionTime > 0) {
+                    if (block.timestamp < exec.lastExecutionTime + exec.recurringInterval) {
                         continue;
                     }
                 }
@@ -751,6 +762,7 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
      */
     function isTaskExecutable(uint256 _taskId) external view returns (bool) {
         Task storage task = tasks[_taskId];
+        TaskExecution storage exec = taskExecutions[_taskId];
 
         if (task.status != TaskStatus.ACTIVE) {
             return false;
@@ -760,12 +772,12 @@ contract DynamicTaskRegistry is Ownable, ReentrancyGuard {
             return false;
         }
 
-        if (task.maxExecutions > 0 && task.executionCount >= task.maxExecutions) {
+        if (exec.maxExecutions > 0 && exec.executionCount >= exec.maxExecutions) {
             return false;
         }
 
-        if (task.recurringInterval > 0 && task.lastExecutionTime > 0) {
-            if (block.timestamp < task.lastExecutionTime + task.recurringInterval) {
+        if (exec.recurringInterval > 0 && exec.lastExecutionTime > 0) {
+            if (block.timestamp < exec.lastExecutionTime + exec.recurringInterval) {
                 return false;
             }
         }
