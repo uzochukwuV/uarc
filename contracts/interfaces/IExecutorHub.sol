@@ -65,10 +65,10 @@ interface IExecutorHub {
     function requestExecution(uint256 taskId, bytes32 commitment) external returns (bool locked);
 
     /// @notice Execute task (reveal phase)
+    /// @dev Conditions are now checked by adapters, not passed separately
     function executeTask(
         uint256 taskId,
         bytes32 reveal,
-        bytes calldata conditionProof,
         bytes calldata actionsProof
     ) external returns (bool success);
 

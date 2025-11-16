@@ -28,7 +28,7 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
     // System contracts
     address public immutable taskLogic;
     address public immutable executorHub;
-    address public immutable conditionOracle;
+    // conditionOracle removed - conditions now checked by adapters
     address public immutable actionRegistry;
     address public immutable rewardManager;
     address public globalRegistry;
@@ -49,7 +49,6 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         address _taskVaultImpl,
         address _taskLogic,
         address _executorHub,
-        address _conditionOracle,
         address _actionRegistry,
         address _rewardManager,
         address _owner
@@ -58,7 +57,6 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         require(_taskVaultImpl != address(0), "Invalid vault impl");
         require(_taskLogic != address(0), "Invalid logic");
         require(_executorHub != address(0), "Invalid hub");
-        require(_conditionOracle != address(0), "Invalid oracle");
         require(_actionRegistry != address(0), "Invalid registry");
         require(_rewardManager != address(0), "Invalid reward manager");
 
@@ -66,7 +64,6 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         taskVaultImplementation = _taskVaultImpl;
         taskLogic = _taskLogic;
         executorHub = _executorHub;
-        conditionOracle = _conditionOracle;
         actionRegistry = _actionRegistry;
         rewardManager = _rewardManager;
     }
@@ -76,27 +73,24 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
     /// @inheritdoc ITaskFactory
     function createTask(
         TaskParams calldata params,
-        ConditionParams calldata condition,
         ActionParams[] calldata actions
     ) external payable nonReentrant returns (uint256 taskId, address taskCore, address taskVault) {
-        return _createTask(params, condition, actions, new TokenDeposit[](0));
+        return _createTask(params, actions, new TokenDeposit[](0));
     }
 
     /// @inheritdoc ITaskFactory
     function createTaskWithTokens(
         TaskParams calldata params,
-        ConditionParams calldata condition,
         ActionParams[] calldata actions,
         TokenDeposit[] calldata deposits
     ) external payable nonReentrant returns (uint256 taskId, address taskCore, address taskVault) {
-        return _createTask(params, condition, actions, deposits);
+        return _createTask(params, actions, deposits);
     }
 
     // ============ Internal Functions ============
 
     function _createTask(
         TaskParams calldata params,
-        ConditionParams calldata condition,
         ActionParams[] calldata actions,
         TokenDeposit[] memory deposits
     ) internal returns (uint256 taskId, address taskCore, address taskVault) {
@@ -125,8 +119,7 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         uint256 providedValue = msg.value - creationFee;
         require(providedValue >= totalReward, "Insufficient reward funding");
 
-        // Hash condition and actions for verification
-        bytes32 conditionHash = _hashCondition(condition);
+        // Hash actions for verification (conditions are now in adapters)
         bytes32 actionsHash = _hashActions(actions);
 
         // Create metadata
@@ -141,7 +134,6 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
             recurringInterval: params.recurringInterval,
             rewardPerExecution: params.rewardPerExecution,
             status: ITaskCore.TaskStatus.ACTIVE,
-            conditionHash: conditionHash,
             actionsHash: actionsHash,
             seedCommitment: params.seedCommitment
         });
@@ -227,10 +219,6 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         }
 
         if (actions.length == 0 || actions.length > 10) revert InvalidActions();
-    }
-
-    function _hashCondition(ConditionParams calldata condition) internal pure returns (bytes32) {
-        return keccak256(abi.encode(condition.conditionType, condition.conditionData));
     }
 
     function _hashActions(ActionParams[] calldata actions) internal pure returns (bytes32) {

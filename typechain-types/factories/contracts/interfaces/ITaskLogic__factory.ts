@@ -63,25 +63,6 @@ const _abi = [
         type: "uint256",
       },
       {
-        indexed: false,
-        internalType: "bool",
-        name: "conditionMet",
-        type: "bool",
-      },
-    ],
-    name: "ConditionChecked",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "taskId",
-        type: "uint256",
-      },
-      {
         indexed: true,
         internalType: "address",
         name: "executor",
@@ -130,19 +111,6 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "conditionOracle",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         components: [
@@ -160,11 +128,6 @@ const _abi = [
             internalType: "bytes32",
             name: "seed",
             type: "bytes32",
-          },
-          {
-            internalType: "bytes",
-            name: "conditionProof",
-            type: "bytes",
           },
           {
             internalType: "bytes",
@@ -245,19 +208,6 @@ const _abi = [
       },
     ],
     name: "setActionRegistry",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_conditionOracle",
-        type: "address",
-      },
-    ],
-    name: "setConditionOracle",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

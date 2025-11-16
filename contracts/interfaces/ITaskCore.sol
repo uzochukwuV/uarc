@@ -31,7 +31,7 @@ interface ITaskCore {
         uint256 recurringInterval;
         uint256 rewardPerExecution;
         TaskStatus status;
-        bytes32 conditionHash;      // Hash of condition params
+        // conditionHash removed - conditions now embedded in action adapters
         bytes32 actionsHash;        // Hash of actions array
         bytes32 seedCommitment;     // Commitment for executor authorization
     }

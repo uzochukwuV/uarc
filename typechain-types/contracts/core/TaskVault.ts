@@ -56,6 +56,7 @@ export interface TaskVaultInterface extends Interface {
     nameOrSignatureOrTopic:
       | "FundsWithdrawn"
       | "NativeDeposited"
+      | "RewardExecute"
       | "RewardReleased"
       | "TokenActionExecuted"
       | "TokenDeposited"
@@ -191,6 +192,18 @@ export namespace NativeDepositedEvent {
   export interface OutputObject {
     from: string;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RewardExecuteEvent {
+  export type InputTuple = [suc: boolean];
+  export type OutputTuple = [suc: boolean];
+  export interface OutputObject {
+    suc: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -464,6 +477,13 @@ export interface TaskVault extends BaseContract {
     NativeDepositedEvent.OutputObject
   >;
   getEvent(
+    key: "RewardExecute"
+  ): TypedContractEvent<
+    RewardExecuteEvent.InputTuple,
+    RewardExecuteEvent.OutputTuple,
+    RewardExecuteEvent.OutputObject
+  >;
+  getEvent(
     key: "RewardReleased"
   ): TypedContractEvent<
     RewardReleasedEvent.InputTuple,
@@ -506,6 +526,17 @@ export interface TaskVault extends BaseContract {
       NativeDepositedEvent.InputTuple,
       NativeDepositedEvent.OutputTuple,
       NativeDepositedEvent.OutputObject
+    >;
+
+    "RewardExecute(bool)": TypedContractEvent<
+      RewardExecuteEvent.InputTuple,
+      RewardExecuteEvent.OutputTuple,
+      RewardExecuteEvent.OutputObject
+    >;
+    RewardExecute: TypedContractEvent<
+      RewardExecuteEvent.InputTuple,
+      RewardExecuteEvent.OutputTuple,
+      RewardExecuteEvent.OutputObject
     >;
 
     "RewardReleased(address,uint256)": TypedContractEvent<

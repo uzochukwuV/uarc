@@ -13,7 +13,7 @@ interface ITaskLogic {
         uint256 taskId;
         address executor;
         bytes32 seed;
-        bytes conditionProof;
+        // conditionProof removed - conditions now in action adapters
         bytes actionsProof;
     }
 
@@ -27,7 +27,7 @@ interface ITaskLogic {
     // ============ Events ============
 
     event ExecutionStarted(uint256 indexed taskId, address indexed executor);
-    event ConditionChecked(uint256 indexed taskId, bool conditionMet);
+    // ConditionChecked event removed - conditions now checked by adapters
     event ActionsExecuted(uint256 indexed taskId, bool success);
     event RewardDistributed(uint256 indexed taskId, address indexed executor, uint256 amount);
 
@@ -46,8 +46,7 @@ interface ITaskLogic {
         external
         returns (ExecutionResult memory result);
 
-    /// @notice Set ConditionOracle address
-    function setConditionOracle(address _conditionOracle) external;
+    // setConditionOracle removed - conditions now checked by adapters
 
     /// @notice Set ActionRegistry address
     function setActionRegistry(address _actionRegistry) external;
@@ -58,8 +57,7 @@ interface ITaskLogic {
     /// @notice Set ExecutorHub address
     function setExecutorHub(address _executorHub) external;
 
-    /// @notice Get ConditionOracle address
-    function conditionOracle() external view returns (address);
+    // conditionOracle() getter removed - not needed anymore
 
     /// @notice Get ActionRegistry address
     function actionRegistry() external view returns (address);

@@ -69,6 +69,30 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "bytes",
+        name: "params",
+        type: "bytes",
+      },
+    ],
+    name: "canExecute",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "canExecute",
+        type: "bool",
+      },
+      {
+        internalType: "string",
+        name: "reason",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "vault",
         type: "address",

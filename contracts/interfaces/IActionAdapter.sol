@@ -34,6 +34,16 @@ interface IActionAdapter {
         external
         returns (bool success, bytes memory result);
 
+    /// @notice Check if action conditions are met and can be executed
+    /// @dev Adapters implement their own condition checking logic
+    /// @param params ABI-encoded parameters for the action
+    /// @return canExecute Whether the action can be executed now
+    /// @return reason Human-readable reason (e.g., "Price too high", "Conditions met")
+    function canExecute(bytes calldata params)
+        external
+        view
+        returns (bool canExecute, string memory reason);
+
     /// @notice Check if protocol is supported
     function isProtocolSupported(address protocol) external view returns (bool);
 

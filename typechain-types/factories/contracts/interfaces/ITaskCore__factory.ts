@@ -231,11 +231,6 @@ const _abi = [
           },
           {
             internalType: "bytes32",
-            name: "conditionHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
             name: "actionsHash",
             type: "bytes32",
           },
@@ -326,11 +321,6 @@ const _abi = [
             internalType: "enum ITaskCore.TaskStatus",
             name: "status",
             type: "uint8",
-          },
-          {
-            internalType: "bytes32",
-            name: "conditionHash",
-            type: "bytes32",
           },
           {
             internalType: "bytes32",

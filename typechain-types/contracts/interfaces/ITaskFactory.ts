@@ -46,16 +46,6 @@ export declare namespace ITaskFactory {
     seedCommitment: string;
   };
 
-  export type ConditionParamsStruct = {
-    conditionType: BigNumberish;
-    conditionData: BytesLike;
-  };
-
-  export type ConditionParamsStructOutput = [
-    conditionType: bigint,
-    conditionData: string
-  ] & { conditionType: bigint; conditionData: string };
-
   export type ActionParamsStruct = {
     selector: BytesLike;
     protocol: AddressLike;
@@ -111,17 +101,12 @@ export interface ITaskFactoryInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "createTask",
-    values: [
-      ITaskFactory.TaskParamsStruct,
-      ITaskFactory.ConditionParamsStruct,
-      ITaskFactory.ActionParamsStruct[]
-    ]
+    values: [ITaskFactory.TaskParamsStruct, ITaskFactory.ActionParamsStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "createTaskWithTokens",
     values: [
       ITaskFactory.TaskParamsStruct,
-      ITaskFactory.ConditionParamsStruct,
       ITaskFactory.ActionParamsStruct[],
       ITaskFactory.TokenDepositStruct[]
     ]
@@ -271,7 +256,6 @@ export interface ITaskFactory extends BaseContract {
   createTask: TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[]
     ],
     [
@@ -287,7 +271,6 @@ export interface ITaskFactory extends BaseContract {
   createTaskWithTokens: TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[],
       deposits: ITaskFactory.TokenDepositStruct[]
     ],
@@ -328,7 +311,6 @@ export interface ITaskFactory extends BaseContract {
   ): TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[]
     ],
     [
@@ -345,7 +327,6 @@ export interface ITaskFactory extends BaseContract {
   ): TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[],
       deposits: ITaskFactory.TokenDepositStruct[]
     ],

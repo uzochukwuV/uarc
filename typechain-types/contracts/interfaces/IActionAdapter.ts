@@ -24,11 +24,15 @@ import type {
 
 export interface IActionAdapterInterface extends Interface {
   getFunction(
-    nameOrSignature: "execute" | "isProtocolSupported" | "name"
+    nameOrSignature: "canExecute" | "execute" | "isProtocolSupported" | "name"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "ActionExecuted"): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "canExecute",
+    values: [BytesLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "execute",
     values: [AddressLike, BytesLike]
@@ -39,6 +43,7 @@ export interface IActionAdapterInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isProtocolSupported",
@@ -115,6 +120,12 @@ export interface IActionAdapter extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  canExecute: TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { canExecute: boolean; reason: string }],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [vault: AddressLike, params: BytesLike],
     [[boolean, string] & { success: boolean; result: string }],
@@ -133,6 +144,13 @@ export interface IActionAdapter extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "canExecute"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { canExecute: boolean; reason: string }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<

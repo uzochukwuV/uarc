@@ -28,7 +28,6 @@ export declare namespace ITaskLogic {
     taskId: BigNumberish;
     executor: AddressLike;
     seed: BytesLike;
-    conditionProof: BytesLike;
     actionsProof: BytesLike;
   };
 
@@ -36,15 +35,8 @@ export declare namespace ITaskLogic {
     taskId: bigint,
     executor: string,
     seed: string,
-    conditionProof: string,
     actionsProof: string
-  ] & {
-    taskId: bigint;
-    executor: string;
-    seed: string;
-    conditionProof: string;
-    actionsProof: string;
-  };
+  ] & { taskId: bigint; executor: string; seed: string; actionsProof: string };
 
   export type ExecutionResultStruct = {
     success: boolean;
@@ -70,7 +62,6 @@ export interface TaskLogicV2Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "actionRegistry"
-      | "conditionOracle"
       | "executeTask"
       | "executorHub"
       | "owner"
@@ -79,7 +70,6 @@ export interface TaskLogicV2Interface extends Interface {
       | "renounceOwnership"
       | "rewardManager"
       | "setActionRegistry"
-      | "setConditionOracle"
       | "setExecutorHub"
       | "setRewardManager"
       | "setTaskRegistry"
@@ -91,7 +81,6 @@ export interface TaskLogicV2Interface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "ActionsExecuted"
-      | "ConditionChecked"
       | "ExecutionStarted"
       | "OwnershipTransferred"
       | "Paused"
@@ -101,10 +90,6 @@ export interface TaskLogicV2Interface extends Interface {
 
   encodeFunctionData(
     functionFragment: "actionRegistry",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "conditionOracle",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -128,10 +113,6 @@ export interface TaskLogicV2Interface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setActionRegistry",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setConditionOracle",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -161,10 +142,6 @@ export interface TaskLogicV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "conditionOracle",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "executeTask",
     data: BytesLike
   ): Result;
@@ -185,10 +162,6 @@ export interface TaskLogicV2Interface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setActionRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setConditionOracle",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -220,19 +193,6 @@ export namespace ActionsExecutedEvent {
   export interface OutputObject {
     taskId: bigint;
     success: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ConditionCheckedEvent {
-  export type InputTuple = [taskId: BigNumberish, conditionMet: boolean];
-  export type OutputTuple = [taskId: bigint, conditionMet: boolean];
-  export interface OutputObject {
-    taskId: bigint;
-    conditionMet: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -353,8 +313,6 @@ export interface TaskLogicV2 extends BaseContract {
 
   actionRegistry: TypedContractMethod<[], [string], "view">;
 
-  conditionOracle: TypedContractMethod<[], [string], "view">;
-
   executeTask: TypedContractMethod<
     [params: ITaskLogic.ExecutionParamsStruct],
     [ITaskLogic.ExecutionResultStructOutput],
@@ -375,12 +333,6 @@ export interface TaskLogicV2 extends BaseContract {
 
   setActionRegistry: TypedContractMethod<
     [_actionRegistry: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  setConditionOracle: TypedContractMethod<
-    [_conditionOracle: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -421,9 +373,6 @@ export interface TaskLogicV2 extends BaseContract {
     nameOrSignature: "actionRegistry"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "conditionOracle"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "executeTask"
   ): TypedContractMethod<
     [params: ITaskLogic.ExecutionParamsStruct],
@@ -452,9 +401,6 @@ export interface TaskLogicV2 extends BaseContract {
     nameOrSignature: "setActionRegistry"
   ): TypedContractMethod<[_actionRegistry: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "setConditionOracle"
-  ): TypedContractMethod<[_conditionOracle: AddressLike], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "setExecutorHub"
   ): TypedContractMethod<[_executorHub: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -479,13 +425,6 @@ export interface TaskLogicV2 extends BaseContract {
     ActionsExecutedEvent.InputTuple,
     ActionsExecutedEvent.OutputTuple,
     ActionsExecutedEvent.OutputObject
-  >;
-  getEvent(
-    key: "ConditionChecked"
-  ): TypedContractEvent<
-    ConditionCheckedEvent.InputTuple,
-    ConditionCheckedEvent.OutputTuple,
-    ConditionCheckedEvent.OutputObject
   >;
   getEvent(
     key: "ExecutionStarted"
@@ -533,17 +472,6 @@ export interface TaskLogicV2 extends BaseContract {
       ActionsExecutedEvent.InputTuple,
       ActionsExecutedEvent.OutputTuple,
       ActionsExecutedEvent.OutputObject
-    >;
-
-    "ConditionChecked(uint256,bool)": TypedContractEvent<
-      ConditionCheckedEvent.InputTuple,
-      ConditionCheckedEvent.OutputTuple,
-      ConditionCheckedEvent.OutputObject
-    >;
-    ConditionChecked: TypedContractEvent<
-      ConditionCheckedEvent.InputTuple,
-      ConditionCheckedEvent.OutputTuple,
-      ConditionCheckedEvent.OutputObject
     >;
 
     "ExecutionStarted(uint256,address)": TypedContractEvent<

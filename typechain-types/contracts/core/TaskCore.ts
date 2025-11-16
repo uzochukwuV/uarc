@@ -35,7 +35,6 @@ export declare namespace ITaskCore {
     recurringInterval: BigNumberish;
     rewardPerExecution: BigNumberish;
     status: BigNumberish;
-    conditionHash: BytesLike;
     actionsHash: BytesLike;
     seedCommitment: BytesLike;
   };
@@ -51,7 +50,6 @@ export declare namespace ITaskCore {
     recurringInterval: bigint,
     rewardPerExecution: bigint,
     status: bigint,
-    conditionHash: string,
     actionsHash: string,
     seedCommitment: string
   ] & {
@@ -65,7 +63,6 @@ export declare namespace ITaskCore {
     recurringInterval: bigint;
     rewardPerExecution: bigint;
     status: bigint;
-    conditionHash: string;
     actionsHash: string;
     seedCommitment: string;
   };
@@ -349,7 +346,6 @@ export interface TaskCore extends BaseContract {
         bigint,
         bigint,
         string,
-        string,
         string
       ] & {
         id: bigint;
@@ -362,7 +358,6 @@ export interface TaskCore extends BaseContract {
         recurringInterval: bigint;
         rewardPerExecution: bigint;
         status: bigint;
-        conditionHash: string;
         actionsHash: string;
         seedCommitment: string;
       }
@@ -439,7 +434,6 @@ export interface TaskCore extends BaseContract {
         bigint,
         bigint,
         string,
-        string,
         string
       ] & {
         id: bigint;
@@ -452,7 +446,6 @@ export interface TaskCore extends BaseContract {
         recurringInterval: bigint;
         rewardPerExecution: bigint;
         status: bigint;
-        conditionHash: string;
         actionsHash: string;
         seedCommitment: string;
       }

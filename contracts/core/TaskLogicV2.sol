@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "../interfaces/ITaskLogic.sol";
 import "../interfaces/ITaskCore.sol";
 import "../interfaces/ITaskVault.sol";
-import "../interfaces/IConditionOracle.sol";
 import "../interfaces/IActionRegistry.sol";
 import "../interfaces/IRewardManager.sol";
 import "../interfaces/IActionAdapter.sol";
@@ -23,7 +22,7 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
 
     // ============ State Variables ============
 
-    address public conditionOracle;
+    // ConditionOracle removed - conditions now checked by adapters
     address public actionRegistry;
     address public rewardManager;
     address public executorHub;
@@ -71,25 +70,8 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
         bool canExecute = ITaskCore(taskCore).executeTask(params.executor);
         if (!canExecute) revert TaskNotExecutable();
 
-        // Step 4: Verify and check condition
-        bool conditionMet = _verifyAndCheckCondition(
-            metadata.conditionHash,
-            params.conditionProof
-        );
-
-        emit ConditionChecked(params.taskId, conditionMet);
-
-        if (!conditionMet) {
-            // Mark execution as failed
-            ITaskCore(taskCore).completeExecution(false);
-
-            result.success = false;
-            result.failureReason = "Condition not met";
-            result.gasUsed = startGas - gasleft();
-            return result;
-        }
-
-        // Step 5: Verify and execute actions
+        // Step 4: Verify and execute actions (conditions checked by adapters)
+        // Conditions are now embedded in action adapter logic
         bool actionsSuccess = _verifyAndExecuteActions(
             taskVault,
             metadata.actionsHash,
@@ -161,38 +143,7 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
      * @param conditionProof Encoded condition data with Merkle proof
      * @return bool Whether condition is met
      */
-    function _verifyAndCheckCondition(
-        bytes32 conditionHash,
-        bytes calldata conditionProof
-    ) internal view returns (bool) {
-        if (conditionOracle == address(0)) {
-            return true; // No oracle = always pass
-        }
-
-        // Decode proof structure
-        (
-            IConditionOracle.Condition memory condition,
-            bytes32[] memory merkleProof
-        ) = abi.decode(conditionProof, (IConditionOracle.Condition, bytes32[]));
-
-        // Verify proof if Merkle proof provided
-        if (merkleProof.length > 0) {
-            bytes32 leaf = keccak256(abi.encode(condition.conditionType, condition.params));
-            bool valid = merkleProof.verify(conditionHash, leaf);
-
-            if (!valid) revert ConditionNotMet();
-        } else {
-            // Direct hash comparison (single condition case)
-            bytes32 computedHash = keccak256(abi.encode(condition.conditionType, condition.params));
-            if (computedHash != conditionHash) revert ConditionNotMet();
-        }
-
-        // Check condition
-        IConditionOracle.ConditionResult memory condResult =
-            IConditionOracle(conditionOracle).checkCondition(condition);
-
-        return condResult.isMet;
-    }
+    // Condition checking removed - now handled by action adapters
 
     /**
      * @notice Verify action proofs and execute actions
@@ -290,7 +241,7 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
         );
 
         // Execute through vault with correct token/amount
-        (bool success, ) = taskVault.call{gas: adapterInfo.gasLimit}(
+        (bool callSuccess, bytes memory returnData) = taskVault.call{gas: adapterInfo.gasLimit}(
             abi.encodeWithSignature(
                 "executeTokenAction(address,address,uint256,bytes)",
                 tokenIn,              // ✅ Actual USDC address
@@ -300,7 +251,14 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
             )
         );
 
-        return success;
+        // Decode the actual vault response (bool success, bytes memory result)
+        if (callSuccess && returnData.length > 0) {
+            (bool actionSuccess, ) = abi.decode(returnData, (bool, bytes));
+            return actionSuccess;
+        }
+
+        // Call failed or no data
+        return false;
     }
 
     /**
@@ -382,11 +340,7 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
 
     // ============ Admin Functions ============
 
-    /// @inheritdoc ITaskLogic
-    function setConditionOracle(address _conditionOracle) external onlyOwner {
-        require(_conditionOracle != address(0), "Invalid oracle");
-        conditionOracle = _conditionOracle;
-    }
+    // setConditionOracle removed - conditions now checked by adapters
 
     /// @inheritdoc ITaskLogic
     function setActionRegistry(address _actionRegistry) external onlyOwner {

@@ -67,16 +67,16 @@ interface ITaskFactory {
     // ============ Functions ============
 
     /// @notice Create a new task with native token reward
+    /// @dev Conditions are now embedded in action adapter params
     function createTask(
         TaskParams calldata params,
-        ConditionParams calldata condition,
         ActionParams[] calldata actions
     ) external payable returns (uint256 taskId, address taskCore, address taskVault);
 
     /// @notice Create task with ERC20 token deposits
+    /// @dev Conditions are now embedded in action adapter params
     function createTaskWithTokens(
         TaskParams calldata params,
-        ConditionParams calldata condition,
         ActionParams[] calldata actions,
         TokenDeposit[] calldata deposits
     ) external payable returns (uint256 taskId, address taskCore, address taskVault);

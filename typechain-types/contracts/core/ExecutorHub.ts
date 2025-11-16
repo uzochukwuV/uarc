@@ -126,7 +126,7 @@ export interface ExecutorHubInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeTask",
-    values: [BigNumberish, BytesLike, BytesLike, BytesLike]
+    values: [BigNumberish, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "executors",
@@ -483,12 +483,7 @@ export interface ExecutorHub extends BaseContract {
   commitDelay: TypedContractMethod<[], [bigint], "view">;
 
   executeTask: TypedContractMethod<
-    [
-      taskId: BigNumberish,
-      reveal: BytesLike,
-      conditionProof: BytesLike,
-      actionsProof: BytesLike
-    ],
+    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;
@@ -640,12 +635,7 @@ export interface ExecutorHub extends BaseContract {
   getFunction(
     nameOrSignature: "executeTask"
   ): TypedContractMethod<
-    [
-      taskId: BigNumberish,
-      reveal: BytesLike,
-      conditionProof: BytesLike,
-      actionsProof: BytesLike
-    ],
+    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;

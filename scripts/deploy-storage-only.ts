@@ -15,11 +15,11 @@ async function main() {
   try {
     console.log("Deploying TaskCreator...");
 
-    const TaskCreator = await ethers.getContractFactory("TaskCreator");
+    const TaskCreator = await ethers.getContractFactory("ConditionOracle");
     console.log("✅ Contract factory created");
 
     console.log("Calling deploy()...");
-    const taskCreator = await TaskCreator.deploy();
+    const taskCreator = await TaskCreator.deploy("0x8AaEe2071A400cC60927e46D53f751e521ef4D35");
     console.log("✅ Deploy transaction sent");
 
     console.log("Waiting for deployment...");

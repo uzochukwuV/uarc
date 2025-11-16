@@ -106,7 +106,7 @@ export interface IExecutorHubInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeTask",
-    values: [BigNumberish, BytesLike, BytesLike, BytesLike]
+    values: [BigNumberish, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getExecutionLock",
@@ -350,12 +350,7 @@ export interface IExecutorHub extends BaseContract {
   canExecute: TypedContractMethod<[executor: AddressLike], [boolean], "view">;
 
   executeTask: TypedContractMethod<
-    [
-      taskId: BigNumberish,
-      reveal: BytesLike,
-      conditionProof: BytesLike,
-      actionsProof: BytesLike
-    ],
+    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;
@@ -420,12 +415,7 @@ export interface IExecutorHub extends BaseContract {
   getFunction(
     nameOrSignature: "executeTask"
   ): TypedContractMethod<
-    [
-      taskId: BigNumberish,
-      reveal: BytesLike,
-      conditionProof: BytesLike,
-      actionsProof: BytesLike
-    ],
+    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;

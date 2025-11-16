@@ -151,7 +151,6 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     function executeTask(
         uint256 taskId,
         bytes32 reveal,
-        bytes calldata conditionProof,
         bytes calldata actionsProof
     ) external onlyRegistered notBlacklisted nonReentrant returns (bool success) {
         ExecutionLock storage lock = taskLocks[taskId];
@@ -171,7 +170,7 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
             taskId: taskId,
             executor: msg.sender,
             seed: reveal,
-            conditionProof: conditionProof,
+            // conditionProof removed - conditions now in adapters
             actionsProof: actionsProof
         });
 

@@ -46,16 +46,6 @@ export declare namespace ITaskFactory {
     seedCommitment: string;
   };
 
-  export type ConditionParamsStruct = {
-    conditionType: BigNumberish;
-    conditionData: BytesLike;
-  };
-
-  export type ConditionParamsStructOutput = [
-    conditionType: bigint,
-    conditionData: string
-  ] & { conditionType: bigint; conditionData: string };
-
   export type ActionParamsStruct = {
     selector: BytesLike;
     protocol: AddressLike;
@@ -94,7 +84,6 @@ export interface TaskFactoryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "actionRegistry"
-      | "conditionOracle"
       | "createTask"
       | "createTaskWithTokens"
       | "creationFee"
@@ -132,22 +121,13 @@ export interface TaskFactoryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "conditionOracle",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "createTask",
-    values: [
-      ITaskFactory.TaskParamsStruct,
-      ITaskFactory.ConditionParamsStruct,
-      ITaskFactory.ActionParamsStruct[]
-    ]
+    values: [ITaskFactory.TaskParamsStruct, ITaskFactory.ActionParamsStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "createTaskWithTokens",
     values: [
       ITaskFactory.TaskParamsStruct,
-      ITaskFactory.ConditionParamsStruct,
       ITaskFactory.ActionParamsStruct[],
       ITaskFactory.TokenDepositStruct[]
     ]
@@ -229,10 +209,6 @@ export interface TaskFactoryInterface extends Interface {
 
   decodeFunctionResult(
     functionFragment: "actionRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "conditionOracle",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createTask", data: BytesLike): Result;
@@ -425,12 +401,9 @@ export interface TaskFactory extends BaseContract {
 
   actionRegistry: TypedContractMethod<[], [string], "view">;
 
-  conditionOracle: TypedContractMethod<[], [string], "view">;
-
   createTask: TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[]
     ],
     [
@@ -446,7 +419,6 @@ export interface TaskFactory extends BaseContract {
   createTaskWithTokens: TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[],
       deposits: ITaskFactory.TokenDepositStruct[]
     ],
@@ -540,14 +512,10 @@ export interface TaskFactory extends BaseContract {
     nameOrSignature: "actionRegistry"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "conditionOracle"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "createTask"
   ): TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[]
     ],
     [
@@ -564,7 +532,6 @@ export interface TaskFactory extends BaseContract {
   ): TypedContractMethod<
     [
       params: ITaskFactory.TaskParamsStruct,
-      condition: ITaskFactory.ConditionParamsStruct,
       actions: ITaskFactory.ActionParamsStruct[],
       deposits: ITaskFactory.TokenDepositStruct[]
     ],

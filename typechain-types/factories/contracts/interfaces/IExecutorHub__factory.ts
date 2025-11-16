@@ -229,11 +229,6 @@ const _abi = [
       },
       {
         internalType: "bytes",
-        name: "conditionProof",
-        type: "bytes",
-      },
-      {
-        internalType: "bytes",
         name: "actionsProof",
         type: "bytes",
       },

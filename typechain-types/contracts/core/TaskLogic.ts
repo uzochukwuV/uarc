@@ -28,7 +28,6 @@ export declare namespace ITaskLogic {
     taskId: BigNumberish;
     executor: AddressLike;
     seed: BytesLike;
-    conditionProof: BytesLike;
     actionsProof: BytesLike;
   };
 
@@ -36,15 +35,8 @@ export declare namespace ITaskLogic {
     taskId: bigint,
     executor: string,
     seed: string,
-    conditionProof: string,
     actionsProof: string
-  ] & {
-    taskId: bigint;
-    executor: string;
-    seed: string;
-    conditionProof: string;
-    actionsProof: string;
-  };
+  ] & { taskId: bigint; executor: string; seed: string; actionsProof: string };
 
   export type ExecutionResultStruct = {
     success: boolean;
@@ -86,7 +78,6 @@ export interface TaskLogicInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "ActionsExecuted"
-      | "ConditionChecked"
       | "ExecutionStarted"
       | "OwnershipTransferred"
       | "RewardDistributed"
@@ -191,19 +182,6 @@ export namespace ActionsExecutedEvent {
   export interface OutputObject {
     taskId: bigint;
     success: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ConditionCheckedEvent {
-  export type InputTuple = [taskId: BigNumberish, conditionMet: boolean];
-  export type OutputTuple = [taskId: bigint, conditionMet: boolean];
-  export interface OutputObject {
-    taskId: bigint;
-    conditionMet: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -399,13 +377,6 @@ export interface TaskLogic extends BaseContract {
     ActionsExecutedEvent.OutputObject
   >;
   getEvent(
-    key: "ConditionChecked"
-  ): TypedContractEvent<
-    ConditionCheckedEvent.InputTuple,
-    ConditionCheckedEvent.OutputTuple,
-    ConditionCheckedEvent.OutputObject
-  >;
-  getEvent(
     key: "ExecutionStarted"
   ): TypedContractEvent<
     ExecutionStartedEvent.InputTuple,
@@ -437,17 +408,6 @@ export interface TaskLogic extends BaseContract {
       ActionsExecutedEvent.InputTuple,
       ActionsExecutedEvent.OutputTuple,
       ActionsExecutedEvent.OutputObject
-    >;
-
-    "ConditionChecked(uint256,bool)": TypedContractEvent<
-      ConditionCheckedEvent.InputTuple,
-      ConditionCheckedEvent.OutputTuple,
-      ConditionCheckedEvent.OutputObject
-    >;
-    ConditionChecked: TypedContractEvent<
-      ConditionCheckedEvent.InputTuple,
-      ConditionCheckedEvent.OutputTuple,
-      ConditionCheckedEvent.OutputObject
     >;
 
     "ExecutionStarted(uint256,address)": TypedContractEvent<

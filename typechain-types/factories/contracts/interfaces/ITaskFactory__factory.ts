@@ -152,23 +152,6 @@ const _abi = [
       {
         components: [
           {
-            internalType: "enum IConditionOracle.ConditionType",
-            name: "conditionType",
-            type: "uint8",
-          },
-          {
-            internalType: "bytes",
-            name: "conditionData",
-            type: "bytes",
-          },
-        ],
-        internalType: "struct ITaskFactory.ConditionParams",
-        name: "condition",
-        type: "tuple",
-      },
-      {
-        components: [
-          {
             internalType: "bytes4",
             name: "selector",
             type: "bytes4",
@@ -242,23 +225,6 @@ const _abi = [
         ],
         internalType: "struct ITaskFactory.TaskParams",
         name: "params",
-        type: "tuple",
-      },
-      {
-        components: [
-          {
-            internalType: "enum IConditionOracle.ConditionType",
-            name: "conditionType",
-            type: "uint8",
-          },
-          {
-            internalType: "bytes",
-            name: "conditionData",
-            type: "bytes",
-          },
-        ],
-        internalType: "struct ITaskFactory.ConditionParams",
-        name: "condition",
         type: "tuple",
       },
       {

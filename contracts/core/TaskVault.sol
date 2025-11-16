@@ -122,6 +122,9 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
         emit RewardReleased(executor, amount);
     }
 
+    event RewardExecute(bool suc);
+
+
     /// @inheritdoc ITaskVault
     function executeTokenAction(
         address token,
@@ -142,7 +145,19 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
         IERC20(token).approve(adapter, amount);
 
         // Execute action through adapter
-        (success, result) = adapter.call(actionData);
+         (bool callSuccess, bytes memory returnData) = adapter.call(actionData);
+
+        // Decode the actual adapter response (bool success, bytes memory result)
+        if (callSuccess && returnData.length > 0) {
+            (success, result) = abi.decode(returnData, (bool, bytes));
+        } else {
+            // Call failed or no data returned
+            success = false;
+            result = returnData;
+        }
+
+        emit RewardExecute(success);
+
 
         // Cleanup: remove approval
         IERC20(token).approve(adapter, 0);
@@ -151,7 +166,7 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
         tokenReserved[token] -= amount;
 
         // If failed, tokens should have been returned to vault
-        if (!success) {
+        if (success == false) {
             // Reclaim tokens that weren't spent
             uint256 currentBalance = IERC20(token).balanceOf(address(this));
             uint256 expectedBalance = tokenBalances[token] + tokenReserved[token];
