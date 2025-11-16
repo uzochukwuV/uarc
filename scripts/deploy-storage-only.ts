@@ -15,7 +15,7 @@ async function main() {
   try {
     console.log("Deploying TaskCreator...");
 
-    const TaskCreator = await ethers.getContractFactory("ConditionOracle");
+    const TaskCreator = await ethers.getContractFactory("TaskLogicV2");
     console.log("✅ Contract factory created");
 
     console.log("Calling deploy()...");
@@ -33,8 +33,8 @@ async function main() {
     console.log("\nVerifying contract...");
     const owner = await taskCreator.owner();
     console.log("Owner:", owner);
-    console.log("Next Task ID:", await taskCreator.nextTaskId());
-    console.log("Max Actions:", await taskCreator.MAX_ACTIONS());
+    // console.log("Next Task ID:", await taskCreator.nextTaskId());
+    // console.log("Max Actions:", await taskCreator.MAX_ACTIONS());
 
     console.log("\n✅ All checks passed!");
 

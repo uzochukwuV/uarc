@@ -31,6 +31,11 @@ const config: HardhatUserConfig = {
             // Standard Hardhat network without PolkaVM for fast local testing
             // Uses Hardhat's built-in EVM (no external binaries needed)
         },
+        etherum : {
+            url: "https://virtual.mainnet.eu.rpc.tenderly.co/82c86106-662e-4d7f-a974-c311987358ff",
+            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
+            chainId: 8
+        },
         polkavmLocal: {
             polkavm: true,
             url: 'http://127.0.0.1:8545',

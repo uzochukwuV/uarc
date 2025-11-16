@@ -49,24 +49,18 @@ async function main() {
   // ============================================================
   console.log("📦 STEP 2: Deploying Core System Contracts...\n");
 
-  // 2.1 Deploy ConditionOracle
-  console.log("3️⃣  Deploying ConditionOracle...");
-  const ConditionOracle = await ethers.getContractFactory("ConditionOracle");
-  const conditionOracle = await ConditionOracle.deploy(deployerAddress);
-  await conditionOracle.waitForDeployment();
-  const conditionOracleAddress = await conditionOracle.getAddress();
-  console.log("   ✅ ConditionOracle:", conditionOracleAddress, "\n");
+  // NOTE: ConditionOracle removed - conditions now checked by adapters
 
-  // 2.2 Deploy ActionRegistry
-  console.log("4️⃣  Deploying ActionRegistry...");
+  // 2.1 Deploy ActionRegistry
+  console.log("3️⃣  Deploying ActionRegistry...");
   const ActionRegistry = await ethers.getContractFactory("ActionRegistry");
   const actionRegistry = await ActionRegistry.deploy(deployerAddress);
   await actionRegistry.waitForDeployment();
   const actionRegistryAddress = await actionRegistry.getAddress();
   console.log("   ✅ ActionRegistry:", actionRegistryAddress, "\n");
 
-  // 2.3 Deploy ExecutorHub
-  console.log("5️⃣  Deploying ExecutorHub...");
+  // 2.2 Deploy ExecutorHub
+  console.log("4️⃣  Deploying ExecutorHub...");
   const ExecutorHub = await ethers.getContractFactory("ExecutorHub");
   const executorHub = await ExecutorHub.deploy(deployerAddress);
   await executorHub.waitForDeployment();
@@ -76,16 +70,16 @@ async function main() {
   console.log("   🔒 Lock Duration: 30 seconds");
   console.log("   ⏱️  Commit Delay: 1 second\n");
 
-  // 2.4 Deploy GlobalRegistry
-  console.log("6️⃣  Deploying GlobalRegistry...");
+  // 2.3 Deploy GlobalRegistry
+  console.log("5️⃣  Deploying GlobalRegistry...");
   const GlobalRegistry = await ethers.getContractFactory("GlobalRegistry");
   const globalRegistry = await GlobalRegistry.deploy(deployerAddress);
   await globalRegistry.waitForDeployment();
   const globalRegistryAddress = await globalRegistry.getAddress();
   console.log("   ✅ GlobalRegistry:", globalRegistryAddress, "\n");
 
-  // 2.5 Deploy RewardManager
-  console.log("7️⃣  Deploying RewardManager...");
+  // 2.4 Deploy RewardManager
+  console.log("6️⃣  Deploying RewardManager...");
   const RewardManager = await ethers.getContractFactory("RewardManager");
   const rewardManager = await RewardManager.deploy(deployerAddress);
   await rewardManager.waitForDeployment();
@@ -94,23 +88,22 @@ async function main() {
   console.log("   💸 Platform Fee: 1% (100 bps)");
   console.log("   ⛽ Gas Reimbursement: 120%\n");
 
-  // 2.6 Deploy TaskLogicV2
-  console.log("8️⃣  Deploying TaskLogicV2...");
+  // 2.5 Deploy TaskLogicV2
+  console.log("7️⃣  Deploying TaskLogicV2...");
   const TaskLogicV2 = await ethers.getContractFactory("TaskLogicV2");
   const taskLogic = await TaskLogicV2.deploy(deployerAddress);
   await taskLogic.waitForDeployment();
   const taskLogicAddress = await taskLogic.getAddress();
   console.log("   ✅ TaskLogicV2:", taskLogicAddress, "\n");
 
-  // 2.7 Deploy TaskFactory
-  console.log("9️⃣  Deploying TaskFactory...");
+  // 2.6 Deploy TaskFactory
+  console.log("8️⃣  Deploying TaskFactory...");
   const TaskFactory = await ethers.getContractFactory("TaskFactory");
   const taskFactory = await TaskFactory.deploy(
     taskCoreImplAddress,
     taskVaultImplAddress,
     taskLogicAddress,
     executorHubAddress,
-    conditionOracleAddress,
     actionRegistryAddress,
     rewardManagerAddress,
     deployerAddress
@@ -122,25 +115,38 @@ async function main() {
   console.log("   💰 Min Task Reward: 0.001 ETH\n");
 
   // ============================================================
-  // STEP 3: DEPLOY ADAPTERS
+  // STEP 3: DEPLOY ADAPTERS (OPTIONAL)
   // ============================================================
   console.log("📦 STEP 3: Deploying Adapters...\n");
 
+  // NOTE: Adapter deployment is optional. Deploy your specific adapters separately.
+  // Example adapters are commented out below.
+
+  let uniswapAdapterAddress = ethers.ZeroAddress;
+  let genericAdapterAddress = ethers.ZeroAddress;
+
+  console.log("ℹ️  Adapter deployment skipped.");
+  console.log("   Deploy your specific adapters (e.g., UniswapUSDCETHBuyLimitAdapter)");
+  console.log("   and register them with ActionRegistry.\n");
+
+  // Uncomment to deploy example adapters if they exist:
+  /*
   // 3.1 Deploy UniswapV2Adapter
-  console.log("🔟 Deploying UniswapV2Adapter...");
+  console.log("9️⃣  Deploying UniswapV2Adapter...");
   const UniswapV2Adapter = await ethers.getContractFactory("UniswapV2Adapter");
   const uniswapAdapter = await UniswapV2Adapter.deploy(deployerAddress);
   await uniswapAdapter.waitForDeployment();
-  const uniswapAdapterAddress = await uniswapAdapter.getAddress();
+  uniswapAdapterAddress = await uniswapAdapter.getAddress();
   console.log("   ✅ UniswapV2Adapter:", uniswapAdapterAddress, "\n");
 
   // 3.2 Deploy GenericAdapter
-  console.log("1️⃣1️⃣  Deploying GenericAdapter...");
+  console.log("🔟 Deploying GenericAdapter...");
   const GenericAdapter = await ethers.getContractFactory("GenericAdapter");
   const genericAdapter = await GenericAdapter.deploy(deployerAddress);
   await genericAdapter.waitForDeployment();
-  const genericAdapterAddress = await genericAdapter.getAddress();
+  genericAdapterAddress = await genericAdapter.getAddress();
   console.log("   ✅ GenericAdapter:", genericAdapterAddress, "\n");
+  */
 
   // ============================================================
   // STEP 4: CONFIGURE CONTRACTS
@@ -148,7 +154,7 @@ async function main() {
   console.log("⚙️  STEP 4: Configuring Contract Connections...\n");
 
   console.log("🔗 Configuring TaskLogicV2...");
-  await taskLogic.setConditionOracle(conditionOracleAddress);
+  // ConditionOracle removed - conditions now checked by adapters
   await taskLogic.setActionRegistry(actionRegistryAddress);
   await taskLogic.setRewardManager(rewardManagerAddress);
   await taskLogic.setExecutorHub(executorHubAddress);
@@ -175,10 +181,16 @@ async function main() {
   console.log("   ✅ TaskFactory configured\n");
 
   // ============================================================
-  // STEP 5: REGISTER ADAPTERS
+  // STEP 5: REGISTER ADAPTERS (OPTIONAL)
   // ============================================================
   console.log("📦 STEP 5: Registering Adapters...\n");
 
+  console.log("ℹ️  No adapters to register yet.");
+  console.log("   Register your specific adapters after deployment using:");
+  console.log("   await actionRegistry.registerAdapter(selector, address, gasLimit, requiresTokens)\n");
+
+  // Uncomment to register example adapters:
+  /*
   console.log("🔌 Registering UniswapV2Adapter...");
   const swapSelector = ethers.id("swap").slice(0, 10);
   await actionRegistry.registerAdapter(
@@ -202,6 +214,7 @@ async function main() {
   console.log("   ✅ GenericAdapter registered");
   console.log("   🔑 Selector:", genericSelector);
   console.log("   ⛽ Gas Limit: 1,000,000\n");
+  */
 
   // ============================================================
   // STEP 6: VERIFICATION
@@ -251,7 +264,6 @@ async function main() {
   console.log("├─ ExecutorHub:", executorHubAddress);
   console.log("├─ GlobalRegistry:", globalRegistryAddress);
   console.log("├─ RewardManager:", rewardManagerAddress);
-  console.log("├─ ConditionOracle:", conditionOracleAddress);
   console.log("└─ ActionRegistry:", actionRegistryAddress);
   console.log("");
 
@@ -279,7 +291,6 @@ async function main() {
         ExecutorHub: executorHubAddress,
         GlobalRegistry: globalRegistryAddress,
         RewardManager: rewardManagerAddress,
-        ConditionOracle: conditionOracleAddress,
         ActionRegistry: actionRegistryAddress,
       },
       adapters: {
@@ -330,14 +341,14 @@ async function main() {
   console.log("2. Create your first task:");
   console.log("   await taskFactory.createTaskWithTokens(...)\n");
 
-  console.log("3. Add price feeds to ConditionOracle:");
-  console.log("   await conditionOracle.setPriceFeed(tokenAddress, feedAddress);\n");
-
-  console.log("4. Register DEX routers in UniswapV2Adapter:");
+  console.log("3. Register DEX routers in UniswapV2Adapter:");
   console.log("   await uniswapAdapter.addRouter(routerAddress);\n");
 
-  console.log("5. Approve protocols in ActionRegistry:");
+  console.log("4. Approve protocols in ActionRegistry:");
   console.log("   await actionRegistry.approveProtocol(protocolAddress);\n");
+
+  console.log("5. Create hyper-specific adapters with embedded conditions:");
+  console.log("   e.g., UniswapUSDCETHBuyLimitAdapter for limit orders\n");
 
   console.log("━".repeat(60));
   console.log("✨ TaskerOnChain V2 is ready!");

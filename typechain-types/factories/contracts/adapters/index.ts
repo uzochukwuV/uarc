@@ -3,5 +3,7 @@
 /* eslint-disable */
 export * as aaveAdapterSol from "./AaveAdapter.sol";
 export * as compoundAdapterSol from "./CompoundAdapter.sol";
+export * as uniswapLimitOrderAdapterSol from "./UniswapLimitOrderAdapter.sol";
 export * as uniswapV2AdapterSol from "./UniswapV2Adapter.sol";
 export { GenericAdapter__factory } from "./GenericAdapter__factory";
+export { ScheduledTransferAdapter__factory } from "./ScheduledTransferAdapter__factory";
