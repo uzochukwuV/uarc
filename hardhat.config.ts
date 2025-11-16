@@ -2,6 +2,7 @@ import { HardhatUserConfig, vars } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@parity/hardhat-polkadot';
 import "@nomicfoundation/hardhat-verify";
+import 'hardhat-tracer'; // 👈 Add trace support (like foundry -vvvv)
 import path from 'path';
 
 const config: HardhatUserConfig = {

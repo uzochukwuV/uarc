@@ -14,6 +14,7 @@
     "@nomicfoundation/hardhat-verify": "^2.0.14",
     "@parity/hardhat-polkadot": "^0.1.8-p0",
     "hardhat": "^2.24.0",
+    "hardhat-tracer": "^3.4.0",
     "solc": "^0.8.28"
   },
   "dependencies": {
