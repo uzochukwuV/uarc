@@ -2,6 +2,7 @@ import { HardhatUserConfig, vars } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@parity/hardhat-polkadot';
 import "@nomicfoundation/hardhat-verify";
+import 'hardhat-tracer'; // 👈 Add trace support (like foundry -vvvv)
 import path from 'path';
 
 const config: HardhatUserConfig = {
@@ -10,8 +11,9 @@ const config: HardhatUserConfig = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200,
-            }
+                runs: 1, // Lower runs = smaller deployment size (trade-off: higher gas costs)
+            },
+            viaIR: true, // Enable IR-based compiler for smaller bytecode
         },
     },
     resolc: {
@@ -21,7 +23,7 @@ const config: HardhatUserConfig = {
               enabled: true,
               parameters: 'z',
               fallbackOz: true,
-              runs: 200,
+              runs: 100,
             },
         },
     },
@@ -29,6 +31,11 @@ const config: HardhatUserConfig = {
         hardhat: {
             // Standard Hardhat network without PolkaVM for fast local testing
             // Uses Hardhat's built-in EVM (no external binaries needed)
+        },
+        etherum : {
+            url: "https://virtual.mainnet.eu.rpc.tenderly.co/82c86106-662e-4d7f-a974-c311987358ff",
+            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
+            chainId: 8
         },
         polkavmLocal: {
             polkavm: true,
@@ -48,7 +55,7 @@ const config: HardhatUserConfig = {
             url: `http://127.0.0.1:8545`,
         },
         polkadotHubTestnet: {
-            polkavm: true,
+            // polkavm: true,
             url: 'https://testnet-passet-hub-eth-rpc.polkadot.io',
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
         },

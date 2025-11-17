@@ -1,0 +1,14 @@
+{
+  "network": "polkadotHubTestnet",
+  "chainId": "420420422",
+  "deployer": "0x8AaEe2071A400cC60927e46D53f751e521ef4D35",
+  "timestamp": "2025-11-17T14:01:42.433Z",
+  "adapter": {
+    "name": "TimeBasedTransfer",
+    "address": "0xc090B7a5E0107B1e9B324Bc6429f6404092b1800",
+    "selector": "0x1cff79cd",
+    "gasLimit": 100000,
+    "requiresTokens": true,
+    "actionRegistry": "0xfbfFf91746dB25F2480fcF909C4DDC676E690d8a"
+  }
+}
