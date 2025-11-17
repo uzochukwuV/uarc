@@ -16,16 +16,23 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
  * - Tokens go to specified recipient
  */
 contract TimeBasedTransferAdapter is IActionAdapter {
+    /**
+     * @notice Params must match TaskLogicV2 expectations (6 params like Uniswap)
+     * @dev TaskLogicV2 decodes as: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
+     * We map: (ignored, token, ignored, amount, executeAfter, recipient)
+     */
     struct TransferParams {
-        address token;           // Token to transfer (e.g., Mock USDC)
-        address recipient;       // Where to send tokens
-        uint256 amount;          // Amount to transfer
-        uint256 executeAfter;    // Timestamp - can execute after this time
+        address ignored1;        // router field (ignored, for TaskLogicV2 compatibility)
+        address token;           // tokenIn - Token to transfer (e.g., Mock USDC)
+        address ignored2;        // tokenOut field (ignored, for TaskLogicV2 compatibility)
+        uint256 amount;          // amountIn - Amount to transfer
+        uint256 executeAfter;    // minAmountOut - Timestamp when task can execute (repurposed field)
+        address recipient;       // recipient - Where to send tokens
     }
 
     /**
      * @notice Check if the time condition is met
-     * @param params ABI-encoded TransferParams
+     * @param params ABI-encoded TransferParams (6 fields for TaskLogicV2 compatibility)
      * @return canExec True if current time >= executeAfter
      * @return reason Human-readable reason
      */
@@ -59,7 +66,7 @@ contract TimeBasedTransferAdapter is IActionAdapter {
     /**
      * @notice Execute the token transfer
      * @param vault Address of TaskVault holding the tokens
-     * @param params ABI-encoded TransferParams
+     * @param params ABI-encoded TransferParams (6 fields for TaskLogicV2 compatibility)
      * @return success True if transfer succeeded
      * @return result Encoded result data
      */

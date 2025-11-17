@@ -219,6 +219,11 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
             revert ActionsFailed();
         }
 
+        // TODO: REFACTOR NEEDED - This hardcoded param structure is a technical debt
+        // Current limitation: ALL adapters must encode params in Uniswap 6-parameter format
+        // Better approach: Add IActionAdapter.getTokenRequirements() interface
+        // See: docs/TASKLOGICV2_ANALYSIS_AND_SOLUTIONS.md for migration plan
+        //
         // Decode action params to extract token info
         // Assuming UniswapV2Adapter.SwapParams structure: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
         (

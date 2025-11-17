@@ -8,7 +8,6 @@ import {
   TaskVault,
   TaskLogicV2,
   ExecutorHub,
-  ConditionOracle,
   ActionRegistry,
   RewardManager,
   GlobalRegistry,
