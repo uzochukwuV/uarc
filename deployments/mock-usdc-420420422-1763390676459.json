@@ -1,0 +1,15 @@
+{
+  "network": "polkadotHubTestnet",
+  "chainId": "420420422",
+  "deployer": "0x8AaEe2071A400cC60927e46D53f751e521ef4D35",
+  "timestamp": "2025-11-17T14:44:36.459Z",
+  "contracts": {
+    "mockUSDC": {
+      "address": "0xDefA91C83A08eb1745668fEeDB51Ab532D20EE62",
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "decimals": 6,
+      "initialSupply": "1000000.0"
+    }
+  }
+}

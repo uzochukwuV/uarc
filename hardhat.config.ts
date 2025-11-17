@@ -11,8 +11,9 @@ const config: HardhatUserConfig = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200,
-            }
+                runs: 1, // Lower runs = smaller deployment size (trade-off: higher gas costs)
+            },
+            viaIR: true, // Enable IR-based compiler for smaller bytecode
         },
     },
     resolc: {
@@ -22,7 +23,7 @@ const config: HardhatUserConfig = {
               enabled: true,
               parameters: 'z',
               fallbackOz: true,
-              runs: 200,
+              runs: 100,
             },
         },
     },
@@ -54,7 +55,7 @@ const config: HardhatUserConfig = {
             url: `http://127.0.0.1:8545`,
         },
         polkadotHubTestnet: {
-            polkavm: true,
+            // polkavm: true,
             url: 'https://testnet-passet-hub-eth-rpc.polkadot.io',
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
         },

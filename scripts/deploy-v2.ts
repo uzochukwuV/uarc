@@ -124,10 +124,24 @@ async function main() {
 
   let uniswapAdapterAddress = ethers.ZeroAddress;
   let genericAdapterAddress = ethers.ZeroAddress;
+  let timeAdapterAddress = ethers.ZeroAddress;
 
-  console.log("ℹ️  Adapter deployment skipped.");
-  console.log("   Deploy your specific adapters (e.g., UniswapUSDCETHBuyLimitAdapter)");
-  console.log("   and register them with ActionRegistry.\n");
+  // Deploy TimeBasedTransferAdapter (for testnet testing)
+  const DEPLOY_TIME_ADAPTER = true; // Set to false to skip
+
+  if (DEPLOY_TIME_ADAPTER) {
+    console.log("9️⃣  Deploying TimeBasedTransferAdapter...");
+    const TimeAdapter = await ethers.getContractFactory("TimeBasedTransferAdapter");
+    const timeAdapter = await TimeAdapter.deploy();
+    await timeAdapter.waitForDeployment();
+    timeAdapterAddress = await timeAdapter.getAddress();
+    console.log("   ✅ TimeBasedTransferAdapter:", timeAdapterAddress);
+    console.log("   📝 Simple time-based token transfer for testing\n");
+  } else {
+    console.log("ℹ️  Adapter deployment skipped.");
+    console.log("   Deploy your specific adapters (e.g., UniswapUSDCETHBuyLimitAdapter)");
+    console.log("   and register them with ActionRegistry.\n");
+  }
 
   // Uncomment to deploy example adapters if they exist:
   /*
@@ -185,9 +199,26 @@ async function main() {
   // ============================================================
   console.log("📦 STEP 5: Registering Adapters...\n");
 
-  console.log("ℹ️  No adapters to register yet.");
-  console.log("   Register your specific adapters after deployment using:");
-  console.log("   await actionRegistry.registerAdapter(selector, address, gasLimit, requiresTokens)\n");
+  if (DEPLOY_TIME_ADAPTER && timeAdapterAddress !== ethers.ZeroAddress) {
+    console.log("🔌 Registering TimeBasedTransferAdapter...");
+    // Use execute() function selector from IAdapter
+    const executeSelector = ethers.id("execute(address,bytes)").slice(0, 10);
+    await actionRegistry.registerAdapter(
+      executeSelector,
+      timeAdapterAddress,
+      100000,  // gasLimit
+      true     // requiresTokens
+    );
+    console.log("   ✅ TimeBasedTransferAdapter registered");
+    console.log("   🔑 Selector:", executeSelector);
+    console.log("   📍 Address:", timeAdapterAddress);
+    console.log("   ⛽ Gas Limit: 100,000");
+    console.log("   💰 Requires Tokens: true\n");
+  } else {
+    console.log("ℹ️  No adapters to register yet.");
+    console.log("   Register your specific adapters after deployment using:");
+    console.log("   await actionRegistry.registerAdapter(selector, address, gasLimit, requiresTokens)\n");
+  }
 
   // Uncomment to register example adapters:
   /*
@@ -311,11 +342,7 @@ async function main() {
       rewardManager: {
         platformFee: (Number(platformFee) / 100).toFixed(2) + "%",
         gasReimbursement: gasMultiplier.toString() + "%",
-      },
-      adapters: {
-        swap: swapSelector,
-        generic: genericSelector,
-      },
+      }
     },
   };
 

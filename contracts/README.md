@@ -38,9 +38,7 @@ ExecutorHub (Executor Management)
 
 ### Support Contracts
 
-| Contract | Purpose | Size | Key Features |
-|----------|---------|------|--------------|
-| **ConditionOracle** | Verify conditions | ~280 lines | Chainlink integration, custom oracles |
+
 | **ActionRegistry** | Manage adapters | ~90 lines | Protocol whitelisting, gas limits |
 | **RewardManager** | Distribute payments | ~180 lines | Reputation multipliers, platform fees |
 
@@ -48,7 +46,7 @@ ExecutorHub (Executor Management)
 
 | Adapter | Purpose | Size | Protocols Supported |
 |---------|---------|------|---------------------|
-| **UniswapV2Adapter** | DEX swaps | ~180 lines | Uniswap V2, SushiSwap, StellaSwap, etc. |
+| **SpecificUniswapV2Adapter** | DEX swaps | ~180 lines | Uniswap V2, SushiSwap, StellaSwap, etc. |
 
 ## Key Improvements Over V1
 
