@@ -1,0 +1,275 @@
+
+## Overview
+
+### Three Applications to Build
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     TaskerOnChain Frontend                  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                 ┌────────────┼────────────┐
+                 │            │            │
+         ┌───────▼──────┐ ┌──▼──────┐ ┌──▼──────────┐
+         │ Task Creator │ │Executor │ │   Adapter   │
+         │   Web App    │ │ Mobile  │ │  Registry   │
+         │              │ │   App   │ │  (Web App)  │
+         └──────────────┘ └─────────┘ └─────────────┘
+```
+
+### MVP Scope (First 8 Weeks)
+
+**Must Have:**
+1. ✅ Task Creator Web App (desktop)
+2. ✅ Executor Dashboard (web, mobile later)
+3. ✅ Basic analytics/monitoring
+
+**Nice to Have (Phase 2):**
+4. ⚠️ Executor Mobile App (React Native)
+5. ⚠️ Adapter Registry UI
+6. ⚠️ Advanced analytics
+
+---
+
+## Tech Stack
+
+### Web Applications
+
+```json
+{
+  "framework": "Next.js 14 (App Router)",
+  "language": "TypeScript",
+  "styling": "TailwindCSS + shadcn/ui",
+  "blockchain": "ethers.js v6 or viem",
+  "wallet": "RainbowKit or ConnectKit",
+  "state": "Zustand + TanStack Query",
+  "forms": "React Hook Form + Zod",
+  "charts": "Recharts or Chart.js",
+  "notifications": "react-hot-toast",
+  "tables": "TanStack Table",
+  "deployment": "Vercel"
+}
+```
+
+### Mobile App (Executor)
+
+```json
+{
+  "framework": "React Native (Expo)",
+  "language": "TypeScript",
+  "wallet": "WalletConnect v2",
+  "navigation": "React Navigation",
+  "state": "Zustand + TanStack Query",
+  "ui": "NativeWind (Tailwind for RN)",
+  "notifications": "Expo Notifications",
+  "deployment": "EAS Build"
+}
+```
+
+### Why This Stack?
+
+✅ **Next.js 14:** Best React framework, great DX, easy deployment
+✅ **TypeScript:** Type safety for smart contract interactions
+✅ **TailwindCSS:** Rapid UI development, consistent design
+✅ **ethers.js v6:** Most popular, great docs, TypeScript support
+✅ **Zustand:** Simpler than Redux, perfect for crypto apps
+✅ **TanStack Query:** Perfect for blockchain data fetching
+✅ **RainbowKit:** Beautiful wallet connection UX
+
+---
+
+## Architecture
+
+### Project Structure
+
+```
+taskerOnChain-frontend/
+├── apps/
+│   ├── web/                    # Task Creator Web App (Next.js)
+│   │   ├── src/
+│   │   │   ├── app/            # Next.js 14 App Router
+│   │   │   │   ├── (dashboard)/
+│   │   │   │   │   ├── tasks/
+│   │   │   │   │   ├── create/
+│   │   │   │   │   └── analytics/
+│   │   │   │   ├── api/        # API routes (if needed)
+│   │   │   │   └── layout.tsx
+│   │   │   ├── components/     # Shared components
+│   │   │   │   ├── ui/         # shadcn/ui components
+│   │   │   │   ├── task/       # Task-specific components
+│   │   │   │   ├── wallet/     # Wallet connection
+│   │   │   │   └── layout/     # Layout components
+│   │   │   ├── lib/            # Utilities
+│   │   │   │   ├── contracts/  # Contract ABIs & addresses
+│   │   │   │   ├── hooks/      # Custom React hooks
+│   │   │   │   ├── utils/      # Helper functions
+│   │   │   │   └── constants/  # Constants
+│   │   │   └── store/          # Zustand stores
+│   │   └── public/
+│   │
+│   ├── executor/               # Executor Dashboard (Next.js)
+│   │   └── (similar structure)
+│   │
+│   └── mobile/                 # Executor Mobile App (React Native)
+│       ├── src/
+│       │   ├── screens/
+│       │   ├── components/
+│       │   ├── navigation/
+│       │   └── lib/
+│       └── app.json
+│
+├── packages/                   # Shared code
+│   ├── contracts/              # Contract ABIs, types, addresses
+│   │   ├── abis/
+│   │   ├── addresses/
+│   │   └── types/              # TypeChain generated types
+│   │
+│   ├── ui/                     # Shared UI components
+│   │   └── components/
+│   │
+│   └── utils/                  # Shared utilities
+│       ├── formatters/
+│       ├── validators/
+│       └── constants/
+│
+├── package.json
+└── turbo.json                  # Turborepo config (monorepo)
+```
+
+### Tech Decisions
+
+**Monorepo (Turborepo):**
+- Share contract ABIs across apps
+- Reuse components
+- Consistent tooling
+
+**Alternative (Simpler):**
+- Single Next.js app with different routes
+- `/create` - Task creator
+- `/execute` - Executor dashboard
+- `/adapters` - Adapter registry
+
+For MVP, **single Next.js app is recommended** (faster development).
+
+---
+
+## User Flows
+
+### Flow 1: Task Creator Journey
+
+```
+┌─────────────┐
+│ Connect     │
+│ Wallet      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Choose Task │ ← "DCA", "Limit Order", "Auto-Compound"
+│ Template    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Configure   │ ← Amount, frequency, conditions
+│ Parameters  │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Approve     │ ← ERC20 approval (if needed)
+│ Tokens      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Create Task │ ← Transaction: createTaskWithTokens()
+│             │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Task Live   │ ← View status, executions, analytics
+│ Dashboard   │
+└─────────────┘
+```
+
+### Flow 2: Executor Journey
+
+```
+┌─────────────┐
+│ Connect     │
+│ Wallet      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Register as │ ← Stake ETH (registerExecutor)
+│ Executor    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Browse      │ ← Filter: profitable, pending, my executions
+│ Tasks       │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Select Task │ ← See: reward, gas cost, profit estimate
+│ to Execute  │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Commit      │ ← requestExecution() - prevent front-running
+│ (TX 1)      │
+└──────┬──────┘
+       │
+       ▼ (Wait 1 block)
+┌─────────────┐
+│ Execute     │ ← executeTask() - earn reward
+│ (TX 2)      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Earnings    │ ← Dashboard: total earned, reputation, stats
+│ Dashboard   │
+└─────────────┘
+```
+
+### Flow 3: Adapter Developer Journey
+
+```
+┌─────────────┐
+│ Build       │ ← Solidity: implement IActionAdapter
+│ Adapter     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Deploy      │ ← Deploy contract to network
+│ Contract    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Register    │ ← actionRegistry.registerAdapter()
+│ in Registry │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Submit to   │ ← Web form: name, description, params
+│ Marketplace │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Earn Fees   │ ← 0.1% of task volume using adapter
+│             │
+└─────────────┘
+```
+
+---
