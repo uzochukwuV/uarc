@@ -1,0 +1,39 @@
+{
+  "network": "etherum",
+  "chainId": "8",
+  "deployer": "0x8AaEe2071A400cC60927e46D53f751e521ef4D35",
+  "timestamp": "2025-11-18T12:04:59.373Z",
+  "contracts": {
+    "implementations": {
+      "TaskCore": "0x470101947345Da863C5BE489FC0Bdb9869E7707E",
+      "TaskVault": "0xb042d307E3a136C5C89cb625b97Df79D4E5077f0"
+    },
+    "core": {
+      "TaskFactory": "0xe45fdc03C85625F19F9CdF1029462F0c4D28e9bA",
+      "TaskLogicV2": "0x4ec18036db66D72e0914f758A28c169F7Df60070",
+      "ExecutorHub": "0x7783F80FDAbfB08239c8f3525D2A83469AC52250",
+      "GlobalRegistry": "0x6CAA668Ec29628dfB431437A5d09590a47B498bb",
+      "RewardManager": "0xF5B17E8A149AF4002AaE8cA1B08c7d61F191363F",
+      "ActionRegistry": "0x5a3F07f4D0d14742F6370234a5d3fe1C175Ff666"
+    },
+    "adapters": {
+      "UniswapV2Adapter": "0x0000000000000000000000000000000000000000",
+      "GenericAdapter": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "configuration": {
+    "taskFactory": {
+      "minTaskReward": "0.001 ETH",
+      "creationFee": "0.0 ETH"
+    },
+    "executorHub": {
+      "minStake": "0.1 ETH",
+      "lockDuration": "30 seconds",
+      "commitDelay": "1 seconds"
+    },
+    "rewardManager": {
+      "platformFee": "1.00%",
+      "gasReimbursement": "100%"
+    }
+  }
+}

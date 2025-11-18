@@ -194,6 +194,38 @@ describe("TaskerOnChain - Complete Flow Test", function () {
     await executorHub.connect(executor).registerExecutor({ value: MIN_STAKE });
   });
 
+  describe("Adapter Interface Extension (getTokenRequirements)", function () {
+    it("Should correctly extract token requirements from adapter params", async function () {
+      console.log("\n========== TEST: getTokenRequirements() Method ==========");
+
+      const actionParams = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "address", "address", "uint256", "uint256", "address", "uint256"],
+        [
+          await mockRouter.getAddress(),
+          await mockUSDC.getAddress(), // tokenIn (USDC)
+          await mockWETH.getAddress(),
+          ethers.parseUnits("1000", 6), // amountIn
+          ethers.parseEther("0.3"),
+          user.address,
+          3100e8,
+        ]
+      );
+
+      // Call getTokenRequirements on adapter
+      const [tokens, amounts] = await adapter.getTokenRequirements(actionParams);
+
+      // Verify it returns correct token and amount
+      expect(tokens.length).to.equal(1);
+      expect(amounts.length).to.equal(1);
+      expect(tokens[0]).to.equal(await mockUSDC.getAddress());
+      expect(amounts[0]).to.equal(ethers.parseUnits("1000", 6));
+
+      console.log(`✅ Token requirements extracted correctly:`);
+      console.log(`   Token: ${tokens[0]}`);
+      console.log(`   Amount: ${ethers.formatUnits(amounts[0], 6)} USDC`);
+    });
+  });
+
   describe("Complete Task Flow: Creation → Execution → Completion", function () {
     it("Should complete full task lifecycle with adapter-embedded conditions", async function () {
       // ========== STEP 1: CREATE TASK ==========
@@ -305,35 +337,15 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       expect(canExecute).to.be.true;
       console.log(`✅ Adapter conditions met: ${reason}`);
 
-      // ========== STEP 3: EXECUTOR COMMITS TO TASK ==========
+      // ========== STEP 3: PREPARE FOR EXECUTION ==========
+      // TESTNET: No commit-reveal pattern, execution is direct
 
-      console.log("\n========== STEP 3: EXECUTOR COMMITS TO TASK ==========");
+      console.log("\n========== STEP 3: PREPARE FOR EXECUTION ==========");
+      console.log(`✅ Ready to execute task ${taskId} directly (no commit-reveal on testnet)`);
 
-      const reveal = ethers.randomBytes(32);
-      const commitment = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["bytes32"], [reveal]));
+      // ========== STEP 4: PREPARE ACTIONS PROOF ==========
 
-      const requestTx = await executorHub.connect(executor).requestExecution(taskId, commitment);
-      await requestTx.wait();
-
-      console.log(`✅ Executor committed to task ${taskId}`);
-      console.log(`   Commitment: ${commitment}`);
-
-      // Verify task is locked
-      const isLocked = await executorHub.isTaskLocked(taskId);
-      expect(isLocked).to.be.true;
-
-      // ========== STEP 4: WAIT FOR COMMIT DELAY ==========
-
-      console.log("\n========== STEP 4: WAIT FOR COMMIT DELAY ==========");
-
-      await ethers.provider.send("evm_increaseTime", [2]);
-      await ethers.provider.send("evm_mine", []);
-
-      console.log(`✅ Commit delay passed`);
-
-      // ========== STEP 5: PREPARE ACTIONS PROOF ==========
-
-      console.log("\n========== STEP 5: PREPARE ACTIONS PROOF ==========");
+      console.log("\n========== STEP 4: PREPARE ACTIONS PROOF ==========");
 
       // Build actions array matching TaskLogicV2.Action struct
       const actionForProof = {
@@ -356,24 +368,25 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       console.log(`✅ Actions proof prepared`);
 
-      // ========== STEP 6: EXECUTE TASK ==========
+      // ========== STEP 5: EXECUTE TASK ==========
 
-      console.log("\n========== STEP 6: EXECUTE TASK ==========");
+      console.log("\n========== STEP 5: EXECUTE TASK ==========");
 
       const executorBalanceBefore = await ethers.provider.getBalance(executor.address);
       const userWETHBefore = await mockWETH.balanceOf(user.address);
 
+      // TESTNET: Direct execution, no commit-reveal
       const executeTx = await executorHub
         .connect(executor)
-        .executeTask(taskId, reveal, actionsProof);
+        .executeTask(taskId, actionsProof);
 
       const executeReceipt = await executeTx.wait();
 
       console.log(`✅ Task executed successfully`);
 
-      // ========== STEP 7: VERIFY RESULTS ==========
+      // ========== STEP 6: VERIFY RESULTS ==========
 
-      console.log("\n========== STEP 7: VERIFY RESULTS ==========");
+      console.log("\n========== STEP 6: VERIFY RESULTS ==========");
 
       // Check executor received reward
       const executorBalanceAfter = await ethers.provider.getBalance(executor.address);
@@ -490,13 +503,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       expect(reason).to.equal("ETH price too high");
       console.log(`✅ Adapter conditions NOT met: ${reason}`);
 
-      // Executor commits
-      const reveal = ethers.randomBytes(32);
-      const commitment = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["bytes32"], [reveal]));
-
-      await executorHub.connect(executor).requestExecution(taskId, commitment);
-      await ethers.provider.send("evm_increaseTime", [2]);
-      await ethers.provider.send("evm_mine", []);
+      // TESTNET: No commit-reveal, direct execution
 
       // Prepare proof
       const actionForProof = {
@@ -513,7 +520,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       // Execute - should complete but actions will fail
       const executeTx = await executorHub
         .connect(executor)
-        .executeTask(taskId, reveal, actionsProof);
+        .executeTask(taskId, actionsProof);
 
       await executeTx.wait();
 

@@ -136,7 +136,8 @@ async function main() {
     await timeAdapter.waitForDeployment();
     timeAdapterAddress = await timeAdapter.getAddress();
     console.log("   ✅ TimeBasedTransferAdapter:", timeAdapterAddress);
-    console.log("   📝 Simple time-based token transfer for testing\n");
+    console.log("   📝 Simple time-based token transfer for testing");
+    console.log("   ✨ Uses clean 4-parameter structure with getTokenRequirements()\n");
   } else {
     console.log("ℹ️  Adapter deployment skipped.");
     console.log("   Deploy your specific adapters (e.g., UniswapUSDCETHBuyLimitAdapter)");

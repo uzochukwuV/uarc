@@ -44,6 +44,16 @@ interface IActionAdapter {
         view
         returns (bool canExecute, string memory reason);
 
+    /// @notice Get token requirements for executing this action
+    /// @dev Allows TaskLogic to know which tokens and amounts are needed without hardcoded param decoding
+    /// @param params ABI-encoded parameters for the action
+    /// @return tokens Array of token addresses required for execution
+    /// @return amounts Array of token amounts required (same length as tokens array)
+    function getTokenRequirements(bytes calldata params)
+        external
+        view
+        returns (address[] memory tokens, uint256[] memory amounts);
+
     /// @notice Check if protocol is supported
     function isProtocolSupported(address protocol) external view returns (bool);
 

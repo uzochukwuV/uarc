@@ -14,25 +14,48 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
  * - Creates task with execution time (e.g., "transfer at 2pm tomorrow")
  * - When time arrives, executor can trigger the transfer
  * - Tokens go to specified recipient
+ *
+ * ✅ REFACTORED: Now uses clean 4-parameter structure with getTokenRequirements()
+ * No longer needs 6-parameter Uniswap workaround!
  */
 contract TimeBasedTransferAdapter is IActionAdapter {
     /**
-     * @notice Params must match TaskLogicV2 expectations (6 params like Uniswap)
-     * @dev TaskLogicV2 decodes as: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
-     * We map: (ignored, token, ignored, amount, executeAfter, recipient)
+     * @notice Clean parameter structure for time-based transfers
+     * @dev No more fake/ignored fields - just what we actually need!
      */
     struct TransferParams {
-        address ignored1;        // router field (ignored, for TaskLogicV2 compatibility)
-        address token;           // tokenIn - Token to transfer (e.g., Mock USDC)
-        address ignored2;        // tokenOut field (ignored, for TaskLogicV2 compatibility)
-        uint256 amount;          // amountIn - Amount to transfer
-        uint256 executeAfter;    // minAmountOut - Timestamp when task can execute (repurposed field)
-        address recipient;       // recipient - Where to send tokens
+        address token;           // Token to transfer (e.g., Mock USDC)
+        address recipient;       // Where to send tokens
+        uint256 amount;          // Amount to transfer
+        uint256 executeAfter;    // Timestamp when task can execute
+    }
+
+    /**
+     * @notice Get token requirements for this transfer
+     * @dev Implements IActionAdapter.getTokenRequirements() - tells TaskLogicV2 what tokens/amounts we need
+     * @param params ABI-encoded TransferParams
+     * @return tokens Array with single token address
+     * @return amounts Array with single amount value
+     */
+    function getTokenRequirements(bytes calldata params)
+        external
+        pure
+        override
+        returns (address[] memory tokens, uint256[] memory amounts)
+    {
+        TransferParams memory p = abi.decode(params, (TransferParams));
+
+        // Single-token adapter: return one token and one amount
+        tokens = new address[](1);
+        amounts = new uint256[](1);
+
+        tokens[0] = p.token;
+        amounts[0] = p.amount;
     }
 
     /**
      * @notice Check if the time condition is met
-     * @param params ABI-encoded TransferParams (6 fields for TaskLogicV2 compatibility)
+     * @param params ABI-encoded TransferParams (4 clean fields)
      * @return canExec True if current time >= executeAfter
      * @return reason Human-readable reason
      */
@@ -66,7 +89,7 @@ contract TimeBasedTransferAdapter is IActionAdapter {
     /**
      * @notice Execute the token transfer
      * @param vault Address of TaskVault holding the tokens
-     * @param params ABI-encoded TransferParams (6 fields for TaskLogicV2 compatibility)
+     * @param params ABI-encoded TransferParams (4 clean fields)
      * @return success True if transfer succeeded
      * @return result Encoded result data
      */

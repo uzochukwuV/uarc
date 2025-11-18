@@ -126,7 +126,7 @@ export interface ExecutorHubInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeTask",
-    values: [BigNumberish, BytesLike, BytesLike]
+    values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "executors",
@@ -478,12 +478,12 @@ export interface ExecutorHub extends BaseContract {
 
   addStake: TypedContractMethod<[], [void], "payable">;
 
-  canExecute: TypedContractMethod<[executor: AddressLike], [boolean], "view">;
+  canExecute: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
 
   commitDelay: TypedContractMethod<[], [bigint], "view">;
 
   executeTask: TypedContractMethod<
-    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
+    [taskId: BigNumberish, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;
@@ -628,14 +628,14 @@ export interface ExecutorHub extends BaseContract {
   ): TypedContractMethod<[], [void], "payable">;
   getFunction(
     nameOrSignature: "canExecute"
-  ): TypedContractMethod<[executor: AddressLike], [boolean], "view">;
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "commitDelay"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "executeTask"
   ): TypedContractMethod<
-    [taskId: BigNumberish, reveal: BytesLike, actionsProof: BytesLike],
+    [taskId: BigNumberish, actionsProof: BytesLike],
     [boolean],
     "nonpayable"
   >;

@@ -122,6 +122,30 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "bytes",
+        name: "params",
+        type: "bytes",
+      },
+    ],
+    name: "getTokenRequirements",
+    outputs: [
+      {
+        internalType: "address[]",
+        name: "tokens",
+        type: "address[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "protocol",
         type: "address",

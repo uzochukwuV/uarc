@@ -64,11 +64,11 @@ interface IExecutorHub {
     /// @notice Request execution lock (commit phase)
     function requestExecution(uint256 taskId, bytes32 commitment) external returns (bool locked);
 
-    /// @notice Execute task (reveal phase)
-    /// @dev Conditions are now checked by adapters, not passed separately
+    /// @notice Execute task
+    /// @dev TESTNET: Simplified signature without commit-reveal
+    /// Production version will restore commit-reveal for security
     function executeTask(
         uint256 taskId,
-        bytes32 reveal,
         bytes calldata actionsProof
     ) external returns (bool success);
 

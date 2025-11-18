@@ -8,8 +8,9 @@ import "../interfaces/ITaskLogic.sol";
 
 /**
  * @title ExecutorHub
- * @notice Manages executor registration, staking, and execution coordination
- * @dev Implements commit-reveal scheme to prevent front-running
+ * @notice Manages executor registration and execution coordination
+ * @dev TESTNET: Simplified for free, open execution. Registration is free, no commit-reveal.
+ * Production version will have staking, reputation, and anti-bot mechanisms.
  */
 contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
 
@@ -51,13 +52,16 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     // ============ Registration Functions ============
 
     /// @inheritdoc IExecutorHub
+    /// @dev TESTNET: Free registration, no stake required
     function registerExecutor() external payable {
         if (executors[msg.sender].isActive) revert AlreadyRegistered();
-        if (msg.value < minStakeAmount) revert InsufficientStake();
+        // TESTNET: No minimum stake requirement
+        // Production: uncomment to require stake
+        // if (msg.value < minStakeAmount) revert InsufficientStake();
 
         executors[msg.sender] = Executor({
             addr: msg.sender,
-            stakedAmount: uint128(msg.value),
+            stakedAmount: uint128(msg.value), // Optional: 0 on testnet
             registeredAt: uint128(block.timestamp),
             totalExecutions: 0,
             successfulExecutions: 0,
@@ -120,80 +124,63 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     // ============ Execution Functions ============
 
     /// @inheritdoc IExecutorHub
+    /// @dev TESTNET: Direct execution without commit-reveal
+    /// Simply call executeTask directly with the actions proof
+    function executeTask(
+        uint256 taskId,
+        bytes calldata actionsProof
+    ) external nonReentrant returns (bool success) {
+        // TESTNET: No registration requirement (for maximum flexibility)
+        // Production: Uncomment to require registration
+        // if (!executors[msg.sender].isActive) revert NotRegistered();
+
+        // TESTNET: No blacklist check
+        // Production: Uncomment to check blacklist
+        // if (executors[msg.sender].isSlashed) revert ExecutorBlacklisted();
+
+        // TESTNET: No commit-reveal pattern
+        // Execute task directly via TaskLogic
+        ITaskLogic.ExecutionParams memory params = ITaskLogic.ExecutionParams({
+            taskId: taskId,
+            executor: msg.sender,
+            seed: bytes32(0), // No seed needed on testnet
+            actionsProof: actionsProof
+        });
+
+        ITaskLogic.ExecutionResult memory result = ITaskLogic(taskLogic).executeTask(params);
+
+        // Track execution if executor is registered
+        if (executors[msg.sender].isActive) {
+            Executor storage executor = executors[msg.sender];
+            executor.totalExecutions++;
+
+            if (result.success) {
+                executor.successfulExecutions++;
+                _updateReputation(msg.sender, true);
+            } else {
+                executor.failedExecutions++;
+                _updateReputation(msg.sender, false);
+            }
+        }
+
+        emit ExecutionCompleted(taskId, msg.sender, result.success);
+
+        return result.success;
+    }
+
+    /// @notice LEGACY: Commit-reveal pattern removed for testnet
+    /// @dev Use executeTask(taskId, actionsProof) instead
+    /// Kept for backwards compatibility but no longer used
     function requestExecution(uint256 taskId, bytes32 commitment)
         external
         onlyRegistered
         notBlacklisted
         returns (bool locked)
     {
-        ExecutionLock storage lock = taskLocks[taskId];
-
-        // Check if already locked
-        if (lock.executor != address(0)) {
-            // Check if lock expired
-            if (block.timestamp <= lock.lockedAt + lockDuration) {
-                revert TaskLocked();
-            }
-        }
-
-        // Lock task
-        taskLocks[taskId] = ExecutionLock({
-            executor: msg.sender,
-            lockedAt: uint96(block.timestamp),
-            commitment: commitment
-        });
-
+        // TESTNET: This function is deprecated but kept for backwards compatibility
+        // Just records execution immediately without locking
         emit ExecutionRequested(taskId, msg.sender, commitment);
         return true;
-    }
-
-    /// @inheritdoc IExecutorHub
-    function executeTask(
-        uint256 taskId,
-        bytes32 reveal,
-        bytes calldata actionsProof
-    ) external onlyRegistered notBlacklisted nonReentrant returns (bool success) {
-        ExecutionLock storage lock = taskLocks[taskId];
-
-        // Verify executor holds lock
-        if (lock.executor != msg.sender) revert InvalidCommitment();
-
-        // Verify commitment delay passed
-        if (block.timestamp < lock.lockedAt + commitDelay) revert CommitmentNotReady();
-
-        // Verify reveal matches commitment
-        bytes32 commitment = keccak256(abi.encode(reveal));
-        if (commitment != lock.commitment) revert InvalidCommitment();
-
-        // Execute task via TaskLogic
-        ITaskLogic.ExecutionParams memory params = ITaskLogic.ExecutionParams({
-            taskId: taskId,
-            executor: msg.sender,
-            seed: reveal,
-            // conditionProof removed - conditions now in adapters
-            actionsProof: actionsProof
-        });
-
-        ITaskLogic.ExecutionResult memory result = ITaskLogic(taskLogic).executeTask(params);
-
-        // Update executor stats
-        Executor storage executor = executors[msg.sender];
-        executor.totalExecutions++;
-
-        if (result.success) {
-            executor.successfulExecutions++;
-            _updateReputation(msg.sender, true);
-        } else {
-            executor.failedExecutions++;
-            _updateReputation(msg.sender, false);
-        }
-
-        // Clear lock
-        delete taskLocks[taskId];
-
-        emit ExecutionCompleted(taskId, msg.sender, result.success);
-
-        return result.success;
     }
 
     /// @inheritdoc IExecutorHub
@@ -249,9 +236,14 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     // ============ View Functions ============
 
     /// @inheritdoc IExecutorHub
-    function canExecute(address executor) external view returns (bool) {
-        Executor storage exec = executors[executor];
-        return exec.isActive && !exec.isSlashed && exec.stakedAmount >= minStakeAmount;
+    /// @dev TESTNET: Anyone can execute (no checks)
+    /// Production: Check registration, reputation, and staking
+    function canExecute(address) external pure returns (bool) {
+        // TESTNET: Everyone can execute, no restrictions
+        // Production version would check:
+        // - Executor storage exec = executors[executor];
+        // - return exec.isActive && !exec.isSlashed && exec.stakedAmount >= minStakeAmount;
+        return true;
     }
 
     /// @inheritdoc IExecutorHub
@@ -274,7 +266,7 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
 
     // ============ Internal Functions ============
 
-    function _updateReputation(address executor, bool success) internal {
+    function _updateReputation(address executor, bool) internal {
         Executor storage exec = executors[executor];
 
         if (exec.totalExecutions == 0) return;

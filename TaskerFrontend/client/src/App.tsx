@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import CreateTask from "@/pages/create-task";
 import MyTasks from "@/pages/my-tasks";
 import ExecutorDashboard from "@/pages/executor-dashboard";
+import Marketplace from "@/pages/marketplace";
 import Leaderboard from "@/pages/leaderboard";
 import Analytics from "@/pages/analytics";
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/create" component={CreateTask} />
       <Route path="/my-tasks" component={MyTasks} />
       <Route path="/execute" component={ExecutorDashboard} />
+      <Route path="/marketplace" component={Marketplace} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/analytics" component={Analytics} />
       <Route component={NotFound} />

@@ -9,6 +9,7 @@ export function Navigation() {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/marketplace", label: "Marketplace" },
     { href: "/create", label: "Create Task" },
     { href: "/my-tasks", label: "My Tasks" },
     { href: "/execute", label: "Execute" },

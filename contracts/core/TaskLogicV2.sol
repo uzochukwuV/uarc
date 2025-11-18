@@ -219,50 +219,42 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
             revert ActionsFailed();
         }
 
-        // TODO: REFACTOR NEEDED - This hardcoded param structure is a technical debt
-        // Current limitation: ALL adapters must encode params in Uniswap 6-parameter format
-        // Better approach: Add IActionAdapter.getTokenRequirements() interface
-        // See: docs/TASKLOGICV2_ANALYSIS_AND_SOLUTIONS.md for migration plan
-        //
-        // Decode action params to extract token info
-        // Assuming UniswapV2Adapter.SwapParams structure: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
-        (
-            ,  // router
-            address tokenIn,
-            ,  // tokenOut
-            uint256 amountIn,
-            ,  // minAmountOut
-             // recipient
-        ) = abi.decode(
-            action.params,
-            (address, address, address, uint256, uint256, address)
-        );
+        // ✅ REFACTORED: Use adapter's getTokenRequirements() instead of hardcoded decoding
+        // This allows adapters to use ANY parameter structure they need
+        // See: docs/TASKLOGICV2_ANALYSIS_AND_SOLUTIONS.md - Option 1 implementation
+        (address[] memory tokens, uint256[] memory amounts) =
+            IActionAdapter(adapterInfo.adapter).getTokenRequirements(action.params);
 
-        // Prepare adapter call
-        bytes memory adapterCall = abi.encodeWithSelector(
-            IActionAdapter.execute.selector,
-            taskVault,
-            action.params
-        );
+        // For single-token adapters (most common case)
+        if (tokens.length == 1 && amounts.length == 1) {
+            // Prepare adapter call
+            bytes memory adapterCall = abi.encodeWithSelector(
+                IActionAdapter.execute.selector,
+                taskVault,
+                action.params
+            );
 
-        // Execute through vault with correct token/amount
-        (bool callSuccess, bytes memory returnData) = taskVault.call{gas: adapterInfo.gasLimit}(
-            abi.encodeWithSignature(
-                "executeTokenAction(address,address,uint256,bytes)",
-                tokenIn,              // ✅ Actual USDC address
-                adapterInfo.adapter,
-                amountIn,             // ✅ Actual 1000e6
-                adapterCall
-            )
-        );
+            // Execute through vault with correct token/amount
+            (bool callSuccess, bytes memory returnData) = taskVault.call{gas: adapterInfo.gasLimit}(
+                abi.encodeWithSignature(
+                    "executeTokenAction(address,address,uint256,bytes)",
+                    tokens[0],           // Token address from adapter
+                    adapterInfo.adapter,
+                    amounts[0],          // Amount from adapter
+                    adapterCall
+                )
+            );
 
-        // Decode the actual vault response (bool success, bytes memory result)
-        if (callSuccess && returnData.length > 0) {
-            (bool actionSuccess, ) = abi.decode(returnData, (bool, bytes));
-            return actionSuccess;
+            // Decode the actual vault response (bool success, bytes memory result)
+            if (callSuccess && returnData.length > 0) {
+                (bool actionSuccess, ) = abi.decode(returnData, (bool, bytes));
+                return actionSuccess;
+            }
         }
+        // Future: Handle multi-token adapters here
+        // else if (tokens.length > 1) { ... }
 
-        // Call failed or no data
+        // Call failed, no data, or unsupported token configuration
         return false;
     }
 

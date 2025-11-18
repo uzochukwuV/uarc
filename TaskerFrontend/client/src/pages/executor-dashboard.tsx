@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Award, DollarSign, CheckCircle, TrendingUp, Search } from "lucide-react";
+import { Award, DollarSign, CheckCircle, TrendingUp, Search, Zap } from "lucide-react";
 import { Link } from "wouter";
 import { useExecutorHub, useExecutableTasks, useWallet } from "@/lib/hooks";
+import { useRegisterExecutor } from "@/lib/hooks/useExecutorHub";
+import { useWaitForTransactionReceipt } from "wagmi";
+import { useToast } from "@/hooks/use-toast";
 import { formatEther } from "viem";
 
 export default function ExecutorDashboard() {
@@ -23,6 +26,11 @@ export default function ExecutorDashboard() {
 
   // Get executable tasks (active tasks)
   const { tasks: taskAddresses = [], isLoading: tasksLoading } = useExecutableTasks();
+
+  // Registration hook
+  const { registerExecutor, hash: registerHash, isPending: isRegistering, isSuccess: isRegisterSuccess } = useRegisterExecutor();
+  const { isSuccess: isRegistrationConfirmed } = useWaitForTransactionReceipt({ hash: registerHash });
+  const { toast } = useToast();
 
   const isLoading = executorLoading || tasksLoading;
 
@@ -53,18 +61,37 @@ export default function ExecutorDashboard() {
         </div>
 
         {!isRegistered ? (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center border-2 border-primary/20">
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-2xl font-semibold mb-4">Become an Executor</h2>
-              <p className="text-muted-foreground mb-8">
-                Executors monitor and execute automated tasks, earning rewards for successful
-                executions. Stake ETH to register and start earning.
+              <div className="mb-6 flex justify-center">
+                <Zap className="w-12 h-12 text-primary" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-4">Start Earning Now</h2>
+              <p className="text-muted-foreground mb-2">
+                Become an Executor and earn rewards for executing automated tasks
               </p>
-              <Link href="/register-executor">
-                <Button size="lg" data-testid="button-register-executor">
-                  Register as Executor
-                </Button>
-              </Link>
+              <p className="text-sm text-green-600 font-semibold mb-8">
+                ✨ Free registration • No stake required • Start earning immediately
+              </p>
+              <Button
+                size="lg"
+                onClick={() => {
+                  registerExecutor(0n); // 0 stake on testnet
+                  toast({
+                    title: "Registration submitted",
+                    description: "You'll be able to execute tasks once confirmed",
+                  });
+                }}
+                disabled={isRegistering || isRegisterSuccess}
+                data-testid="button-register-executor"
+              >
+                {isRegistering ? "Registering..." : isRegisterSuccess ? "Registered!" : "Register as Executor - Free"}
+              </Button>
+              {isRegisterSuccess && (
+                <p className="text-sm text-green-600 font-semibold mt-4">
+                  ✅ Registration confirmed! Start executing tasks from the marketplace.
+                </p>
+              )}
             </div>
           </Card>
         ) : (

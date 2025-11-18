@@ -165,33 +165,21 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
       const executeAfter = BigInt(currentTime + Math.floor(executeAfterHours * 3600));
 
       console.log("\n--- Step 1: Encoding Adapter Params ---");
-      // IMPORTANT: TaskLogicV2 decodes params as (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
-      // We need to encode our params to match this structure!
-      // Mapping: (dummy, tokenIn=USDC, dummy, amountIn=100, dummy, recipient)
-      // Then the adapter will decode it as (token, recipient, amount, executeAfter)
-      // Wait - this won't work because the structures are different!
-
-      // Actually, we need to encode in the format that TaskLogicV2 expects (6 params)
-      // AND ALSO encode the data the adapter needs (4 params)
-      // The trick: TaskLogicV2 uses params to extract tokenIn and amountIn
-      // The adapter receives the same params and decodes them differently
-
-      // Solution: Encode as 6 params matching Uniswap format, with our data in the right positions
+      // TESTNET: TimeBasedTransferAdapter now uses clean 4-parameter format
+      // No more 6-parameter Uniswap workaround!
       const adapterParams = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address", "address", "address", "uint256", "uint256", "address"],
+        ["address", "address", "uint256", "uint256"],
         [
-          ethers.ZeroAddress,            // router (not used, but TaskLogicV2 expects it)
-          await mockUSDC.getAddress(),   // tokenIn (TaskLogicV2 extracts this)
-          ethers.ZeroAddress,            // tokenOut (not used)
-          TRANSFER_AMOUNT,               // amountIn (TaskLogicV2 extracts this)
-          executeAfter,                  // minAmountOut (we'll use this for executeAfter timestamp!)
+          await mockUSDC.getAddress(),   // token
           recipient.address,             // recipient
+          TRANSFER_AMOUNT,               // amount
+          executeAfter,                  // executeAfter timestamp
         ]
       );
-      console.log("✅ Adapter params encoded (6-param Uniswap format)");
-      console.log("   Token (tokenIn):", await mockUSDC.getAddress());
-      console.log("   Amount (amountIn):", ethers.formatUnits(TRANSFER_AMOUNT, 6), "USDC");
-      console.log("   Execute After (minAmountOut field):", new Date(Number(executeAfter) * 1000).toISOString());
+      console.log("✅ Adapter params encoded (clean 4-param format)");
+      console.log("   Token:", await mockUSDC.getAddress());
+      console.log("   Amount:", ethers.formatUnits(TRANSFER_AMOUNT, 6), "USDC");
+      console.log("   Execute After:", new Date(Number(executeAfter) * 1000).toISOString());
       console.log("   Recipient:", recipient.address);
 
       // Step 2: Build TaskParams struct
@@ -324,31 +312,9 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
       expect(canExecuteNow).to.be.true;
       console.log("✅ Adapter conditions met:", reason);
 
-      // Step 12: Executor commits to task (commit-reveal pattern)
-      console.log("\n--- Step 12: Executor Commits to Task ---");
-      const reveal = ethers.randomBytes(32);
-      const commitment = ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(["bytes32"], [reveal])
-      );
-
-      const requestTx = await executorHub.connect(executor).requestExecution(taskId, commitment);
-      await requestTx.wait();
-      console.log("✅ Executor committed to task");
-      console.log("   Commitment:", commitment);
-
-      // Verify task is locked
-      const isLocked = await executorHub.isTaskLocked(taskId);
-      expect(isLocked).to.be.true;
-      console.log("✅ Task is locked for executor");
-
-      // Step 13: Wait for commit delay
-      console.log("\n--- Step 13: Waiting for Commit Delay ---");
-      await ethers.provider.send("evm_increaseTime", [2]);
-      await ethers.provider.send("evm_mine", []);
-      console.log("✅ Commit delay passed");
-
-      // Step 14: Prepare actions proof
-      console.log("\n--- Step 14: Preparing Actions Proof ---");
+      // Step 12: Prepare actions proof (TESTNET: no commit-reveal)
+      console.log("\n--- Step 12: Preparing Actions Proof ---");
+      // TESTNET: Simplified execution without commit-reveal pattern
       const actionForProof = {
         selector: "0x1cff79cd",
         protocol: await mockUSDC.getAddress(), // Must match what we used in task creation
@@ -361,14 +327,14 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
       );
       console.log("✅ Actions proof prepared");
 
-      // Step 15: Execute task
-      console.log("\n--- Step 15: Executing Task ---");
+      // Step 13: Execute task (TESTNET: direct execution)
+      console.log("\n--- Step 13: Executing Task ---");
       const executorBalanceBefore = await ethers.provider.getBalance(executor.address);
       const recipientBalanceBefore = await mockUSDC.balanceOf(recipient.address);
 
       const executeTx = await executorHub
         .connect(executor)
-        .executeTask(taskId, reveal, actionsProof);
+        .executeTask(taskId, actionsProof);
 
       const executeReceipt = await executeTx.wait();
       console.log("✅ Task executed! Transaction hash:", executeReceipt?.hash);
@@ -491,7 +457,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
           tokenDeposits,
           { value: REWARD_PER_EXECUTION / 2n }
         )
-      ).to.be.revertedWith("Insufficient native token deposited");
+      ).to.be.revertedWith("Insufficient reward funding");
 
       console.log("✅ Task creation correctly rejected with insufficient ETH");
     });

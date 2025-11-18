@@ -223,11 +223,6 @@ const _abi = [
         type: "uint256",
       },
       {
-        internalType: "bytes32",
-        name: "reveal",
-        type: "bytes32",
-      },
-      {
         internalType: "bytes",
         name: "actionsProof",
         type: "bytes",

@@ -31,6 +31,7 @@ export interface UniswapV2USDCETHBuyLimitAdapterInterface extends Interface {
       | "WETH"
       | "canExecute"
       | "execute"
+      | "getTokenRequirements"
       | "isProtocolSupported"
       | "name"
   ): FunctionFragment;
@@ -56,6 +57,10 @@ export interface UniswapV2USDCETHBuyLimitAdapterInterface extends Interface {
     values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "getTokenRequirements",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "isProtocolSupported",
     values: [AddressLike]
   ): string;
@@ -73,6 +78,10 @@ export interface UniswapV2USDCETHBuyLimitAdapterInterface extends Interface {
   decodeFunctionResult(functionFragment: "WETH", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getTokenRequirements",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "isProtocolSupported",
     data: BytesLike
@@ -168,6 +177,12 @@ export interface UniswapV2USDCETHBuyLimitAdapter extends BaseContract {
     "nonpayable"
   >;
 
+  getTokenRequirements: TypedContractMethod<
+    [params: BytesLike],
+    [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
+    "view"
+  >;
+
   isProtocolSupported: TypedContractMethod<
     [protocol: AddressLike],
     [boolean],
@@ -201,6 +216,13 @@ export interface UniswapV2USDCETHBuyLimitAdapter extends BaseContract {
     [vault: AddressLike, params: BytesLike],
     [[boolean, string] & { success: boolean; result: string }],
     "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getTokenRequirements"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
+    "view"
   >;
   getFunction(
     nameOrSignature: "isProtocolSupported"

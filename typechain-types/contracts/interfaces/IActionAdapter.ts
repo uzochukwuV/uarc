@@ -24,7 +24,12 @@ import type {
 
 export interface IActionAdapterInterface extends Interface {
   getFunction(
-    nameOrSignature: "canExecute" | "execute" | "isProtocolSupported" | "name"
+    nameOrSignature:
+      | "canExecute"
+      | "execute"
+      | "getTokenRequirements"
+      | "isProtocolSupported"
+      | "name"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "ActionExecuted"): EventFragment;
@@ -38,6 +43,10 @@ export interface IActionAdapterInterface extends Interface {
     values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "getTokenRequirements",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "isProtocolSupported",
     values: [AddressLike]
   ): string;
@@ -45,6 +54,10 @@ export interface IActionAdapterInterface extends Interface {
 
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getTokenRequirements",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "isProtocolSupported",
     data: BytesLike
@@ -132,6 +145,12 @@ export interface IActionAdapter extends BaseContract {
     "nonpayable"
   >;
 
+  getTokenRequirements: TypedContractMethod<
+    [params: BytesLike],
+    [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
+    "view"
+  >;
+
   isProtocolSupported: TypedContractMethod<
     [protocol: AddressLike],
     [boolean],
@@ -157,6 +176,13 @@ export interface IActionAdapter extends BaseContract {
     [vault: AddressLike, params: BytesLike],
     [[boolean, string] & { success: boolean; result: string }],
     "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getTokenRequirements"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
+    "view"
   >;
   getFunction(
     nameOrSignature: "isProtocolSupported"

@@ -110,6 +110,23 @@ contract MockUniswapUSDCETHBuyLimitAdapter is IActionAdapter {
     }
 
     /// @inheritdoc IActionAdapter
+    function getTokenRequirements(bytes calldata params)
+        external
+        pure
+        override
+        returns (address[] memory tokens, uint256[] memory amounts)
+    {
+        BuyLimitParams memory p = abi.decode(params, (BuyLimitParams));
+
+        // Single-token adapter: USDC in
+        tokens = new address[](1);
+        amounts = new uint256[](1);
+
+        tokens[0] = p.tokenIn;    // USDC
+        amounts[0] = p.amountIn;  // Amount of USDC to spend
+    }
+
+    /// @inheritdoc IActionAdapter
     function isProtocolSupported(address protocol) external view override returns (bool) {
         return protocol == MOCK_ROUTER;
     }
