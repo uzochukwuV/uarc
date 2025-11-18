@@ -61,21 +61,21 @@ export function useUserTasks() {
     async function fetchTasks() {
       if (!userTaskIds || !Array.isArray(userTaskIds) || userTaskIds.length === 0) {
         setTasks([]);
-        setIsLoading(false);
-        return;
+        // setIsLoading(false);
+        // return;
       }
 
       if (!globalRegistryAddress) {
         console.error('GlobalRegistry address not found');
         setTasks([]);
-        setIsLoading(false);
-        return;
+        // setIsLoading(false);
+        // return;
       }
 
       setIsLoading(true);
 
       try {
-        const taskPromises = (userTaskIds as bigint[]).map(async (taskId) => {
+        const taskPromises = ([0, 1] as bigint[]).map(async (taskId) => {
           try {
             // Use wagmi's readContract to fetch task info
             // We'll use the provider directly here for simplicity
@@ -93,7 +93,7 @@ export function useUserTasks() {
 
             // Fetch task info
             const taskInfo = await contract.getTaskInfo(taskId);
-
+            console.log(taskInfo)
             // Fetch task addresses
             const [taskCoreAddress, taskVaultAddress] = await contract.getTaskAddresses(taskId);
 

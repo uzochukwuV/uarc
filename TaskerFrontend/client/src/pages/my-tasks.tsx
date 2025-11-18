@@ -29,17 +29,17 @@ export default function MyTasks() {
     3: TaskStatus.CANCELLED,
     4: TaskStatus.COMPLETED, // EXPIRED -> COMPLETED for UI
   };
-
+  console.log(blockchainTasks)
   // Convert blockchain tasks to UI format
   const tasks = blockchainTasks.map(task => ({
     id: task.id,
     name: `Task #${task.id}`,
-    description: `Automated task • Reward: ${formatEther(task.rewardPerExecution)} ETH • Executions: ${Number(task.executionCount)}/${Number(task.maxExecutions)}`,
+    description: `Automated task • Reward: ${formatEther(task?.rewardPerExecution || 0n)} ETH • Executions: ${Number(task.executionCount)}/${Number(task.maxExecutions)}`,
     type: "TIME_BASED_TRANSFER" as any,
     status: statusMap[task.status] || TaskStatus.ACTIVE,
     executionCount: Number(task.executionCount),
     maxExecutions: Number(task.maxExecutions),
-    rewardPerExecution: formatEther(task.rewardPerExecution),
+    rewardPerExecution: formatEther(task.rewardPerExecution || 0n),
     createdAt: new Date(task.createdAt * 1000).toISOString(),
     creator: task.creator,
     taskCoreAddress: task.taskCoreAddress,

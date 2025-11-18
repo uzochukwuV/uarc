@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Task, TaskStatus } from "@shared/schema";
-import { Clock, TrendingUp, Repeat, Zap } from "lucide-react";
+import { Clock, TrendingUp, Repeat, Zap, GemIcon } from "lucide-react";
 import { Link } from "wouter";
 
 interface TaskCardProps {
@@ -41,12 +41,14 @@ export function TaskCard({ task, showActions = false, onCancel, onPause, onResum
     });
   };
 
+
+
   return (
     <Card className="p-6 hover-elevate transition-all group" data-testid={`task-card-${task.id}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-            <TypeIcon className="w-5 h-5 text-primary" />
+            <GemIcon className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{task.name}</h3>
@@ -112,12 +114,10 @@ export function TaskCard({ task, showActions = false, onCancel, onPause, onResum
 
       {showActions && (
         <div className="flex items-center gap-2 pt-4 border-t border-border">
-          <Link href={`/tasks/${task.id}`}>
-            <a className="flex-1">
-              <Button variant="outline" className="w-full" data-testid={`button-view-${task.id}`}>
-                View Details
-              </Button>
-            </a>
+          <Link href={`/tasks/${task.id}`} className="flex-1">
+            <Button variant="outline" className="w-full" data-testid={`button-view-${task.id}`}>
+              View Details
+            </Button>
           </Link>
           {task.status === TaskStatus.ACTIVE && onPause && (
             <Button
