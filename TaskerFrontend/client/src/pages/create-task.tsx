@@ -403,7 +403,7 @@ export default function CreateTask() {
                       />
                     </div>
 
-                    <div>
+                    {/* <div>
                       <Label htmlFor="adapterAddress">Adapter Contract Address</Label>
                       <Input
                         id="adapterAddress"
@@ -415,7 +415,7 @@ export default function CreateTask() {
                       <p className="text-sm text-muted-foreground mt-1">
                         The adapter contract that defines execution logic
                       </p>
-                    </div>
+                    </div> */}
 
                     {/* Template-Specific Fields */}
                     {selectedTemplate === "TIME_BASED_TRANSFER" && (

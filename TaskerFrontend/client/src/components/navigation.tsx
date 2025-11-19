@@ -12,9 +12,9 @@ export function Navigation() {
     { href: "/marketplace", label: "Marketplace" },
     { href: "/create", label: "Create Task" },
     { href: "/my-tasks", label: "My Tasks" },
-    { href: "/execute", label: "Execute" },
-    { href: "/analytics", label: "Analytics" },
-    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/execute", label: "Execute *" },
+    { href: "/analytics", label: "Analytics *" },
+    { href: "/leaderboard", label: "Leaderboard *" },
   ];
 
   return (

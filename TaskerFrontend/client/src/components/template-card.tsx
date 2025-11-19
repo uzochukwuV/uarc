@@ -50,8 +50,8 @@ export function TemplateCard({
           <span className="font-semibold">{estimatedGas}</span>
         </div>
 
-        <Button className="w-full" data-testid={`button-select-${type.toLowerCase().replace(/_/g, '-')}`}>
-          Select Template
+        <Button disabled={type != "TIME_BASED_TRANSFER"} className="w-full" data-testid={`button-select-${type.toLowerCase().replace(/_/g, '-')}`}>
+          Select Template {type == "TIME_BASED_TRANSFER" ? "" : "(coming Soon) " } 
         </Button>
       </div>
     </Card>
