@@ -229,19 +229,17 @@ export default function CreateTask() {
       const hoursFromNow = parseFloat(formData.executeAfterHours || "1");
       const executeAfter = BigInt(Math.floor(Date.now() / 1000) + Math.floor(hoursFromNow * 3600));
 
-      // CRITICAL: Encode as 6 parameters to match TaskLogicV2 expectations!
-      // TaskLogicV2 expects Uniswap format: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
-      // We map our params: (ignored, token, ignored, amount, executeAfter, recipient)
+      // CRITICAL: Encode as struct to match TimeBasedTransferAdapter expectations!
+      // TimeBasedTransferAdapter.sol expects: struct TransferParams { address token; address recipient; uint256 amount; uint256 executeAfter; }
+      // Must use tuple encoding to match struct memory layout
       adapterParams = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address", "address", "address", "uint256", "uint256", "address"],
-        [
-          ethers.ZeroAddress,                           // router (ignored, for TaskLogicV2 compatibility)
-          formData.tokenAddress,                        // tokenIn - TaskLogicV2 extracts this
-          ethers.ZeroAddress,                           // tokenOut (ignored)
-          BigInt(formData.transferAmount),              // amountIn - TaskLogicV2 extracts this
-          executeAfter,                                 // minAmountOut - repurposed as timestamp!
+        ["tuple(address,address,uint256,uint256)"],
+        [[
+          formData.tokenAddress,                        // token
           formData.recipientAddress,                    // recipient
-        ]
+          BigInt(formData.transferAmount),              // amount
+          executeAfter,                                 // executeAfter
+        ]]
       ) as `0x${string}`;
 
       // Add token deposit (the tokens to be transferred)
