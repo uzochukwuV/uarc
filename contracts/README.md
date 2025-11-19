@@ -318,3 +318,70 @@ MIT License - See LICENSE file
 ---
 
 **⚠️ WARNING**: These contracts are under active development and have NOT been audited. Do NOT use in production with real funds until after professional security audit.
+🚀 Deploying Updated TimeBasedTransferAdapter & Testing...
+
+Deploying with account: 0x8AaEe2071A400cC60927e46D53f751e521ef4D35
+Recipient account: 0x19C50Bfd73627B35f2EF3F7B0755229D42cd56a8
+Account balance: 4753.98614843254 ETH
+
+📝 STEP 1: Deploying TimeBasedTransferAdapter...
+✅ Deployed to: 0x629cfCA0e279d895A798262568dBD8DaA7582912
+   Adapter name: TimeBasedTransferAdapter
+
+📝 STEP 2: Connecting to Protocol Contracts...
+✅ Connected to all protocol contracts
+
+📝 STEP 3: Registering Adapter in ActionRegistry...
+✅ Adapter registered
+
+📝 STEP 4: Approving Mock USDC as protocol...
+✅ Mock USDC approved as protocol
+
+📝 STEP 5: Setting up USDC tokens...
+✅ Minted 100 USDC to deployer
+✅ Approved TaskFactory to spend USDC
+
+📝 STEP 6: Checking executor status...
+✅ Already registered as executor (skipping)
+
+📝 STEP 7: Creating task (executes after 60 seconds)...
+   Current time: 2025-11-18T17:48:51.000Z
+   Execute after: 2025-11-18T17:49:51.000Z
+   Current block: 2210601
+✅ Task created! Task ID: 1
+   Transaction: 0x0569fc6c9c489877608e88a19053c67a6bf8b4b7fa7a78dab93945f84e04ed3b
+
+📝 STEP 8: Waiting 60 seconds for time condition...
+   Waiting ⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳⏳
+   10 seconds elapsed...
+   20 seconds elapsed...
+   30 seconds elapsed...
+   40 seconds elapsed...
+   50 seconds elapsed...
+   60 seconds elapsed...
+✅ Time condition should be met!
+   Adapter canExecute: true
+   Reason: Time condition met - ready to execute
+
+📝 STEP 9: Executing task (direct, no commit-reveal on testnet)...
+✅ Task executed!
+   Transaction: 0xd48e5d55917bfb9e1ca51a55860e673c2b3d6aa7d226bd7bd13a6a25ebd4b4c0
+
+📝 STEP 10: Verifying execution results...
+✅ Recipient USDC balance change: 100.0 USDC
+   Expected: 100.0 USDC
+   ✅ TRANSFER SUCCESSFUL!
+
+════════════════════════════════════════════════════════════
+📋 DEPLOYMENT & TEST SUMMARY
+════════════════════════════════════════════════════════════
+TimeBasedTransferAdapter: 0x629cfCA0e279d895A798262568dBD8DaA7582912
+Task ID: 1
+Recipient: 0x19C50Bfd73627B35f2EF3F7B0755229D42cd56a8
+USDC Transferred: 100.0 USDC
+════════════════════════════════════════════════════════════
+
+✅ COMPLETE END-TO-END TEST SUCCESSFUL!
+
+📝 Update frontend addresses.ts:
+TIME_BASED_TRANSFER_ADAPTER: '0x629cfCA0e279d895A798262568dBD8DaA7582912'

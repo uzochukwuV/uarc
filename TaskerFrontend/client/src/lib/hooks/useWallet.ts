@@ -9,7 +9,8 @@ export function useWallet() {
   const chain = useChainId();
 
   const chainId = chain;
-  const isSupported = chainId === 80001 || chainId === 137; // Mumbai or Polygon
+  // Support Polkadot Hub Testnet (420420422), Mumbai (80001), and Polygon (137)
+  const isSupported = chainId === 420420422 || chainId === 80001 || chainId === 137;
   const contractsDeployed = areContractsDeployed(chainId);
 
   return {

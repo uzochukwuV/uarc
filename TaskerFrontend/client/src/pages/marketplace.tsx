@@ -14,102 +14,62 @@ import {
   TrendingUp,
   CheckCircle
 } from "lucide-react";
-import { useExecutableTasks, useWallet } from "@/lib/hooks";
+import { useWallet, useMarketplaceTasks } from "@/lib/hooks";
 import { useExecuteTask } from "@/lib/hooks/useExecutorHub";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { formatEther } from "viem";
 import { ethers } from "ethers";
 
-interface Task {
-  id: string;
-  name: string;
-  description: string;
-  reward: string;
-  executionCount: number;
-  maxExecutions: number;
-  status: "active" | "completed" | "expired";
-  creator: string;
-  adapter: string;
-}
-
 export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("active");
+  const [executingTaskId, setExecutingTaskId] = useState<bigint | null>(null);
 
   const { address: userAddress, isConnected } = useWallet();
-  const { tasks: taskAddresses = [], isLoading: tasksLoading } = useExecutableTasks();
-  const { executeTask, hash: executeHash, isPending: isExecuting, isSuccess: isExecuteSuccess } = useExecuteTask();
+  const { tasks: marketplaceTasks = [], isLoading: tasksLoading } = useMarketplaceTasks(20, 0);
+  const { executeTask, hash: executeHash, isPending: isExecuting, isSuccess: isExecuteSuccess, error: executeError } = useExecuteTask();
   const { isSuccess: isExecutionConfirmed } = useWaitForTransactionReceipt({ hash: executeHash });
   const { toast } = useToast();
 
-  // Mock tasks data - in production, fetch from blockchain
-  const mockTasks: Task[] = useMemo(() => [
-    {
-      id: "1",
-      name: "Time-Based USDC Transfer",
-      description: "Transfer 100 USDC at a specific time. Simple and perfect for testing!",
-      reward: "0.01",
-      executionCount: 2,
-      maxExecutions: 10,
-      status: "active",
-      creator: "0x742d35Cc6634C0532925a3b844Bc856d9d8E6fE3",
-      adapter: "TimeBasedTransferAdapter"
-    },
-    {
-      id: "2",
-      name: "Limit Order - ETH/USDC",
-      description: "Buy ETH when price drops below $2000. Automated trading at scale.",
-      reward: "0.05",
-      executionCount: 0,
-      maxExecutions: 5,
-      status: "active",
-      creator: "0xaBEd4bC16A1cFD123456789abcdef0123456789a",
-      adapter: "UniswapV2USDCETHBuyLimitAdapter"
-    },
-    {
-      id: "3",
-      name: "Daily USDC Sweep",
-      description: "Automatically sweep USDC to cold wallet daily. Enhanced security.",
-      reward: "0.02",
-      executionCount: 45,
-      maxExecutions: 365,
-      status: "active",
-      creator: "0x1234567890123456789012345678901234567890",
-      adapter: "TimeBasedTransferAdapter"
-    },
-    {
-      id: "4",
-      name: "Completed Task",
-      description: "This task has already reached max executions.",
-      reward: "0.03",
-      executionCount: 10,
-      maxExecutions: 10,
-      status: "completed",
-      creator: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-      adapter: "TimeBasedTransferAdapter"
-    },
-  ], []);
+  // Convert blockchain tasks to display format
+  const displayTasks = useMemo(() => {
+    return marketplaceTasks.map((task) => ({
+      taskId: task.taskId,
+      taskCore: task.taskCore,
+      taskVault: task.taskVault,
+      creator: task.creator,
+      createdAt: task.createdAt,
+      expiresAt: task.expiresAt,
+      status: task.status === 0 ? "active" : task.status === 3 ? "completed" : "expired" as "active" | "completed" | "expired",
+      maxExecutions: Number(task.maxExecutions),
+      executionCount: Number(task.executionCount),
+      rewardPerExecution: task.rewardPerExecution,
+      isExecutable: task.isExecutable,
+      remainingExecutions: task.remainingExecutions,
+      progressPercent: task.progressPercent,
+    }));
+  }, [marketplaceTasks]);
 
   // Filter and search tasks
   const filteredTasks = useMemo(() => {
-    return mockTasks.filter(task => {
+    return displayTasks.filter(task => {
       // Status filter
       if (statusFilter !== "all" && task.status !== statusFilter) {
         return false;
       }
 
-      // Search filter
-      if (searchQuery && !task.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !task.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+      // Search filter (for now search by addresses since we don't have task names)
+      if (searchQuery && !task.taskCore.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !task.creator.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
 
       return true;
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, displayTasks]);
 
-  const handleExecuteTask = (taskId: string) => {
+  const handleExecuteTask = (taskId: bigint) => {
     if (!isConnected) {
       toast({
         title: "Wallet not connected",
@@ -119,16 +79,123 @@ export default function Marketplace() {
       return;
     }
 
-    // TODO: Build proper actionsProof from task data
-    const actionsProof = "0x"; // Placeholder
+    if (isExecuting && executingTaskId === taskId) {
+      toast({
+        title: "Execution in progress",
+        description: "Please wait for the current transaction to complete",
+        variant: "default"
+      });
+      return;
+    }
 
-    executeTask(BigInt(taskId), actionsProof as `0x${string}`);
+    // Get task data for this execution
+    const task = displayTasks.find(t => t.taskId === taskId);
+    if (!task) {
+      toast({
+        title: "Task not found",
+        description: "Could not find task data",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Build actions proof from task data
+    // Actions proof must be encoded as: abi.encode(Action[] memory actions, bytes32[] memory merkleProof)
+    // Where Action = { bytes4 selector, address protocol, bytes params }
+    try {
+      // CRITICAL: Actions require the exact parameters from task creation!
+      // The contract stores actionsHash but not the actual parameters
+      // We need to reconstruct the action from what was stored during task creation
+
+      // For TimeBasedTransferAdapter tasks:
+      const actionSelector = "0x1cff79cd"; // executeAction(address,bytes)
+
+      // Build action using placeholder values (these should come from task stored parameters)
+      const actions = [{
+        selector: actionSelector,
+        protocol: ethers.ZeroAddress, // PLACEHOLDER - should be token from task creation
+        params: "0x", // PLACEHOLDER - should be encoded adapter params
+      }];
+
+      const encodedProof = ethers.AbiCoder.defaultAbiCoder().encode(
+        [
+          'tuple(bytes4 selector, address protocol, bytes params)[]',
+          'bytes32[]'
+        ],
+        [actions, []]  // Empty merkle proof for single action
+      );
+
+      console.log('[marketplace] Executing task:', {
+        taskId: String(taskId),
+        taskCore: task.taskCore,
+        reward: formatEther(task.rewardPerExecution),
+        actionProof: {
+          selector: actionSelector,
+          protocol: 'PLACEHOLDER - ZeroAddress',
+          params: 'PLACEHOLDER - empty bytes',
+          note: 'Action parameters not available! Need to store them with task'
+        },
+        actionsProof: encodedProof,
+        actionsProofLength: encodedProof.length,
+        executionData: {
+          executionCount: task.executionCount,
+          maxExecutions: task.maxExecutions,
+          remaining: task.remainingExecutions,
+        },
+      });
+
+      setExecutingTaskId(taskId);
+      executeTask(taskId, encodedProof as `0x${string}`);
+
+      toast({
+        title: "Execution submitted",
+        description: `Task #${String(taskId)} submitted to blockchain. Awaiting confirmation...`,
+      });
+    } catch (error) {
+      console.error('[marketplace] Error building actions proof:', {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      toast({
+        title: "Error executing task",
+        description: error instanceof Error ? error.message : "Failed to build execution proof",
+        variant: "destructive"
+      });
+      setExecutingTaskId(null);
+    }
+  };
+
+  // Handle transaction confirmation
+  if (isExecuteSuccess && executingTaskId !== null) {
+    toast({
+      title: "Execution confirmed!",
+      description: `Task #${String(executingTaskId)} has been executed successfully. You earned the reward!`,
+    });
+    setExecutingTaskId(null);
+  }
+
+  // Handle execution errors
+  if (executeError && executingTaskId !== null) {
+    const errorMessage = executeError instanceof Error
+      ? executeError.message
+      : typeof executeError === 'string'
+      ? executeError
+      : JSON.stringify(executeError);
+
+    console.error('[marketplace] Transaction error:', {
+      error: executeError,
+      message: errorMessage,
+      taskId: String(executingTaskId),
+    });
 
     toast({
-      title: "Execution submitted",
-      description: "Your execution is being processed...",
+      title: "Execution failed",
+      description: errorMessage || "Transaction was reverted",
+      variant: "destructive"
     });
-  };
+    setExecutingTaskId(null);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -184,10 +251,17 @@ export default function Marketplace() {
             ))
           ) : filteredTasks.length > 0 ? (
             filteredTasks.map((task) => (
-              <Card key={task.id} className="p-6 hover:border-primary/50 transition-colors">
+              <Card key={String(task.taskId)} className="p-6 hover:border-primary/50 transition-colors">
                 <div className="mb-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold">{task.name}</h3>
+                    <div>
+                      <h3 className="text-lg font-semibold font-mono text-sm">
+                        Task #{String(task.taskId)}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {task.taskCore.substring(0, 10)}...{task.taskCore.substring(task.taskCore.length - 8)}
+                      </p>
+                    </div>
                     <Badge
                       variant={task.status === "active" ? "default" : "secondary"}
                       className={task.status === "active" ? "bg-green-600" : ""}
@@ -200,14 +274,11 @@ export default function Marketplace() {
                       ) : (
                         <>
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          Completed
+                          {task.status === "completed" ? "Completed" : "Expired"}
                         </>
                       )}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {task.description}
-                  </p>
                 </div>
 
                 {/* Task Stats */}
@@ -216,7 +287,7 @@ export default function Marketplace() {
                     <DollarSign className="w-4 h-4 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground">Reward</p>
-                      <p className="font-semibold">{task.reward} ETH</p>
+                      <p className="font-semibold">{formatEther(task.rewardPerExecution)} ETH</p>
                     </div>
                   </div>
 
@@ -224,10 +295,28 @@ export default function Marketplace() {
                     <TrendingUp className="w-4 h-4 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground">Executions</p>
-                      <p className="font-semibold">{task.executionCount}/{task.maxExecutions}</p>
+                      <p className="font-semibold">
+                        {task.executionCount}/{task.maxExecutions > 0 ? task.maxExecutions : "∞"}
+                      </p>
                     </div>
                   </div>
                 </div>
+
+                {/* Progress Bar */}
+                {task.maxExecutions > 0 && (
+                  <div className="mb-4">
+                    <div className="flex justify-between mb-2">
+                      <p className="text-xs text-muted-foreground">Progress</p>
+                      <p className="text-xs font-semibold">{Math.round(task.progressPercent || 0)}%</p>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2">
+                      <div
+                        className="bg-primary rounded-full h-2 transition-all"
+                        style={{ width: `${task.progressPercent || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Creator Info */}
                 <div className="mb-4">
@@ -239,16 +328,21 @@ export default function Marketplace() {
 
                 {/* Action Button */}
                 <Button
-                  onClick={() => handleExecuteTask(task.id)}
-                  disabled={task.status !== "active" || isExecuting || !isConnected}
+                  onClick={() => handleExecuteTask(task.taskId)}
+                  disabled={task.status !== "active" || (isExecuting && executingTaskId === task.taskId) || !isConnected}
                   className="w-full"
-                  data-testid={`button-execute-task-${task.id}`}
+                  data-testid={`button-execute-task-${String(task.taskId)}`}
                 >
                   {task.status === "completed" ? (
                     "Task Completed"
-                  ) : isExecuting ? (
-                    "Executing..."
-                  ) : isExecuteSuccess ? (
+                  ) : task.status === "expired" ? (
+                    "Task Expired"
+                  ) : executingTaskId === task.taskId && isExecuting ? (
+                    <>
+                      <Zap className="w-4 h-4 mr-2 animate-spin" />
+                      Executing...
+                    </>
+                  ) : executingTaskId === task.taskId && isExecuteSuccess ? (
                     "✓ Executed"
                   ) : (
                     <>
@@ -262,7 +356,9 @@ export default function Marketplace() {
           ) : (
             <div className="col-span-full">
               <Card className="p-12 text-center">
-                <p className="text-muted-foreground mb-4">No tasks match your filters</p>
+                <p className="text-muted-foreground mb-4">
+                  {tasksLoading ? "Loading tasks..." : "No tasks match your filters"}
+                </p>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -282,18 +378,23 @@ export default function Marketplace() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-2">Total Tasks</p>
-              <p className="text-3xl font-bold">{mockTasks.length}</p>
+              <p className="text-3xl font-bold">{displayTasks.length}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-2">Active Tasks</p>
               <p className="text-3xl font-bold text-green-600">
-                {mockTasks.filter(t => t.status === "active").length}
+                {displayTasks.filter(t => t.status === "active").length}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-2">Total Rewards Available</p>
               <p className="text-3xl font-bold text-primary">
-                {(mockTasks.reduce((sum, t) => sum + parseFloat(t.reward), 0)).toFixed(2)} ETH
+                {displayTasks.length > 0
+                  ? formatEther(
+                      displayTasks.reduce((sum, t) => sum + t.rewardPerExecution * BigInt(t.remainingExecutions || 1), BigInt(0))
+                    )
+                  : "0"
+                } ETH
               </p>
             </div>
           </div>

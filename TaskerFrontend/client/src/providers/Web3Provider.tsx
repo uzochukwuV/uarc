@@ -42,14 +42,11 @@ if (!projectId || projectId === "YOUR_PROJECT_ID") {
 // Build transports mapping for getDefaultConfig.
 // For each chain provide a http transport using the first RPC url available.
 const transports: Record<number, ReturnType<typeof http>> = {};
-for (const chain of chains) {
-  const url = chain.rpcUrls?.default?.http?.[0];
-  if (url) transports[chain.id] = http({ url });
-  else {
-    // Fallback to a generic public http() if chain.rpcUrls missing (not recommended)
-    transports[chain.id] = http();
-  }
-}
+
+// Explicitly set up Polkadot Hub Testnet transport
+transports[420420422] = http("https://testnet-passet-hub-eth-rpc.polkadot.io");
+transports[polygonMumbai.id] = http();
+transports[polygon.id] = http();
 
 // getDefaultConfig will wire up wagmi + rainbowkit + default wallets for you.
 const config = getDefaultConfig({

@@ -75,7 +75,7 @@ export function useUserTasks() {
       setIsLoading(true);
 
       try {
-        const taskPromises = ([0, 1] as bigint[]).map(async (taskId) => {
+        const taskPromises = ([0, 1, 2, 3, 4] as bigint[]).map(async (taskId) => {
           try {
             // Use wagmi's readContract to fetch task info
             // We'll use the provider directly here for simplicity

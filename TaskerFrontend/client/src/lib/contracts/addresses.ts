@@ -8,16 +8,16 @@ export const CONTRACTS = {
   // Polkadot Hub Testnet (Asset Hub)
   polkadotHubTestnet: {
     // Implementation Contracts
-    TASK_CORE_IMPL: '0xB70f2Fd6A2cF4Acad3DeD463a6fF4d83DD6A5ad9',
-    TASK_VAULT_IMPL: '0x46D2afDca699F9B44c188A6dE2bc53263a10865D',
+    TASK_CORE_IMPL: '0xFcAbca3d3cFb4db36a26681386a572e41C815de1',
+    TASK_VAULT_IMPL: '0x2E8816dfa628a43B4B4E77B6e63cFda351C96447',
 
     // Core System Contracts
-    TASK_FACTORY: '0x36ce3E5904B0C983e034D42B2aC74e95CC243893',
-    TASK_LOGIC: '0xDa5f0913Ece98c60f12397Fd9C1BA42C49762D62',
-    EXECUTOR_HUB: '0xe477B7Da250753fBD5C1371975f76164A4F3E8DF',
-    GLOBAL_REGISTRY: '0x3bF75a448FB34AcB3cAA18ab7b21Fd10627A9A1e',
-    REWARD_MANAGER: '0xd48A87474ddAA6340493D8ffdAb5E9De262bbdd8',
-    ACTION_REGISTRY: '0xfbfFf91746dB25F2480fcF909C4DDC676E690d8a',
+    TASK_FACTORY: '0x5a3F07f4D0d14742F6370234a5d3fe1C175Ff666',
+    TASK_LOGIC: '0xb042d307E3a136C5C89cb625b97Df79D4E5077f0',
+    EXECUTOR_HUB: '0x3462d113E141C5E9FBCc59e94F4dF73F7A1e9C3b',
+    GLOBAL_REGISTRY: '0x3613b315bdba793842fffFc4195Cd6d4F1265560',
+    REWARD_MANAGER: '0x470101947345Da863C5BE489FC0Bdb9869E7707E',
+    ACTION_REGISTRY: '0xa3B7Ec213Af9C6000Bc35C094955a2a10b19A3d9',
 
     // Mock tokens for testing
     MOCK_USDC: '0xDefA91C83A08eb1745668fEeDB51Ab532D20EE62',
@@ -27,7 +27,7 @@ export const CONTRACTS = {
 
     // Adapters
     USDC_ETH_BUY_LIMIT_ADAPTER: '0x0000000000000000000000000000000000000000',
-    TIME_BASED_TRANSFER_ADAPTER: '0x5aA38fb73359E06e2581D9951cbd0244EAdae831',
+    TIME_BASED_TRANSFER_ADAPTER: '0x629cfCA0e279d895A798262568dBD8DaA7582912',
   },
 
   // Polygon Mumbai Testnet (Chain ID: 80001)
@@ -78,13 +78,12 @@ export const CONTRACTS = {
  * Get chain name from chain ID
  */
 export function getChainName(chainId?: number): keyof typeof CONTRACTS {
-  // Polkadot Hub Testnet doesn't have a standard chain ID yet
-  // We'll use a custom one or rely on RPC URL
-  if (!chainId || chainId === 0) return 'polkadotHubTestnet'; // Default to Polkadot Hub
-  if (chainId === 137) return 'polygon';
-  if (chainId === 80001) return 'polygonMumbai';
+  // Map chain IDs to contract keys
+  if (chainId === 420420422) return 'polkadotHubTestnet'; // Polkadot Hub Testnet
+  if (chainId === 137) return 'polygon'; // Polygon Mainnet
+  if (chainId === 80001) return 'polygonMumbai'; // Polygon Mumbai
 
-  // Default to Polkadot Hub for unknown chains
+  // Default to Polkadot Hub for unknown chains or if no chainId provided
   return 'polkadotHubTestnet';
 }
 

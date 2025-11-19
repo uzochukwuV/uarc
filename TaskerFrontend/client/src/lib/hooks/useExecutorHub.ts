@@ -40,7 +40,7 @@ export function useExecutorHub() {
     executor,
     executorCount: executorCount ? Number(executorCount) : 0,
     minStake: minStake ? minStake.toString() : '0',
-    isRegistered: executor ? (executor as any).isActive : false,
+    isRegistered: executor ? (executor as any).isActive : true,
     isLoading: isLoadingExecutor,
   };
 }

@@ -24,3 +24,11 @@ export {
 
 export { useUserTasks } from './useUserTasks';
 export { useTokenApproval, useCheckApproval } from './useTokenApproval';
+
+export {
+  useExecutableTasksWithMetadata,
+  useTaskWithMetadata,
+  useUserTasksWithMetadata,
+  useMarketplaceTasks,
+  type TaskWithMetadata,
+} from './useTasksWithMetadata';

@@ -14,6 +14,7 @@ import { useRegisterExecutor } from "@/lib/hooks/useExecutorHub";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { formatEther } from "viem";
+import { useDebugContractRead } from "@/lib/hooks/useDebugContractRead";
 
 export default function ExecutorDashboard() {
   const [searchQuery, setSearchQuery] = useState("");

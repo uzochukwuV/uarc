@@ -17,17 +17,20 @@ import { ethers } from "hardhat";
 
 // Contract addresses on Polkadot Hub Testnet
 const CONTRACTS = {
-  TASK_CORE_IMPL: '0xB70f2Fd6A2cF4Acad3DeD463a6fF4d83DD6A5ad9',
-    TASK_VAULT_IMPL: '0x46D2afDca699F9B44c188A6dE2bc53263a10865D',
+   // Implementation Contracts
+    TASK_CORE_IMPL: '0xFcAbca3d3cFb4db36a26681386a572e41C815de1',
+    TASK_VAULT_IMPL: '0x2E8816dfa628a43B4B4E77B6e63cFda351C96447',
 
     // Core System Contracts
-    TASK_FACTORY: '0x36ce3E5904B0C983e034D42B2aC74e95CC243893',
-    TASK_LOGIC: '0xDa5f0913Ece98c60f12397Fd9C1BA42C49762D62',
-    EXECUTOR_HUB: '0xe477B7Da250753fBD5C1371975f76164A4F3E8DF',
-    GLOBAL_REGISTRY: '0x3bF75a448FB34AcB3cAA18ab7b21Fd10627A9A1e',
-    REWARD_MANAGER: '0xd48A87474ddAA6340493D8ffdAb5E9De262bbdd8',
-    ACTION_REGISTRY: '0xfbfFf91746dB25F2480fcF909C4DDC676E690d8a',
-  MOCK_USDC: "0xDefA91C83A08eb1745668fEeDB51Ab532D20EE62",
+    TASK_FACTORY: '0x5a3F07f4D0d14742F6370234a5d3fe1C175Ff666',
+    TASK_LOGIC: '0xb042d307E3a136C5C89cb625b97Df79D4E5077f0',
+    EXECUTOR_HUB: '0x3462d113E141C5E9FBCc59e94F4dF73F7A1e9C3b',
+    GLOBAL_REGISTRY: '0x3613b315bdba793842fffFc4195Cd6d4F1265560',
+    REWARD_MANAGER: '0x470101947345Da863C5BE489FC0Bdb9869E7707E',
+    ACTION_REGISTRY: '0xa3B7Ec213Af9C6000Bc35C094955a2a10b19A3d9',
+
+    // Mock tokens for testing
+    MOCK_USDC: '0xDefA91C83A08eb1745668fEeDB51Ab532D20EE62',
 };
 
 async function main() {
@@ -112,18 +115,27 @@ async function main() {
   console.log("✅ Approved TaskFactory to spend USDC");
 
   // ============ STEP 6: Register as Executor ============
-  console.log("\n📝 STEP 6: Registering as executor...");
+  console.log("\n📝 STEP 6: Checking executor status...");
 
   try {
-    const executorStake = ethers.parseEther("1"); // 1 ETH stake
-    const registerTx = await executorHub.registerExecutor({ value: executorStake });
-    await registerTx.wait();
-    console.log("✅ Registered as executor with 1 ETH stake");
-  } catch (error: any) {
-    if (error.message.includes("already registered")) {
-      console.log("⚠️  Already registered as executor (skipping)");
+    // Check if already registered
+    const executor = await executorHub.getExecutor(deployer.address);
+    if (executor.isActive) {
+      console.log("✅ Already registered as executor (skipping)");
     } else {
-      throw error;
+      // TESTNET: Free registration (0 stake required)
+      const registerTx = await executorHub.registerExecutor();
+      await registerTx.wait();
+      console.log("✅ Registered as executor (free on testnet)");
+    }
+  } catch (error: any) {
+    // If getExecutor fails, try to register
+    try {
+      const registerTx = await executorHub.registerExecutor();
+      await registerTx.wait();
+      console.log("✅ Registered as executor (free on testnet)");
+    } catch (registerError: any) {
+      console.log("⚠️  Could not register (may already be registered)");
     }
   }
 
@@ -138,16 +150,14 @@ async function main() {
   console.log("   Execute after:", new Date(Number(executeAfter) * 1000).toISOString());
   console.log("   Current block:", currentBlock);
 
-  // Encode params in 6-parameter format
+  // Encode params in clean 4-parameter format (TESTNET: new adapter format)
   const adapterParams = ethers.AbiCoder.defaultAbiCoder().encode(
-    ["address", "address", "address", "uint256", "uint256", "address"],
+    ["address", "address", "uint256", "uint256"],
     [
-      ethers.ZeroAddress,     // router (ignored)
-      CONTRACTS.MOCK_USDC,    // tokenIn
-      ethers.ZeroAddress,     // tokenOut (ignored)
-      transferAmount,         // amountIn
-      executeAfter,           // minAmountOut - repurposed as timestamp
+      CONTRACTS.MOCK_USDC,    // token
       recipient.address,      // recipient
+      transferAmount,         // amount
+      executeAfter,           // executeAfter timestamp
     ]
   );
 
@@ -226,23 +236,8 @@ async function main() {
   console.log("   Adapter canExecute:", canExec);
   console.log("   Reason:", reason);
 
-  // ============ STEP 9: Execute Task (Commit-Reveal) ============
-  console.log("\n📝 STEP 9: Executing task via commit-reveal...");
-
-  // Commit to task
-  const reveal = ethers.randomBytes(32);
-  const commitment = ethers.keccak256(
-    ethers.AbiCoder.defaultAbiCoder().encode(["bytes32"], [reveal])
-  );
-
-  const requestTx = await executorHub.requestExecution(taskId, commitment);
-  await requestTx.wait();
-  console.log("✅ Committed to task");
-  console.log("   Commitment:", commitment);
-
-  // Wait for commit delay (2 seconds)
-  console.log("   Waiting 3 seconds for commit delay...");
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // ============ STEP 9: Execute Task (TESTNET: Direct execution) ============
+  console.log("\n📝 STEP 9: Executing task (direct, no commit-reveal on testnet)...");
 
   // Prepare actions proof
   const actionForProof = {
@@ -256,10 +251,10 @@ async function main() {
     [[actionForProof], []] // Empty merkle proof for single action
   );
 
-  // Execute task
+  // Execute task directly (TESTNET: simplified execution)
   const recipientBalanceBefore = await mockUSDC.balanceOf(recipient.address);
 
-  const executeTx = await executorHub.executeTask(taskId, reveal, actionsProof);
+  const executeTx = await executorHub.executeTask(taskId, actionsProof as `0x${string}`);
   const executeReceipt = await executeTx.wait();
 
   console.log("✅ Task executed!");
