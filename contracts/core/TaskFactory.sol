@@ -147,6 +147,9 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
             metadata
         );
 
+        // Store actions in TaskCore for later retrieval during execution
+        _storeActions(taskCore, actions);
+
         // Initialize TaskVault
         ITaskVault(taskVault).initialize(taskCore, msg.sender, rewardManager);
 
@@ -223,6 +226,22 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
 
     function _hashActions(ActionParams[] calldata actions) internal pure returns (bytes32) {
         return keccak256(abi.encode(actions));
+    }
+
+    /// @notice Convert ActionParams to ITaskCore.Action and store in TaskCore
+    function _storeActions(address taskCore, ActionParams[] calldata actions) internal {
+        // Convert ActionParams[] to ITaskCore.Action[]
+        ITaskCore.Action[] memory coreActions = new ITaskCore.Action[](actions.length);
+        for (uint256 i = 0; i < actions.length; i++) {
+            coreActions[i] = ITaskCore.Action({
+                selector: actions[i].selector,
+                protocol: actions[i].protocol,
+                params: actions[i].params
+            });
+        }
+
+        // Store in TaskCore
+        ITaskCore(taskCore).setActions(coreActions);
     }
 
     // ============ View Functions ============

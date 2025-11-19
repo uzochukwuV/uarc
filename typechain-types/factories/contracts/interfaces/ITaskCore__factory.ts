@@ -19,6 +19,43 @@ const _abi = [
         type: "uint256",
       },
       {
+        indexed: false,
+        internalType: "uint256",
+        name: "executionCount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "maxExecutions",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "isExecutable",
+        type: "bool",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "checkpoint",
+        type: "string",
+      },
+    ],
+    name: "ExecutionCheckpoint",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "taskId",
+        type: "uint256",
+      },
+      {
         indexed: true,
         internalType: "address",
         name: "creator",
@@ -171,6 +208,85 @@ const _abi = [
       },
     ],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "index",
+        type: "uint256",
+      },
+    ],
+    name: "getAction",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "bytes4",
+            name: "selector",
+            type: "bytes4",
+          },
+          {
+            internalType: "address",
+            name: "protocol",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "params",
+            type: "bytes",
+          },
+        ],
+        internalType: "struct ITaskCore.Action",
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getActions",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "bytes4",
+            name: "selector",
+            type: "bytes4",
+          },
+          {
+            internalType: "address",
+            name: "protocol",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "params",
+            type: "bytes",
+          },
+        ],
+        internalType: "struct ITaskCore.Action[]",
+        name: "",
+        type: "tuple[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getActionsLength",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -379,6 +495,36 @@ const _abi = [
   {
     inputs: [],
     name: "resume",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "bytes4",
+            name: "selector",
+            type: "bytes4",
+          },
+          {
+            internalType: "address",
+            name: "protocol",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "params",
+            type: "bytes",
+          },
+        ],
+        internalType: "struct ITaskCore.Action[]",
+        name: "actions",
+        type: "tuple[]",
+      },
+    ],
+    name: "setActions",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

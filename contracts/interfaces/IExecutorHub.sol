@@ -21,19 +21,12 @@ interface IExecutorHub {
         bool isSlashed;
     }
 
-    struct ExecutionLock {
-        address executor;
-        uint96 lockedAt;
-        bytes32 commitment;
-    }
-
     // ============ Events ============
 
     event ExecutorRegistered(address indexed executor, uint256 stakeAmount);
     event ExecutorUnregistered(address indexed executor);
     event StakeAdded(address indexed executor, uint256 amount);
     event StakeWithdrawn(address indexed executor, uint256 amount);
-    event ExecutionRequested(uint256 indexed taskId, address indexed executor, bytes32 commitment);
     event ExecutionCompleted(uint256 indexed taskId, address indexed executor, bool success);
     event ExecutorSlashed(address indexed executor, uint256 amount, string reason);
 
@@ -43,9 +36,6 @@ interface IExecutorHub {
     error NotRegistered();
     error InsufficientStake();
     error ExecutorBlacklisted();
-    error TaskLocked();
-    error InvalidCommitment();
-    error CommitmentNotReady();
 
     // ============ Functions ============
 
@@ -61,15 +51,9 @@ interface IExecutorHub {
     /// @notice Withdraw stake (only when not active)
     function withdrawStake(uint256 amount) external;
 
-    /// @notice Request execution lock (commit phase)
-    function requestExecution(uint256 taskId, bytes32 commitment) external returns (bool locked);
-
-    /// @notice Execute task
-    /// @dev TESTNET: Simplified signature without commit-reveal
-    /// Production version will restore commit-reveal for security
+    /// @notice Execute task (actions are fetched from TaskCore)
     function executeTask(
-        uint256 taskId,
-        bytes calldata actionsProof
+        uint256 taskId
     ) external returns (bool success);
 
     /// @notice Record execution result (called by TaskLogic)
@@ -83,10 +67,4 @@ interface IExecutorHub {
 
     /// @notice Get executor info
     function getExecutor(address executor) external view returns (Executor memory);
-
-    /// @notice Get execution lock
-    function getExecutionLock(uint256 taskId) external view returns (ExecutionLock memory);
-
-    /// @notice Check if task is locked
-    function isTaskLocked(uint256 taskId) external view returns (bool);
 }

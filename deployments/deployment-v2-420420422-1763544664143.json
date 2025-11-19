@@ -1,0 +1,38 @@
+{
+  "network": "polkadotHubTestnet",
+  "chainId": "420420422",
+  "deployer": "0x8AaEe2071A400cC60927e46D53f751e521ef4D35",
+  "timestamp": "2025-11-19T09:31:04.142Z",
+  "contracts": {
+    "implementations": {
+      "TaskCore": "0xE0a0FDfdE15cE94A4880d638f50A41a6b248C757",
+      "TaskVault": "0xBa8e68e5Fa7C5c964ada5314a99f98913B254E8f"
+    },
+    "core": {
+      "TaskFactory": "0x760C1E991a71da83bafd717af8225396930A7AE5",
+      "TaskLogicV2": "0x3E1c7370D63388B462C9D90D68eC50B9378f3b7b",
+      "ExecutorHub": "0xa9f3c5A77876036Ae17112e3E38E44fCAe4Fc409",
+      "GlobalRegistry": "0x5AC66E43e7eBb79907d28868E8De95Fb5cf187c9",
+      "RewardManager": "0x99093C6405b9Cc364230b21e5DC05F050e12d4A3",
+      "ActionRegistry": "0x67C03819c9CBeD453EcAfbeD537D446f40738630"
+    },
+    "adapters": {
+      "UniswapV2Adapter": "0x0000000000000000000000000000000000000000",
+      "GenericAdapter": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "configuration": {
+    "taskFactory": {
+      "minTaskReward": "0.001 ETH",
+      "creationFee": "0.0 ETH"
+    },
+    "executorHub": {
+      "minStake": "0.1 ETH",
+      "executionModel": "Direct execution with on-chain actions"
+    },
+    "rewardManager": {
+      "platformFee": "1.00%",
+      "gasReimbursement": "100%"
+    }
+  }
+}

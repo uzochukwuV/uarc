@@ -67,8 +67,7 @@ async function main() {
   const executorHubAddress = await executorHub.getAddress();
   console.log("   ✅ ExecutorHub:", executorHubAddress);
   console.log("   💰 Minimum Stake: 0.1 ETH");
-  console.log("   🔒 Lock Duration: 30 seconds");
-  console.log("   ⏱️  Commit Delay: 1 second\n");
+  console.log("   📝 Actions stored on-chain during task creation\n");
 
   // 2.3 Deploy GlobalRegistry
   console.log("5️⃣  Deploying GlobalRegistry...");
@@ -262,12 +261,9 @@ async function main() {
 
   // Verify ExecutorHub settings
   const minStakeAmount = await executorHub.minStakeAmount();
-  const lockDuration = await executorHub.lockDuration();
-  const commitDelay = await executorHub.commitDelay();
   console.log("📊 ExecutorHub Settings:");
   console.log("   Min Stake:", ethers.formatEther(minStakeAmount), "ETH");
-  console.log("   Lock Duration:", lockDuration.toString(), "seconds");
-  console.log("   Commit Delay:", commitDelay.toString(), "seconds\n");
+  console.log("   Direct execution (no commit-reveal on testnet)\n");
 
   // Verify RewardManager settings
   const platformFee = await rewardManager.platformFeePercentage();
@@ -337,8 +333,7 @@ async function main() {
       },
       executorHub: {
         minStake: ethers.formatEther(minStakeAmount) + " ETH",
-        lockDuration: lockDuration.toString() + " seconds",
-        commitDelay: commitDelay.toString() + " seconds",
+        executionModel: "Direct execution with on-chain actions",
       },
       rewardManager: {
         platformFee: (Number(platformFee) / 100).toFixed(2) + "%",

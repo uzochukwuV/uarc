@@ -80,7 +80,7 @@ export function useRegisterExecutor() {
 
 /**
  * Hook for executor task execution
- * TESTNET: Simplified execution without commit-reveal pattern
+ * Actions are now fetched from on-chain TaskCore storage
  */
 export function useExecuteTask() {
   const { chainId } = useWallet();
@@ -95,31 +95,20 @@ export function useExecuteTask() {
   } = useWriteContract();
 
   /**
-   * Execute a task directly (testnet simplified execution)
+   * Execute a task (actions are retrieved from TaskCore)
    * @param taskId - The task ID to execute
-   * @param actionsProof - Encoded actions proof
    */
-  const executeTask = (taskId: bigint, actionsProof: `0x${string}`) => {
+  const executeTask = (taskId: bigint) => {
     writeContract({
       address: contractAddress as `0x${string}`,
       abi: ExecutorHubABI.abi,
       functionName: 'executeTask',
-      args: [taskId, actionsProof],
+      args: [taskId],
     });
-  };
-
-  /**
-   * @deprecated Use executeTask() instead
-   * Commit-reveal pattern removed for testnet
-   */
-  const commitToTask = (taskId: bigint, _commitmentHash: `0x${string}`) => {
-    console.warn('commitToTask is deprecated on testnet. Use executeTask() directly.');
-    // TESTNET: No-op on testnet
   };
 
   return {
     executeTask,
-    commitToTask, // Kept for backwards compatibility but deprecated
     hash,
     isPending,
     isSuccess,

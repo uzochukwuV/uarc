@@ -19,7 +19,6 @@ import { useExecuteTask } from "@/lib/hooks/useExecutorHub";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { formatEther } from "viem";
-import { ethers } from "ethers";
 
 export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,44 +98,13 @@ export default function Marketplace() {
       return;
     }
 
-    // Build actions proof from task data
-    // Actions proof must be encoded as: abi.encode(Action[] memory actions, bytes32[] memory merkleProof)
-    // Where Action = { bytes4 selector, address protocol, bytes params }
+    // Execute task - actions are now stored on-chain in TaskCore
     try {
-      // CRITICAL: Actions require the exact parameters from task creation!
-      // The contract stores actionsHash but not the actual parameters
-      // We need to reconstruct the action from what was stored during task creation
-
-      // For TimeBasedTransferAdapter tasks:
-      const actionSelector = "0x1cff79cd"; // executeAction(address,bytes)
-
-      // Build action using placeholder values (these should come from task stored parameters)
-      const actions = [{
-        selector: actionSelector,
-        protocol: ethers.ZeroAddress, // PLACEHOLDER - should be token from task creation
-        params: "0x", // PLACEHOLDER - should be encoded adapter params
-      }];
-
-      const encodedProof = ethers.AbiCoder.defaultAbiCoder().encode(
-        [
-          'tuple(bytes4 selector, address protocol, bytes params)[]',
-          'bytes32[]'
-        ],
-        [actions, []]  // Empty merkle proof for single action
-      );
-
       console.log('[marketplace] Executing task:', {
         taskId: String(taskId),
         taskCore: task.taskCore,
         reward: formatEther(task.rewardPerExecution),
-        actionProof: {
-          selector: actionSelector,
-          protocol: 'PLACEHOLDER - ZeroAddress',
-          params: 'PLACEHOLDER - empty bytes',
-          note: 'Action parameters not available! Need to store them with task'
-        },
-        actionsProof: encodedProof,
-        actionsProofLength: encodedProof.length,
+        note: 'Actions fetched from on-chain TaskCore storage',
         executionData: {
           executionCount: task.executionCount,
           maxExecutions: task.maxExecutions,
@@ -145,21 +113,21 @@ export default function Marketplace() {
       });
 
       setExecutingTaskId(taskId);
-      executeTask(taskId, encodedProof as `0x${string}`);
+      executeTask(taskId);
 
       toast({
         title: "Execution submitted",
         description: `Task #${String(taskId)} submitted to blockchain. Awaiting confirmation...`,
       });
     } catch (error) {
-      console.error('[marketplace] Error building actions proof:', {
+      console.error('[marketplace] Error executing task:', {
         error,
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
       toast({
         title: "Error executing task",
-        description: error instanceof Error ? error.message : "Failed to build execution proof",
+        description: error instanceof Error ? error.message : "Failed to execute task",
         variant: "destructive"
       });
       setExecutingTaskId(null);

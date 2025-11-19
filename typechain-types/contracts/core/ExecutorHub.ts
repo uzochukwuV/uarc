@@ -24,18 +24,6 @@ import type {
 } from "../../common";
 
 export declare namespace IExecutorHub {
-  export type ExecutionLockStruct = {
-    executor: AddressLike;
-    lockedAt: BigNumberish;
-    commitment: BytesLike;
-  };
-
-  export type ExecutionLockStructOutput = [
-    executor: string,
-    lockedAt: bigint,
-    commitment: string
-  ] & { executor: string; lockedAt: bigint; commitment: string };
-
   export type ExecutorStruct = {
     addr: AddressLike;
     stakedAmount: BigNumberish;
@@ -76,25 +64,18 @@ export interface ExecutorHubInterface extends Interface {
     nameOrSignature:
       | "addStake"
       | "canExecute"
-      | "commitDelay"
       | "executeTask"
       | "executors"
-      | "getExecutionLock"
       | "getExecutor"
-      | "isTaskLocked"
-      | "lockDuration"
       | "minStakeAmount"
       | "owner"
       | "recordExecution"
       | "registerExecutor"
       | "renounceOwnership"
-      | "requestExecution"
-      | "setLockDuration"
       | "setMinStakeAmount"
       | "setTaskLogic"
       | "setTaskRegistry"
       | "slashExecutor"
-      | "taskLocks"
       | "taskLogic"
       | "taskRegistry"
       | "totalExecutors"
@@ -106,7 +87,6 @@ export interface ExecutorHubInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "ExecutionCompleted"
-      | "ExecutionRequested"
       | "ExecutorRegistered"
       | "ExecutorSlashed"
       | "ExecutorUnregistered"
@@ -121,32 +101,16 @@ export interface ExecutorHubInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "commitDelay",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "executeTask",
-    values: [BigNumberish, BytesLike]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "executors",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getExecutionLock",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getExecutor",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isTaskLocked",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "lockDuration",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "minStakeAmount",
@@ -166,14 +130,6 @@ export interface ExecutorHubInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "requestExecution",
-    values: [BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setLockDuration",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setMinStakeAmount",
     values: [BigNumberish]
   ): string;
@@ -188,10 +144,6 @@ export interface ExecutorHubInterface extends Interface {
   encodeFunctionData(
     functionFragment: "slashExecutor",
     values: [AddressLike, BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "taskLocks",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "taskLogic", values?: undefined): string;
   encodeFunctionData(
@@ -218,28 +170,12 @@ export interface ExecutorHubInterface extends Interface {
   decodeFunctionResult(functionFragment: "addStake", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "commitDelay",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "executeTask",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "executors", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getExecutionLock",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getExecutor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isTaskLocked",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "lockDuration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -260,14 +196,6 @@ export interface ExecutorHubInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "requestExecution",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setLockDuration",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setMinStakeAmount",
     data: BytesLike
   ): Result;
@@ -283,7 +211,6 @@ export interface ExecutorHubInterface extends Interface {
     functionFragment: "slashExecutor",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "taskLocks", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "taskLogic", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "taskRegistry",
@@ -322,28 +249,6 @@ export namespace ExecutionCompletedEvent {
     taskId: bigint;
     executor: string;
     success: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ExecutionRequestedEvent {
-  export type InputTuple = [
-    taskId: BigNumberish,
-    executor: AddressLike,
-    commitment: BytesLike
-  ];
-  export type OutputTuple = [
-    taskId: bigint,
-    executor: string,
-    commitment: string
-  ];
-  export interface OutputObject {
-    taskId: bigint;
-    executor: string;
-    commitment: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -480,10 +385,8 @@ export interface ExecutorHub extends BaseContract {
 
   canExecute: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
 
-  commitDelay: TypedContractMethod<[], [bigint], "view">;
-
   executeTask: TypedContractMethod<
-    [taskId: BigNumberish, actionsProof: BytesLike],
+    [taskId: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -516,21 +419,11 @@ export interface ExecutorHub extends BaseContract {
     "view"
   >;
 
-  getExecutionLock: TypedContractMethod<
-    [taskId: BigNumberish],
-    [IExecutorHub.ExecutionLockStructOutput],
-    "view"
-  >;
-
   getExecutor: TypedContractMethod<
     [executor: AddressLike],
     [IExecutorHub.ExecutorStructOutput],
     "view"
   >;
-
-  isTaskLocked: TypedContractMethod<[taskId: BigNumberish], [boolean], "view">;
-
-  lockDuration: TypedContractMethod<[], [bigint], "view">;
 
   minStakeAmount: TypedContractMethod<[], [bigint], "view">;
 
@@ -550,18 +443,6 @@ export interface ExecutorHub extends BaseContract {
   registerExecutor: TypedContractMethod<[], [void], "payable">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
-
-  requestExecution: TypedContractMethod<
-    [taskId: BigNumberish, commitment: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
-
-  setLockDuration: TypedContractMethod<
-    [_duration: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
 
   setMinStakeAmount: TypedContractMethod<
     [_minStake: BigNumberish],
@@ -585,18 +466,6 @@ export interface ExecutorHub extends BaseContract {
     [executor: AddressLike, amount: BigNumberish, reason: string],
     [void],
     "nonpayable"
-  >;
-
-  taskLocks: TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [string, bigint, string] & {
-        executor: string;
-        lockedAt: bigint;
-        commitment: string;
-      }
-    ],
-    "view"
   >;
 
   taskLogic: TypedContractMethod<[], [string], "view">;
@@ -630,15 +499,8 @@ export interface ExecutorHub extends BaseContract {
     nameOrSignature: "canExecute"
   ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
   getFunction(
-    nameOrSignature: "commitDelay"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "executeTask"
-  ): TypedContractMethod<
-    [taskId: BigNumberish, actionsProof: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[taskId: BigNumberish], [boolean], "nonpayable">;
   getFunction(
     nameOrSignature: "executors"
   ): TypedContractMethod<
@@ -669,25 +531,12 @@ export interface ExecutorHub extends BaseContract {
     "view"
   >;
   getFunction(
-    nameOrSignature: "getExecutionLock"
-  ): TypedContractMethod<
-    [taskId: BigNumberish],
-    [IExecutorHub.ExecutionLockStructOutput],
-    "view"
-  >;
-  getFunction(
     nameOrSignature: "getExecutor"
   ): TypedContractMethod<
     [executor: AddressLike],
     [IExecutorHub.ExecutorStructOutput],
     "view"
   >;
-  getFunction(
-    nameOrSignature: "isTaskLocked"
-  ): TypedContractMethod<[taskId: BigNumberish], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "lockDuration"
-  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "minStakeAmount"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -713,16 +562,6 @@ export interface ExecutorHub extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "requestExecution"
-  ): TypedContractMethod<
-    [taskId: BigNumberish, commitment: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setLockDuration"
-  ): TypedContractMethod<[_duration: BigNumberish], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "setMinStakeAmount"
   ): TypedContractMethod<[_minStake: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -737,19 +576,6 @@ export interface ExecutorHub extends BaseContract {
     [executor: AddressLike, amount: BigNumberish, reason: string],
     [void],
     "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "taskLocks"
-  ): TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [string, bigint, string] & {
-        executor: string;
-        lockedAt: bigint;
-        commitment: string;
-      }
-    ],
-    "view"
   >;
   getFunction(
     nameOrSignature: "taskLogic"
@@ -776,13 +602,6 @@ export interface ExecutorHub extends BaseContract {
     ExecutionCompletedEvent.InputTuple,
     ExecutionCompletedEvent.OutputTuple,
     ExecutionCompletedEvent.OutputObject
-  >;
-  getEvent(
-    key: "ExecutionRequested"
-  ): TypedContractEvent<
-    ExecutionRequestedEvent.InputTuple,
-    ExecutionRequestedEvent.OutputTuple,
-    ExecutionRequestedEvent.OutputObject
   >;
   getEvent(
     key: "ExecutorRegistered"
@@ -837,17 +656,6 @@ export interface ExecutorHub extends BaseContract {
       ExecutionCompletedEvent.InputTuple,
       ExecutionCompletedEvent.OutputTuple,
       ExecutionCompletedEvent.OutputObject
-    >;
-
-    "ExecutionRequested(uint256,address,bytes32)": TypedContractEvent<
-      ExecutionRequestedEvent.InputTuple,
-      ExecutionRequestedEvent.OutputTuple,
-      ExecutionRequestedEvent.OutputObject
-    >;
-    ExecutionRequested: TypedContractEvent<
-      ExecutionRequestedEvent.InputTuple,
-      ExecutionRequestedEvent.OutputTuple,
-      ExecutionRequestedEvent.OutputObject
     >;
 
     "ExecutorRegistered(address,uint256)": TypedContractEvent<

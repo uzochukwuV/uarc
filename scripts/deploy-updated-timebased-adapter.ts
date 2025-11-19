@@ -18,16 +18,17 @@ import { ethers } from "hardhat";
 // Contract addresses on Polkadot Hub Testnet
 const CONTRACTS = {
    // Implementation Contracts
-    TASK_CORE_IMPL: '0xFcAbca3d3cFb4db36a26681386a572e41C815de1',
-    TASK_VAULT_IMPL: '0x2E8816dfa628a43B4B4E77B6e63cFda351C96447',
+     TASK_CORE_IMPL: '0xa3Eb8927227E1e5079afB46709553f8CcDb7d0aC',
+    TASK_VAULT_IMPL: '0x5A3996e2c3B25B1bE91C9770d07C67adA67E442C',
 
     // Core System Contracts
-    TASK_FACTORY: '0x5a3F07f4D0d14742F6370234a5d3fe1C175Ff666',
-    TASK_LOGIC: '0xb042d307E3a136C5C89cb625b97Df79D4E5077f0',
-    EXECUTOR_HUB: '0x3462d113E141C5E9FBCc59e94F4dF73F7A1e9C3b',
-    GLOBAL_REGISTRY: '0x3613b315bdba793842fffFc4195Cd6d4F1265560',
-    REWARD_MANAGER: '0x470101947345Da863C5BE489FC0Bdb9869E7707E',
-    ACTION_REGISTRY: '0xa3B7Ec213Af9C6000Bc35C094955a2a10b19A3d9',
+    TASK_FACTORY: '0x2166493d8E5b6BB0c610688C39Cef2804488aC51',
+    TASK_LOGIC: '0xfB6055b83ACd887026957f126774Ce3bfCDB15fd',
+    EXECUTOR_HUB: '0x0a872C6c000CE924C85eCe380a796f1Dc717c8a9',
+    GLOBAL_REGISTRY: '0xd5D87c6F041A55719784E7A7f44E28a0DE37236C',
+    REWARD_MANAGER: '0x0791f78fF27D7f43CAd36307912d6AebCe26c028',
+    ACTION_REGISTRY: '0xa045405f282b34671e388518bdAA36289722B661',
+
 
     // Mock tokens for testing
     MOCK_USDC: '0xDefA91C83A08eb1745668fEeDB51Ab532D20EE62',
@@ -54,13 +55,38 @@ async function main() {
   console.log("✅ Deployed to:", adapterAddress);
   console.log("   Adapter name:", await adapter.name());
 
-  // ============ STEP 2: Connect to Protocol Contracts ============
-  console.log("\n📝 STEP 2: Connecting to Protocol Contracts...");
+  // ============ STEP 2: Deploy or Connect to MockERC20 Token ============
+  console.log("\n📝 STEP 2: Deploying/Connecting to MockERC20 Token...");
+
+  let mockUSDAAddress = CONTRACTS.MOCK_USDC;
+  let mockUSDC;
+
+  // Try to connect to existing token
+  try {
+    mockUSDC = await ethers.getContractAt("MockERC20", CONTRACTS.MOCK_USDC);
+    // Test if it's a valid contract by calling name()
+    await mockUSDC.name();
+    console.log("✅ Connected to existing MockERC20:", mockUSDAAddress);
+  } catch (error) {
+    console.log("⚠️  MockERC20 not found at", CONTRACTS.MOCK_USDC);
+    console.log("   Deploying new MockERC20...");
+
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    mockUSDC = await MockERC20.deploy("Mock USDC", "USDC", 6);
+    await mockUSDC.waitForDeployment();
+    mockUSDAAddress = await mockUSDC.getAddress();
+    console.log("✅ Deployed new MockERC20 to:", mockUSDAAddress);
+  }
+
+  // ============ STEP 2B: Connect to Protocol Contracts ============
+  console.log("\n📝 STEP 2B: Connecting to Protocol Contracts...");
 
   const taskFactory = await ethers.getContractAt("TaskFactory", CONTRACTS.TASK_FACTORY);
   const executorHub = await ethers.getContractAt("ExecutorHub", CONTRACTS.EXECUTOR_HUB);
   const actionRegistry = await ethers.getContractAt("ActionRegistry", CONTRACTS.ACTION_REGISTRY);
-  const mockUSDC = await ethers.getContractAt("MockERC20", CONTRACTS.MOCK_USDC);
+
+  // Get TaskVault to register token
+  const taskVaultImpl = await ethers.getContractAt("TaskVault", CONTRACTS.TASK_VAULT_IMPL);
 
   console.log("✅ Connected to all protocol contracts");
 
@@ -88,9 +114,9 @@ async function main() {
   console.log("\n📝 STEP 4: Approving Mock USDC as protocol...");
 
   try {
-    const approveTx = await actionRegistry.approveProtocol(CONTRACTS.MOCK_USDC);
+    const approveTx = await actionRegistry.approveProtocol(mockUSDAAddress);
     await approveTx.wait();
-    console.log("✅ Mock USDC approved as protocol");
+    console.log("✅ Mock USDC approved as protocol at:", mockUSDAAddress);
   } catch (error: any) {
     if (error.message.includes("already approved")) {
       console.log("⚠️  Protocol already approved (skipping)");
@@ -109,10 +135,15 @@ async function main() {
   await mintTx.wait();
   console.log("✅ Minted 100 USDC to deployer");
 
-  // Approve TaskFactory to spend USDC
-  const approveTx = await mockUSDC.approve(CONTRACTS.TASK_FACTORY, transferAmount);
+  // Approve TaskFactory to spend USDC (for creating tasks with token deposits)
+  const approveTx = await mockUSDC.approve(CONTRACTS.TASK_FACTORY, ethers.parseUnits("1000", 6));
   await approveTx.wait();
   console.log("✅ Approved TaskFactory to spend USDC");
+
+  // Also approve the adapter to spend USDC (if needed for execution)
+  const approveAdapterTx = await mockUSDC.approve(adapterAddress, ethers.parseUnits("1000", 6));
+  await approveAdapterTx.wait();
+  console.log("✅ Approved TimeBasedTransferAdapter to spend USDC");
 
   // ============ STEP 6: Register as Executor ============
   console.log("\n📝 STEP 6: Checking executor status...");
@@ -151,15 +182,20 @@ async function main() {
   console.log("   Current block:", currentBlock);
 
   // Encode params in clean 4-parameter format (TESTNET: new adapter format)
+  // CRITICAL: Use tuple encoding to match struct layout expected by adapter
+  // TimeBasedTransferAdapter expects: struct TransferParams { address token; address recipient; uint256 amount; uint256 executeAfter; }
   const adapterParams = ethers.AbiCoder.defaultAbiCoder().encode(
-    ["address", "address", "uint256", "uint256"],
-    [
-      CONTRACTS.MOCK_USDC,    // token
-      recipient.address,      // recipient
-      transferAmount,         // amount
-      executeAfter,           // executeAfter timestamp
-    ]
+    ["tuple(address,address,uint256,uint256)"],  // ← Explicit tuple for struct
+    [[
+      mockUSDAAddress,         // token (use the dynamically resolved address)
+      recipient.address,       // recipient
+      transferAmount,          // amount
+      executeAfter,            // executeAfter timestamp
+    ]]
   );
+
+  console.log("   ✅ Encoded action params (struct format)");
+  console.log("   Token in params:", mockUSDAAddress);
 
   // Build task params
   const taskParams = {
@@ -172,12 +208,12 @@ async function main() {
 
   const actions = [{
     selector: "0x1cff79cd",
-    protocol: CONTRACTS.MOCK_USDC, // Use token as protocol
+    protocol: mockUSDAAddress,    // Use token as protocol (use the dynamically resolved address)
     params: adapterParams,
   }];
 
   const tokenDeposits = [{
-    token: CONTRACTS.MOCK_USDC,
+    token: mockUSDAAddress,         // Use the dynamically resolved address
     amount: transferAmount,
   }];
 
@@ -191,30 +227,59 @@ async function main() {
     { value: totalETHValue }
   );
   const createReceipt = await createTx.wait();
+  console.log(createReceipt?.toJSON())
 
-  // Extract task ID
-  const taskCreatedEvent = createReceipt?.logs.find((log: any) => {
-    try {
-      const parsed = taskFactory.interface.parseLog({
-        topics: log.topics as string[],
-        data: log.data,
-      });
-      return parsed?.name === "TaskCreated";
-    } catch {
-      return false;
+  // Extract task ID from logs
+  let taskId: bigint | undefined;
+
+  console.log("📍 Extracting task ID from receipt logs...");
+  console.log("   Receipt logs count:", createReceipt?.logs?.length || 0);
+
+  // Parse logs from receipt
+  if (createReceipt?.logs) {
+    for (let i = 0; i < createReceipt.logs.length; i++) {
+      const log = createReceipt.logs[i];
+      try {
+        const parsed = taskFactory.interface.parseLog({
+          topics: log.topics as string[],
+          data: log.data,
+        });
+        console.log(parsed?.name)
+
+        if (parsed?.name === "TaskCreated") {
+          console.log("   ✅ Found TaskCreated event at log index:", i);
+          taskId = parsed.args[0];
+          console.log("   Task ID from event:", taskId?.toString());
+          break;
+        }
+      } catch (e) {
+        // Not a TaskFactory event, continue
+      }
     }
-  });
-
-  if (!taskCreatedEvent) {
-    throw new Error("TaskCreated event not found!");
   }
 
-  const parsedEvent = taskFactory.interface.parseLog({
-    topics: taskCreatedEvent.topics as string[],
-    data: taskCreatedEvent.data,
-  });
+  // Fallback: Check all tasks created and use the latest
+  if (!taskId) {
+    console.log("⚠️  Could not extract taskId from events, trying alternative method...");
+    // Try to find any task in the factory storage by querying getTask(i) until we hit a non-existent one
+    for (let i = 0; i < 10; i++) {
+      try {
+        const task = await taskFactory.getTask(BigInt(i));
+        if (task.taskCore !== "0x0000000000000000000000000000000000000000") {
+          taskId = BigInt(i);
+          console.log("   Found task at ID:", taskId.toString());
+          break;
+        }
+      } catch (e) {
+        // Task doesn't exist at this ID
+      }
+    }
+  }
 
-  const taskId = parsedEvent!.args[0];
+  if (!taskId) {
+    throw new Error("Could not determine task ID!");
+  }
+
   console.log("✅ Task created! Task ID:", taskId.toString());
   console.log("   Transaction:", createReceipt?.hash);
 
@@ -222,7 +287,7 @@ async function main() {
   console.log("\n📝 STEP 8: Waiting 60 seconds for time condition...");
   console.log("   Waiting", "⏳".repeat(60));
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 70; i++) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     if ((i + 1) % 10 === 0) {
       console.log(`   ${i + 1} seconds elapsed...`);
@@ -236,32 +301,46 @@ async function main() {
   console.log("   Adapter canExecute:", canExec);
   console.log("   Reason:", reason);
 
-  // ============ STEP 9: Execute Task (TESTNET: Direct execution) ============
-  console.log("\n📝 STEP 9: Executing task (direct, no commit-reveal on testnet)...");
+  // ============ STEP 9: Execute Task (Actions fetched from TaskCore) ============
+  console.log("\n📝 STEP 9: Executing task (actions fetched from on-chain storage)...");
 
-  // Prepare actions proof
-  const actionForProof = {
-    selector: "0x1cff79cd",
-    protocol: CONTRACTS.MOCK_USDC,
-    params: adapterParams,
-  };
+  // Get task core address from factory
+  const deployedTask = await taskFactory.getTask(taskId);
+  console.log("   Task found:", {
+    taskCore: deployedTask.taskCore,
+    taskVault: deployedTask.taskVault,
+  });
 
-  const actionsProof = ethers.AbiCoder.defaultAbiCoder().encode(
-    ["tuple(bytes4 selector, address protocol, bytes params)[]", "bytes32[]"],
-    [[actionForProof], []] // Empty merkle proof for single action
-  );
+  const taskCore = await ethers.getContractAt("TaskCore", deployedTask.taskCore);
 
-  // Execute task directly (TESTNET: simplified execution)
+  // Verify actions are stored on-chain
+  const storedActions = await taskCore.getActions();
+  console.log("   ✅ Verified actions stored on-chain:", storedActions.length, "action(s)");
+  console.log("   Action selector:", storedActions[0].selector);
+  console.log("   Protocol:", storedActions[0].protocol);
+
+  // Execute task directly (no actionsProof needed - actions are on-chain)
   const recipientBalanceBefore = await mockUSDC.balanceOf(recipient.address);
 
-  const executeTx = await executorHub.executeTask(taskId, actionsProof as `0x${string}`);
+  console.log("\n--- EXECUTION 1 ---");
+  const executeTx = await executorHub.executeTask(taskId);
   const executeReceipt = await executeTx.wait();
 
   console.log("✅ Task executed!");
   console.log("   Transaction:", executeReceipt?.hash);
 
-  // ============ STEP 10: Verify Results ============
-  console.log("\n📝 STEP 10: Verifying execution results...");
+  // ============ STEP 10: Check Task Info After First Execution ============
+  console.log("\n📝 STEP 10: Checking task state after execution...");
+
+  let taskMetadata = await taskCore.getMetadata();
+  console.log("📊 Task Metadata After Execution 1:");
+  console.log("   executionCount:", taskMetadata.executionCount.toString());
+  console.log("   maxExecutions:", taskMetadata.maxExecutions.toString());
+  console.log("   Status:", taskMetadata.status, "(0=ACTIVE, 1=PAUSED, 2=EXECUTING, 3=COMPLETED)");
+  console.log("   lastExecutionTime:", taskMetadata.lastExecutionTime.toString());
+
+  // ============ STEP 10B: Verify Results ============
+  console.log("\n📝 STEP 10B: Verifying execution results...");
 
   const recipientBalanceAfter = await mockUSDC.balanceOf(recipient.address);
   const usdcReceived = recipientBalanceAfter - recipientBalanceBefore;
@@ -273,6 +352,42 @@ async function main() {
     console.log("   ✅ TRANSFER SUCCESSFUL!");
   } else {
     console.log("   ❌ TRANSFER FAILED - Amount mismatch!");
+  }
+
+  // ============ STEP 10C: Test Execution Limit Enforcement ============
+  console.log("\n📝 STEP 10C: Testing execution limit enforcement...");
+  console.log("--- ATTEMPTING EXECUTION 2 (should fail) ---");
+
+  try {
+    const executeTx2 = await executorHub.executeTask(taskId);
+    await executeTx2.wait();
+
+    // If we get here, execution succeeded (should NOT happen!)
+    console.log("❌ ISSUE: Second execution succeeded when it should have failed!");
+    console.log("   This means maxExecutions enforcement is NOT working!");
+
+    // Check state again
+    taskMetadata = await taskCore.getMetadata();
+    console.log("\n   Current task state:");
+    console.log("   executionCount:", taskMetadata.executionCount.toString());
+    console.log("   maxExecutions:", taskMetadata.maxExecutions.toString());
+    console.log("   Status:", taskMetadata.status);
+  } catch (error: any) {
+    console.log("✅ Second execution correctly FAILED!");
+    console.log("   Error reason:", error.reason || error.message);
+
+    // Verify task is in COMPLETED state
+    taskMetadata = await taskCore.getMetadata();
+    console.log("\n   Task state after failed execution attempt:");
+    console.log("   executionCount:", taskMetadata.executionCount.toString());
+    console.log("   maxExecutions:", taskMetadata.maxExecutions.toString());
+    console.log("   Status:", taskMetadata.status, "(3=COMPLETED - correct!)");
+
+    if (taskMetadata.status === 3n) {
+      console.log("   ✅ Task correctly marked as COMPLETED");
+    } else {
+      console.log("   ❌ Task should be COMPLETED but status is:", taskMetadata.status);
+    }
   }
 
   // ============ Summary ============

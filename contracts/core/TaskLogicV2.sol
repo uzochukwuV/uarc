@@ -70,12 +70,12 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
         bool canExecute = ITaskCore(taskCore).executeTask(params.executor);
         if (!canExecute) revert TaskNotExecutable();
 
-        // Step 4: Verify and execute actions (conditions checked by adapters)
-        // Conditions are now embedded in action adapter logic
+        // Step 4: Fetch and execute actions from TaskCore
+        // Actions are now stored on-chain during task creation
         bool actionsSuccess = _verifyAndExecuteActions(
+            taskCore,
             taskVault,
-            metadata.actionsHash,
-            params.actionsProof
+            metadata.actionsHash
         );
 
         emit ActionsExecuted(params.taskId, actionsSuccess);
@@ -146,49 +146,27 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
     // Condition checking removed - now handled by action adapters
 
     /**
-     * @notice Verify action proofs and execute actions
+     * @notice Fetch actions from TaskCore and execute them
+     * @param taskCore Address of task core (contains stored actions)
      * @param taskVault Address of task vault
-     * @param actionsHash Stored hash of actions
-     * @param actionsProof Encoded actions with Merkle proofs
+     * @param actionsHash Stored hash of actions (for verification)
      * @return bool Whether all actions succeeded
      */
     function _verifyAndExecuteActions(
+        address taskCore,
         address taskVault,
-        bytes32 actionsHash,
-        bytes calldata actionsProof
+        bytes32 actionsHash
     ) internal returns (bool) {
         require(actionRegistry != address(0), "Registry not set");
 
-        // Decode actions and proofs
-        (
-            Action[] memory actions,
-            bytes32[] memory merkleProof
-        ) = abi.decode(actionsProof, (Action[], bytes32[]));
+        // Fetch actions from TaskCore
+        ITaskCore.Action[] memory actions = ITaskCore(taskCore).getActions();
 
-        // Verify actions against hash
-        if (merkleProof.length > 0) {
-            // Multiple actions - verify Merkle root
-            bytes32[] memory leaves = new bytes32[](actions.length);
+        require(actions.length > 0, "No actions stored");
 
-            for (uint256 i = 0; i < actions.length; i++) {
-                leaves[i] = keccak256(abi.encode(
-                    actions[i].selector,
-                    actions[i].protocol,
-                    actions[i].params
-                ));
-            }
-
-            // Compute root and verify
-            bytes32 computedRoot = _computeRoot(leaves);
-            bool valid = merkleProof.verify(actionsHash, computedRoot);
-
-            if (!valid) revert ActionsFailed();
-        } else {
-            // Single action - hash the entire action array (matches TaskFactory._hashActions)
-            bytes32 computedHash = keccak256(abi.encode(actions));
-
-            if (computedHash != actionsHash) revert ActionsFailed();
-        }
+        // Verify actions hash matches stored hash
+        bytes32 computedHash = keccak256(abi.encode(actions));
+        if (computedHash != actionsHash) revert ActionsFailed();
 
         // Execute each action
         for (uint256 i = 0; i < actions.length; i++) {
@@ -207,7 +185,7 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
      * @param action Action to execute
      * @return bool Whether action succeeded
      */
-    function _executeAction(address taskVault, Action memory action) internal returns (bool) {
+    function _executeAction(address taskVault, ITaskCore.Action memory action) internal returns (bool) {
         // Get adapter from registry
         IActionRegistry.AdapterInfo memory adapterInfo =
             IActionRegistry(actionRegistry).getAdapter(action.selector);
@@ -287,45 +265,6 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
         return totalPaid;
     }
 
-    /**
-     * @notice Compute Merkle root from leaves
-     * @param leaves Array of leaf hashes
-     * @return bytes32 Merkle root
-     */
-    function _computeRoot(bytes32[] memory leaves) internal pure returns (bytes32) {
-        require(leaves.length > 0, "Empty leaves");
-
-        if (leaves.length == 1) {
-            return leaves[0];
-        }
-
-        uint256 n = leaves.length;
-        uint256 offset = 0;
-
-        while (n > 0) {
-            for (uint256 i = 0; i < n / 2; i++) {
-                leaves[offset + i] = _hashPair(
-                    leaves[offset + i * 2],
-                    leaves[offset + i * 2 + 1]
-                );
-            }
-            offset += n / 2;
-            n = n / 2;
-        }
-
-        return leaves[0];
-    }
-
-    /**
-     * @notice Hash pair in sorted order
-     */
-    function _hashPair(bytes32 a, bytes32 b) private pure returns (bytes32 value) {
-        assembly {
-            mstore(0x00, a)
-            mstore(0x20, b)
-            value := keccak256(0x00, 0x40)
-        }
-    }
 
     // ============ Structs ============
 

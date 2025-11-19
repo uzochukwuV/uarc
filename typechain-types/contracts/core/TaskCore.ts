@@ -24,6 +24,18 @@ import type {
 } from "../../common";
 
 export declare namespace ITaskCore {
+  export type ActionStruct = {
+    selector: BytesLike;
+    protocol: AddressLike;
+    params: BytesLike;
+  };
+
+  export type ActionStructOutput = [
+    selector: string,
+    protocol: string,
+    params: string
+  ] & { selector: string; protocol: string; params: string };
+
   export type TaskMetadataStruct = {
     id: BigNumberish;
     creator: AddressLike;
@@ -75,6 +87,9 @@ export interface TaskCoreInterface extends Interface {
       | "completeExecution"
       | "creator"
       | "executeTask"
+      | "getAction"
+      | "getActions"
+      | "getActionsLength"
       | "getMetadata"
       | "initialize"
       | "isExecutable"
@@ -82,6 +97,7 @@ export interface TaskCoreInterface extends Interface {
       | "metadata"
       | "pause"
       | "resume"
+      | "setActions"
       | "taskId"
       | "updateReward"
       | "vault"
@@ -89,6 +105,7 @@ export interface TaskCoreInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "ExecutionCheckpoint"
       | "TaskCancelled"
       | "TaskExecuted"
       | "TaskRewardUpdated"
@@ -104,6 +121,18 @@ export interface TaskCoreInterface extends Interface {
   encodeFunctionData(
     functionFragment: "executeTask",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAction",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getActions",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getActionsLength",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getMetadata",
@@ -127,6 +156,10 @@ export interface TaskCoreInterface extends Interface {
   encodeFunctionData(functionFragment: "metadata", values?: undefined): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "resume", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "setActions",
+    values: [ITaskCore.ActionStruct[]]
+  ): string;
   encodeFunctionData(functionFragment: "taskId", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "updateReward",
@@ -144,6 +177,12 @@ export interface TaskCoreInterface extends Interface {
     functionFragment: "executeTask",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getAction", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getActions", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getActionsLength",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getMetadata",
     data: BytesLike
@@ -157,12 +196,41 @@ export interface TaskCoreInterface extends Interface {
   decodeFunctionResult(functionFragment: "metadata", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "resume", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setActions", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "taskId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "updateReward",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "vault", data: BytesLike): Result;
+}
+
+export namespace ExecutionCheckpointEvent {
+  export type InputTuple = [
+    taskId: BigNumberish,
+    executionCount: BigNumberish,
+    maxExecutions: BigNumberish,
+    isExecutable: boolean,
+    checkpoint: string
+  ];
+  export type OutputTuple = [
+    taskId: bigint,
+    executionCount: bigint,
+    maxExecutions: bigint,
+    isExecutable: boolean,
+    checkpoint: string
+  ];
+  export interface OutputObject {
+    taskId: bigint;
+    executionCount: bigint;
+    maxExecutions: bigint;
+    isExecutable: boolean;
+    checkpoint: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace TaskCancelledEvent {
@@ -309,6 +377,16 @@ export interface TaskCore extends BaseContract {
     "nonpayable"
   >;
 
+  getAction: TypedContractMethod<
+    [index: BigNumberish],
+    [ITaskCore.ActionStructOutput],
+    "view"
+  >;
+
+  getActions: TypedContractMethod<[], [ITaskCore.ActionStructOutput[]], "view">;
+
+  getActionsLength: TypedContractMethod<[], [bigint], "view">;
+
   getMetadata: TypedContractMethod<
     [],
     [ITaskCore.TaskMetadataStructOutput],
@@ -369,6 +447,12 @@ export interface TaskCore extends BaseContract {
 
   resume: TypedContractMethod<[], [void], "nonpayable">;
 
+  setActions: TypedContractMethod<
+    [actions: ITaskCore.ActionStruct[]],
+    [void],
+    "nonpayable"
+  >;
+
   taskId: TypedContractMethod<[], [bigint], "view">;
 
   updateReward: TypedContractMethod<
@@ -395,6 +479,19 @@ export interface TaskCore extends BaseContract {
   getFunction(
     nameOrSignature: "executeTask"
   ): TypedContractMethod<[executor: AddressLike], [boolean], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getAction"
+  ): TypedContractMethod<
+    [index: BigNumberish],
+    [ITaskCore.ActionStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getActions"
+  ): TypedContractMethod<[], [ITaskCore.ActionStructOutput[]], "view">;
+  getFunction(
+    nameOrSignature: "getActionsLength"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "getMetadata"
   ): TypedContractMethod<[], [ITaskCore.TaskMetadataStructOutput], "view">;
@@ -459,6 +556,13 @@ export interface TaskCore extends BaseContract {
     nameOrSignature: "resume"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setActions"
+  ): TypedContractMethod<
+    [actions: ITaskCore.ActionStruct[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "taskId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -468,6 +572,13 @@ export interface TaskCore extends BaseContract {
     nameOrSignature: "vault"
   ): TypedContractMethod<[], [string], "view">;
 
+  getEvent(
+    key: "ExecutionCheckpoint"
+  ): TypedContractEvent<
+    ExecutionCheckpointEvent.InputTuple,
+    ExecutionCheckpointEvent.OutputTuple,
+    ExecutionCheckpointEvent.OutputObject
+  >;
   getEvent(
     key: "TaskCancelled"
   ): TypedContractEvent<
@@ -498,6 +609,17 @@ export interface TaskCore extends BaseContract {
   >;
 
   filters: {
+    "ExecutionCheckpoint(uint256,uint256,uint256,bool,string)": TypedContractEvent<
+      ExecutionCheckpointEvent.InputTuple,
+      ExecutionCheckpointEvent.OutputTuple,
+      ExecutionCheckpointEvent.OutputObject
+    >;
+    ExecutionCheckpoint: TypedContractEvent<
+      ExecutionCheckpointEvent.InputTuple,
+      ExecutionCheckpointEvent.OutputTuple,
+      ExecutionCheckpointEvent.OutputObject
+    >;
+
     "TaskCancelled(uint256,address)": TypedContractEvent<
       TaskCancelledEvent.InputTuple,
       TaskCancelledEvent.OutputTuple,

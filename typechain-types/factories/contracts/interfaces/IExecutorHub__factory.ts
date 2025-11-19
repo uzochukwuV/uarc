@@ -16,11 +16,6 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "CommitmentNotReady",
-    type: "error",
-  },
-  {
-    inputs: [],
     name: "ExecutorBlacklisted",
     type: "error",
   },
@@ -31,17 +26,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "InvalidCommitment",
-    type: "error",
-  },
-  {
-    inputs: [],
     name: "NotRegistered",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TaskLocked",
     type: "error",
   },
   {
@@ -67,31 +52,6 @@ const _abi = [
       },
     ],
     name: "ExecutionCompleted",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "taskId",
-        type: "uint256",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "executor",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "bytes32",
-        name: "commitment",
-        type: "bytes32",
-      },
-    ],
-    name: "ExecutionRequested",
     type: "event",
   },
   {
@@ -222,11 +182,6 @@ const _abi = [
         name: "taskId",
         type: "uint256",
       },
-      {
-        internalType: "bytes",
-        name: "actionsProof",
-        type: "bytes",
-      },
     ],
     name: "executeTask",
     outputs: [
@@ -237,42 +192,6 @@ const _abi = [
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "taskId",
-        type: "uint256",
-      },
-    ],
-    name: "getExecutionLock",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "address",
-            name: "executor",
-            type: "address",
-          },
-          {
-            internalType: "uint96",
-            name: "lockedAt",
-            type: "uint96",
-          },
-          {
-            internalType: "bytes32",
-            name: "commitment",
-            type: "bytes32",
-          },
-        ],
-        internalType: "struct IExecutorHub.ExecutionLock",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -348,25 +267,6 @@ const _abi = [
         name: "taskId",
         type: "uint256",
       },
-    ],
-    name: "isTaskLocked",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "taskId",
-        type: "uint256",
-      },
       {
         internalType: "address",
         name: "executor",
@@ -393,30 +293,6 @@ const _abi = [
     name: "registerExecutor",
     outputs: [],
     stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "taskId",
-        type: "uint256",
-      },
-      {
-        internalType: "bytes32",
-        name: "commitment",
-        type: "bytes32",
-      },
-    ],
-    name: "requestExecution",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "locked",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {

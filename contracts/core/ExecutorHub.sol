@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../interfaces/IExecutorHub.sol";
 import "../interfaces/ITaskLogic.sol";
+import "../interfaces/ITaskCore.sol";
 
 /**
  * @title ExecutorHub
@@ -17,14 +18,11 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     // ============ State Variables ============
 
     mapping(address => Executor) public executors;
-    mapping(uint256 => ExecutionLock) public taskLocks;
 
     address public taskLogic;
     address public taskRegistry;
 
     uint256 public minStakeAmount = 0.1 ether;
-    uint256 public lockDuration = 30 seconds;
-    uint256 public commitDelay = 1; // Seconds to wait after commit
 
     uint256 public totalExecutors;
 
@@ -124,11 +122,10 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     // ============ Execution Functions ============
 
     /// @inheritdoc IExecutorHub
-    /// @dev TESTNET: Direct execution without commit-reveal
-    /// Simply call executeTask directly with the actions proof
+    /// @dev Execute task with actions stored on-chain
+    /// TaskLogic will fetch actions from TaskCore
     function executeTask(
-        uint256 taskId,
-        bytes calldata actionsProof
+        uint256 taskId
     ) external nonReentrant returns (bool success) {
         // TESTNET: No registration requirement (for maximum flexibility)
         // Production: Uncomment to require registration
@@ -138,13 +135,21 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         // Production: Uncomment to check blacklist
         // if (executors[msg.sender].isSlashed) revert ExecutorBlacklisted();
 
-        // TESTNET: No commit-reveal pattern
+        // EARLY VALIDATION: Check task is executable before attempting execution
+        // This prevents unlimited execution attempts and provides early failure
+        require(taskRegistry != address(0), "Task registry not set");
+
+        (address taskCore, ) = _getTaskAddresses(taskId);
+        require(taskCore != address(0), "Task not found");
+        require(ITaskCore(taskCore).isExecutable(), "Task not executable");
+
         // Execute task directly via TaskLogic
+        // Actions are now fetched from TaskCore instead of passed as proof
         ITaskLogic.ExecutionParams memory params = ITaskLogic.ExecutionParams({
             taskId: taskId,
             executor: msg.sender,
             seed: bytes32(0), // No seed needed on testnet
-            actionsProof: actionsProof
+            actionsProof: bytes("") // Actions now fetched from TaskCore
         });
 
         ITaskLogic.ExecutionResult memory result = ITaskLogic(taskLogic).executeTask(params);
@@ -166,21 +171,6 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         emit ExecutionCompleted(taskId, msg.sender, result.success);
 
         return result.success;
-    }
-
-    /// @notice LEGACY: Commit-reveal pattern removed for testnet
-    /// @dev Use executeTask(taskId, actionsProof) instead
-    /// Kept for backwards compatibility but no longer used
-    function requestExecution(uint256 taskId, bytes32 commitment)
-        external
-        onlyRegistered
-        notBlacklisted
-        returns (bool locked)
-    {
-        // TESTNET: This function is deprecated but kept for backwards compatibility
-        // Just records execution immediately without locking
-        emit ExecutionRequested(taskId, msg.sender, commitment);
-        return true;
     }
 
     /// @inheritdoc IExecutorHub
@@ -218,11 +208,6 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         minStakeAmount = _minStake;
     }
 
-    function setLockDuration(uint256 _duration) external onlyOwner {
-        require(_duration > 0 && _duration <= 5 minutes, "Invalid duration");
-        lockDuration = _duration;
-    }
-
     function setTaskLogic(address _taskLogic) external onlyOwner {
         require(_taskLogic != address(0), "Invalid logic");
         taskLogic = _taskLogic;
@@ -251,20 +236,29 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         return executors[executor];
     }
 
-    /// @inheritdoc IExecutorHub
-    function getExecutionLock(uint256 taskId) external view returns (ExecutionLock memory) {
-        return taskLocks[taskId];
-    }
-
-    /// @inheritdoc IExecutorHub
-    function isTaskLocked(uint256 taskId) external view returns (bool) {
-        ExecutionLock storage lock = taskLocks[taskId];
-        if (lock.executor == address(0)) return false;
-        if (block.timestamp > lock.lockedAt + lockDuration) return false;
-        return true;
-    }
-
     // ============ Internal Functions ============
+
+    /// @notice Get task addresses from global registry
+    /// @param taskId Task identifier
+    /// @return taskCore Address of TaskCore
+    /// @return taskVault Address of TaskVault
+    function _getTaskAddresses(uint256 taskId)
+        internal
+        view
+        returns (address taskCore, address taskVault)
+    {
+        require(taskRegistry != address(0), "Registry not set");
+
+        (bool success, bytes memory data) = taskRegistry.staticcall(
+            abi.encodeWithSignature("getTaskAddresses(uint256)", taskId)
+        );
+
+        if (!success || data.length == 0) {
+            return (address(0), address(0));
+        }
+
+        (taskCore, taskVault) = abi.decode(data, (address, address));
+    }
 
     function _updateReputation(address executor, bool) internal {
         Executor storage exec = executors[executor];

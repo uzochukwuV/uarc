@@ -24,18 +24,6 @@ import type {
 } from "../../common";
 
 export declare namespace IExecutorHub {
-  export type ExecutionLockStruct = {
-    executor: AddressLike;
-    lockedAt: BigNumberish;
-    commitment: BytesLike;
-  };
-
-  export type ExecutionLockStructOutput = [
-    executor: string,
-    lockedAt: bigint,
-    commitment: string
-  ] & { executor: string; lockedAt: bigint; commitment: string };
-
   export type ExecutorStruct = {
     addr: AddressLike;
     stakedAmount: BigNumberish;
@@ -77,12 +65,9 @@ export interface IExecutorHubInterface extends Interface {
       | "addStake"
       | "canExecute"
       | "executeTask"
-      | "getExecutionLock"
       | "getExecutor"
-      | "isTaskLocked"
       | "recordExecution"
       | "registerExecutor"
-      | "requestExecution"
       | "slashExecutor"
       | "unregisterExecutor"
       | "withdrawStake"
@@ -91,7 +76,6 @@ export interface IExecutorHubInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "ExecutionCompleted"
-      | "ExecutionRequested"
       | "ExecutorRegistered"
       | "ExecutorSlashed"
       | "ExecutorUnregistered"
@@ -106,19 +90,11 @@ export interface IExecutorHubInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeTask",
-    values: [BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getExecutionLock",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getExecutor",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isTaskLocked",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "recordExecution",
@@ -127,10 +103,6 @@ export interface IExecutorHubInterface extends Interface {
   encodeFunctionData(
     functionFragment: "registerExecutor",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "requestExecution",
-    values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "slashExecutor",
@@ -152,15 +124,7 @@ export interface IExecutorHubInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getExecutionLock",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getExecutor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isTaskLocked",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -169,10 +133,6 @@ export interface IExecutorHubInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "registerExecutor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "requestExecution",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -204,28 +164,6 @@ export namespace ExecutionCompletedEvent {
     taskId: bigint;
     executor: string;
     success: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ExecutionRequestedEvent {
-  export type InputTuple = [
-    taskId: BigNumberish,
-    executor: AddressLike,
-    commitment: BytesLike
-  ];
-  export type OutputTuple = [
-    taskId: bigint,
-    executor: string,
-    commitment: string
-  ];
-  export interface OutputObject {
-    taskId: bigint;
-    executor: string;
-    commitment: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -350,15 +288,9 @@ export interface IExecutorHub extends BaseContract {
   canExecute: TypedContractMethod<[executor: AddressLike], [boolean], "view">;
 
   executeTask: TypedContractMethod<
-    [taskId: BigNumberish, actionsProof: BytesLike],
+    [taskId: BigNumberish],
     [boolean],
     "nonpayable"
-  >;
-
-  getExecutionLock: TypedContractMethod<
-    [taskId: BigNumberish],
-    [IExecutorHub.ExecutionLockStructOutput],
-    "view"
   >;
 
   getExecutor: TypedContractMethod<
@@ -366,8 +298,6 @@ export interface IExecutorHub extends BaseContract {
     [IExecutorHub.ExecutorStructOutput],
     "view"
   >;
-
-  isTaskLocked: TypedContractMethod<[taskId: BigNumberish], [boolean], "view">;
 
   recordExecution: TypedContractMethod<
     [
@@ -381,12 +311,6 @@ export interface IExecutorHub extends BaseContract {
   >;
 
   registerExecutor: TypedContractMethod<[], [void], "payable">;
-
-  requestExecution: TypedContractMethod<
-    [taskId: BigNumberish, commitment: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
 
   slashExecutor: TypedContractMethod<
     [executor: AddressLike, amount: BigNumberish, reason: string],
@@ -414,18 +338,7 @@ export interface IExecutorHub extends BaseContract {
   ): TypedContractMethod<[executor: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "executeTask"
-  ): TypedContractMethod<
-    [taskId: BigNumberish, actionsProof: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "getExecutionLock"
-  ): TypedContractMethod<
-    [taskId: BigNumberish],
-    [IExecutorHub.ExecutionLockStructOutput],
-    "view"
-  >;
+  ): TypedContractMethod<[taskId: BigNumberish], [boolean], "nonpayable">;
   getFunction(
     nameOrSignature: "getExecutor"
   ): TypedContractMethod<
@@ -433,9 +346,6 @@ export interface IExecutorHub extends BaseContract {
     [IExecutorHub.ExecutorStructOutput],
     "view"
   >;
-  getFunction(
-    nameOrSignature: "isTaskLocked"
-  ): TypedContractMethod<[taskId: BigNumberish], [boolean], "view">;
   getFunction(
     nameOrSignature: "recordExecution"
   ): TypedContractMethod<
@@ -451,13 +361,6 @@ export interface IExecutorHub extends BaseContract {
   getFunction(
     nameOrSignature: "registerExecutor"
   ): TypedContractMethod<[], [void], "payable">;
-  getFunction(
-    nameOrSignature: "requestExecution"
-  ): TypedContractMethod<
-    [taskId: BigNumberish, commitment: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
   getFunction(
     nameOrSignature: "slashExecutor"
   ): TypedContractMethod<
@@ -478,13 +381,6 @@ export interface IExecutorHub extends BaseContract {
     ExecutionCompletedEvent.InputTuple,
     ExecutionCompletedEvent.OutputTuple,
     ExecutionCompletedEvent.OutputObject
-  >;
-  getEvent(
-    key: "ExecutionRequested"
-  ): TypedContractEvent<
-    ExecutionRequestedEvent.InputTuple,
-    ExecutionRequestedEvent.OutputTuple,
-    ExecutionRequestedEvent.OutputObject
   >;
   getEvent(
     key: "ExecutorRegistered"
@@ -532,17 +428,6 @@ export interface IExecutorHub extends BaseContract {
       ExecutionCompletedEvent.InputTuple,
       ExecutionCompletedEvent.OutputTuple,
       ExecutionCompletedEvent.OutputObject
-    >;
-
-    "ExecutionRequested(uint256,address,bytes32)": TypedContractEvent<
-      ExecutionRequestedEvent.InputTuple,
-      ExecutionRequestedEvent.OutputTuple,
-      ExecutionRequestedEvent.OutputObject
-    >;
-    ExecutionRequested: TypedContractEvent<
-      ExecutionRequestedEvent.InputTuple,
-      ExecutionRequestedEvent.OutputTuple,
-      ExecutionRequestedEvent.OutputObject
     >;
 
     "ExecutorRegistered(address,uint256)": TypedContractEvent<

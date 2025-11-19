@@ -8,20 +8,154 @@ V2 is a complete rewrite addressing all security vulnerabilities and architectur
 
 ## Architecture
 
-```
-TaskFactory (Deploys Tasks)
-    │
-    ├─> TaskCore (Metadata & Lifecycle)
-    │
-    ├─> TaskVault (Isolated Funds)
-    │
-    └─> TaskLogic (Execution Orchestration)
-            │
-            ├─> ConditionOracle (Verify Conditions)
-            ├─> ActionRegistry (Manage Adapters)
-            └─> RewardManager (Distribute Rewards)
+### System Overview
 
-ExecutorHub (Executor Management)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      TASKER ON-CHAIN V2                         │
+│                    (Post-Audit Architecture)                    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                         TASK CREATION                                  │
+└────────────────────────────────────────────────────────────────────────┘
+
+User/Creator
+    │
+    ├─> TaskFactory.createTask() or createTaskWithTokens()
+    │       │
+    │       ├─> Deploy TaskCore clone (EIP-1167)
+    │       ├─> Deploy TaskVault clone (EIP-1167)
+    │       ├─> Store Actions on-chain in TaskCore
+    │       ├─> Fund TaskVault (native + ERC20 tokens)
+    │       └─> Register with GlobalRegistry
+    │
+    └─> Return: (taskId, taskCore, taskVault)
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        TASK EXECUTION FLOW                             │
+└────────────────────────────────────────────────────────────────────────┘
+
+Executor
+    │
+    ├─> ExecutorHub.executeTask(taskId)
+    │       │
+    │       └─> ITaskLogic.executeTask(ExecutionParams)
+    │               │
+    │               ├─ STEP 1: Load Task
+    │               │   ├─> GlobalRegistry.getTaskAddresses(taskId)
+    │               │   └─> Get taskCore, taskVault addresses
+    │               │
+    │               ├─ STEP 2: Verify Task Executable
+    │               │   ├─> TaskCore.getMetadata()
+    │               │   ├─> Check status = ACTIVE
+    │               │   ├─> Check not expired
+    │               │   └─> Check max executions not reached
+    │               │
+    │               ├─ STEP 3: Fetch & Execute Actions
+    │               │   ├─> TaskCore.getActions() [stored on-chain]
+    │               │   │
+    │               │   └─> For each action:
+    │               │       ├─> ActionRegistry.getAdapter(selector)
+    │               │       ├─> IActionAdapter.canExecute(params)
+    │               │       │   └─> Check condition met (adapter logic)
+    │               │       │
+    │               │       ├─> IActionAdapter.getTokenRequirements(params)
+    │               │       │   └─> Get tokens & amounts needed
+    │               │       │
+    │               │       └─> TaskVault.executeTokenAction(token, adapter, amount, data)
+    │               │           ├─> Reserve tokens from balance
+    │               │           ├─> Approve adapter to spend tokens
+    │               │           ├─> Call adapter.execute()
+    │               │           ├─> Unreserve tokens
+    │               │           └─> Return (success, result)
+    │               │
+    │               ├─ STEP 4: Distribute Reward
+    │               │   ├─> RewardManager.calculateReward()
+    │               │   │   ├─> Get executor reputation multiplier
+    │               │   │   ├─> Calculate executor reward
+    │               │   │   ├─> Calculate platform fee
+    │               │   │   └─> Calculate gas reimbursement
+    │               │   │
+    │               │   └─> TaskVault.releaseReward(executor, amount)
+    │               │       └─> Transfer ETH to executor
+    │               │
+    │               └─ STEP 5: Update Task Status
+    │                   ├─> TaskCore.completeExecution(success)
+    │                   │   ├─> If success: increment executionCount
+    │                   │   ├─> Check if maxExecutions reached
+    │                   │   └─> Set status = COMPLETED or ACTIVE
+    │                   │
+    │                   └─> ExecutorHub tracks execution stats
+    │
+    └─> Return: ExecutionResult { success, gasUsed, rewardPaid }
+
+```
+
+### Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  CREATION TIME (Task Setup)                 │
+└─────────────────────────────────────────────────────────────┘
+
+Creator sends:
+  - Native ETH (reward + gas reimbursement)
+  - ERC20 tokens (optional)
+  - Task parameters (expiry, max executions, reward/execution)
+  - Actions array (protocol, selector, params)
+
+                        ↓↓↓
+                    TaskFactory
+                        │
+    ┌───────────────────┼───────────────────┐
+    │                   │                   │
+    ▼                   ▼                   ▼
+TaskCore            TaskVault          GlobalRegistry
+├─ id               ├─ nativeBalance   ├─ taskId ↔ (core, vault)
+├─ creator          ├─ tokenBalances   ├─ creator
+├─ status=ACTIVE    ├─ tokenReserved   ├─ createdAt
+├─ metadata         ├─ nativeReserved  └─ expiresAt
+├─ rewardPerExec    └─ trackedTokens
+├─ maxExecutions
+├─ executionCount
+├─ lastExecutionTime
+├─ recurringInterval
+├─ expiresAt
+└─ actions[] [STORED ON-CHAIN] ◄─── Actions stored here!
+
+
+┌─────────────────────────────────────────────────────────────┐
+│               EXECUTION TIME (Task Running)                 │
+└─────────────────────────────────────────────────────────────┘
+
+TaskCore State Changes:
+  1. ACTIVE → EXECUTING (when execute starts)
+  2. executionCount increments
+  3. lastExecutionTime updates
+  4. EXECUTING → COMPLETED (if max executions reached)
+     or EXECUTING → ACTIVE (if more executions allowed)
+
+TaskVault State Changes:
+  1. nativeBalance decreases (reward release)
+  2. nativeReserved tracks in-flight payments
+  3. tokenBalances decreases (action execution)
+  4. tokenReserved tracks pending token operations
+
+ExecutorHub State Changes:
+  1. totalExecutions++
+  2. successfulExecutions++ or failedExecutions++
+  3. reputationScore updates
+
+RewardManager Calculation:
+  multiplier = 100% + (reputationScore * 2500 / 10000)
+             = range 100% to 125%
+
+  executorReward = baseReward * multiplier
+  platformFee = baseReward * 1% (configurable)
+  gasReimbursement = gasUsed * gasprice * 120%
+
 ```
 
 ## Contracts
@@ -30,43 +164,83 @@ ExecutorHub (Executor Management)
 
 | Contract | Purpose | Size | Key Features |
 |----------|---------|------|--------------|
-| **TaskFactory** | Deploy new tasks | ~250 lines | EIP-1167 clones, batch deployment |
-| **TaskCore** | Task metadata | ~200 lines | Lifecycle management, status tracking |
-| **TaskVault** | Isolated funds | ~280 lines | Per-task escrow, multi-token support |
-| **TaskLogic** | Execution flow | ~180 lines | Condition + action + reward orchestration |
-| **ExecutorHub** | Executor registry | ~270 lines | Staking, commit-reveal, reputation |
+| **TaskFactory** | Deploy new tasks | 298 lines | EIP-1167 clones, on-chain action storage |
+| **TaskCore** | Task metadata & storage | 258 lines | Lifecycle management, on-chain action storage, status tracking |
+| **TaskVault** | Isolated funds | 259 lines | Per-task escrow, multi-token support, token reservation |
+| **TaskLogicV2** | Execution orchestration | 313 lines | Adapter-based condition checking, action execution, reward distribution |
+| **ExecutorHub** | Executor registry | 252 lines | Free registration (testnet), reputation tracking |
+| **GlobalRegistry** | Task indexing | 324 lines | Task discovery, pagination, status queries |
 
 ### Support Contracts
 
-
-| **ActionRegistry** | Manage adapters | ~90 lines | Protocol whitelisting, gas limits |
-| **RewardManager** | Distribute payments | ~180 lines | Reputation multipliers, platform fees |
+| Contract | Purpose | Size | Key Features |
+|----------|---------|------|--------------|
+| **ActionRegistry** | Manage adapters | 91 lines | Adapter registration, protocol whitelisting, gas limits |
+| **RewardManager** | Distribute payments | 176 lines | Reputation multipliers (100-125%), platform fees, gas reimbursement |
 
 ### Adapters
 
-| Adapter | Purpose | Size | Protocols Supported |
-|---------|---------|------|---------------------|
-| **SpecificUniswapV2Adapter** | DEX swaps | ~180 lines | Uniswap V2, SushiSwap, StellaSwap, etc. |
+| Adapter | Purpose | Size | Key Features |
+|---------|---------|------|------------------|
+| **TimeBasedTransferAdapter** | Time-based token transfers | 175 lines | Condition checking in adapter, `getTokenRequirements()`, `canExecute()` |
+| **UniswapV2USDCETHBuyLimitAdapter** | Price-based swaps | TBD | Adapter-based condition logic |
 
-## Key Improvements Over V1
+## Architecture Changes (Post-Audit)
+
+### ConditionOracle Removal ✅
+**Old Design**: Centralized ConditionOracle contract verified all conditions
+- Single point of failure
+- Hardcoded logic for each condition type
+- Required complex Merkle proofs
+
+**New Design**: Conditions checked by adapters
+- ✅ Each adapter implements `canExecute(params)`
+- ✅ Decentralized condition logic
+- ✅ Simpler to audit and extend
+- Example: [TimeBasedTransferAdapter:62-87](contracts/adapters/TimeBasedTransferAdapter.sol#L62-L87)
+
+### On-Chain Action Storage ✅
+**Old Design**: Actions passed as proofs during execution
+- Required complex off-chain proof generation
+- More prone to front-running
+
+**New Design**: Actions stored on-chain in TaskCore
+- ✅ Set during task creation via `setActions()`
+- ✅ Fetched during execution via `getActions()`
+- ✅ Verified against `actionsHash` for integrity
+- Location: [TaskCore:220-235](contracts/core/TaskCore.sol#L220-L235)
+
+### Adapter Token Requirements ✅
+**Old Design**: TaskLogic hardcoded parameter decoding for each adapter
+
+**New Design**: Adapters declare their token needs
+- ✅ Each adapter implements `getTokenRequirements(params)`
+- ✅ Returns (tokens[], amounts[])
+- ✅ TaskLogicV2 agnostic to adapter internals
+- Example: [TimeBasedTransferAdapter:40-54](contracts/adapters/TimeBasedTransferAdapter.sol#L40-L54)
+
+---
+
+## Key Features
 
 ### Security
 
 ✅ **No Low-Level Calls**: All interactions use typed interfaces
 ✅ **Isolated Vaults**: Each task has its own vault (no fund mixing)
 ✅ **SafeERC20**: Proper handling of non-standard tokens
-✅ **ReentrancyGuard**: Protection on all fund transfers
+✅ **ReentrancyGuard**: Protection on all fund transfers and adapter execution
 ✅ **Pull Payments**: Executors pull rewards, not pushed
 ✅ **Access Control**: Granular permissions with modifiers
-✅ **Commit-Reveal**: Prevents front-running of task execution
+✅ **Decentralized Conditions**: Adapters verify their own conditions
 
 ### Architecture
 
-✅ **Modular Design**: Small, focused contracts (<300 lines)
+✅ **Modular Design**: Small, focused contracts (<330 lines)
 ✅ **Factory Pattern**: Gas-efficient deployment via EIP-1167 clones
 ✅ **Interface-Driven**: Type-safe, testable interactions
 ✅ **Separation of Concerns**: Metadata/funds/execution split
-✅ **Upgradeable**: Core contracts can be upgraded via proxies
+✅ **Extensible**: New adapters added without core changes
+✅ **GlobalRegistry**: Centralized task discovery and indexing
 
 ### Gas Efficiency
 
@@ -75,6 +249,90 @@ ExecutorHub (Executor Management)
 ✅ **Immutable Variables**: Reduced SLOAD costs
 ✅ **Minimal Proxies**: Clone pattern for task deployment
 ✅ **Off-Chain Indexing**: Events for query, not storage iteration
+
+## State Management Details
+
+### Task Lifecycle States
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Task State Machine                      │
+└─────────────────────────────────────────────────────────┘
+
+CREATION: TaskFactory creates TaskCore with status=ACTIVE
+    │
+    ├─ Creator can PAUSE → PAUSED state
+    │  Creator can RESUME → ACTIVE state (from PAUSED)
+    │
+    ├─ Executor calls executeTask()
+    │  ├─ TaskCore.executeTask() called
+    │  │  └─ Status: ACTIVE → EXECUTING
+    │  │
+    │  ├─ TaskLogicV2 runs actions
+    │  │  (condition checking, execution, reward)
+    │  │
+    │  └─ TaskCore.completeExecution(success)
+    │     └─ If success:
+    │        ├─ executionCount++
+    │        ├─ lastExecutionTime = block.timestamp
+    │        ├─ If executionCount >= maxExecutions:
+    │        │  └─ Status: EXECUTING → COMPLETED
+    │        └─ Else:
+    │           └─ Status: EXECUTING → ACTIVE
+    │
+    ├─ Task expires (expiresAt < block.timestamp)
+    │  └─ isExecutable() returns false
+    │
+    └─ Creator calls cancel()
+       └─ Status: ACTIVE/PAUSED → CANCELLED
+          Creator can withdraw remaining funds
+
+```
+
+### State Reading Flow
+
+**At Creation Time:**
+```
+TaskFactory._createTask()
+  ├─ Read: nextTaskId (for new task ID)
+  ├─ Write: Create TaskCore clone
+  │ └─ TaskCore.initialize(metadata)
+  │    └─ Write: metadata, creator, vault, logic
+  ├─ Write: Create TaskVault clone
+  │ └─ TaskVault.initialize()
+  │    └─ Write: taskCore, creator, rewardManager, taskLogic
+  ├─ Write: Store actions in TaskCore.setActions()
+  ├─ Write: Fund TaskVault with tokens
+  └─ Write: Register in GlobalRegistry
+```
+
+**At Execution Time:**
+```
+TaskLogicV2.executeTask()
+  ├─ Read: TaskCore.getMetadata() [all task info]
+  │  └─ Check: status, maxExecutions, executionCount, expiresAt
+  ├─ Read: TaskCore.getActions() [stored actions]
+  │  └─ For each action:
+  │     ├─ Read: ActionRegistry.getAdapter()
+  │     ├─ Call: adapter.canExecute() [condition check]
+  │     ├─ Call: adapter.getTokenRequirements() [token info]
+  │     ├─ Write: TaskVault reserves tokens
+  │     ├─ Call: adapter.execute()
+  │     └─ Write: TaskVault unreserves tokens
+  ├─ Call: RewardManager.calculateReward()
+  │  └─ Read: ExecutorHub.getExecutor() [reputation]
+  ├─ Write: TaskVault.releaseReward() [transfer ETH]
+  └─ Write: TaskCore.completeExecution() [update counters]
+```
+
+**State Consistency Checks:**
+```
+✅ Actions hash verified: keccak256(actions) == stored hash
+✅ Token balances tracked: balance - reserved = available
+✅ Execution counters atomic: incremented and checked together
+✅ Status transitions valid: only allowed state changes
+✅ Reentrancy protected: ReentrancyGuard on sensitive operations
+```
 
 ## Usage Examples
 
@@ -86,77 +344,86 @@ TaskCore coreImpl = new TaskCore();
 TaskVault vaultImpl = new TaskVault();
 
 // Deploy core infrastructure
-TaskLogic logic = new TaskLogic(owner);
+TaskLogicV2 logic = new TaskLogicV2(owner);
 ExecutorHub hub = new ExecutorHub(owner);
-ConditionOracle oracle = new ConditionOracle(owner);
 ActionRegistry registry = new ActionRegistry(owner);
 RewardManager rewardMgr = new RewardManager(owner);
+GlobalRegistry globalRegistry = new GlobalRegistry(owner);
 
-// Deploy factory
+// Deploy factory (no ConditionOracle parameter anymore!)
 TaskFactory factory = new TaskFactory(
     address(coreImpl),
     address(vaultImpl),
     address(logic),
     address(hub),
-    address(oracle),
     address(registry),
     address(rewardMgr),
     owner
 );
 
-// Deploy adapters
-UniswapV2Adapter uniswapAdapter = new UniswapV2Adapter(owner);
+// Set factory in global registry
+globalRegistry.authorizeFactory(address(factory));
+
+// Configure task logic
+logic.setActionRegistry(address(registry));
+logic.setRewardManager(address(rewardMgr));
+logic.setExecutorHub(address(hub));
+logic.setTaskRegistry(address(globalRegistry));
+
+// Deploy adapters with condition logic embedded
+TimeBasedTransferAdapter timeAdapter = new TimeBasedTransferAdapter();
+UniswapV2USDCETHBuyLimitAdapter uniswapAdapter = new UniswapV2USDCETHBuyLimitAdapter();
+
+// Register adapters in ActionRegistry
+registry.registerAdapter(
+    timeAdapter.name.selector,  // Function selector
+    address(timeAdapter),
+    300000,  // Gas limit
+    true     // Requires tokens
+);
 ```
 
-### 2. Create Uniswap Limit Order Task
+### 2. Create Time-Based Transfer Task
 
 ```solidity
-// User wants to swap 1000 USDC for WETH when ETH price drops to $1800
+// User wants to transfer 100 USDC at a specific future time
 
-// Prepare parameters
 ITaskFactory.TaskParams memory taskParams = ITaskFactory.TaskParams({
     expiresAt: block.timestamp + 30 days,
-    maxExecutions: 1, // One-time
+    maxExecutions: 1,           // One-time
     recurringInterval: 0,
     rewardPerExecution: 0.01 ether,
-    seedCommitment: keccak256(abi.encode("random-seed"))
+    seedCommitment: bytes32(0)  // No seed needed for adapter
 });
 
-ITaskFactory.ConditionParams memory condition = ITaskFactory.ConditionParams({
-    conditionType: IConditionOracle.ConditionType.PRICE_BELOW,
-    conditionData: abi.encode(WETH_ADDRESS, 1800e8) // $1800 (Chainlink 8 decimals)
-});
-
+// Conditions are now embedded in adapter parameters!
 ITaskFactory.ActionParams[] memory actions = new ITaskFactory.ActionParams[](1);
 actions[0] = ITaskFactory.ActionParams({
     selector: bytes4(keccak256("execute(address,bytes)")),
-    protocol: UNISWAP_V2_ROUTER,
-    params: abi.encode(UniswapV2Adapter.SwapParams({
-        router: UNISWAP_V2_ROUTER,
-        tokenIn: USDC_ADDRESS,
-        tokenOut: WETH_ADDRESS,
-        amountIn: 1000e6, // 1000 USDC
-        minAmountOut: 0.5 ether, // At least 0.5 WETH
-        recipient: msg.sender
+    protocol: address(usdcToken),  // Protocol being used
+    params: abi.encode(TimeBasedTransferAdapter.TransferParams({
+        token: USDC_ADDRESS,
+        recipient: msg.sender,
+        amount: 100e6,  // 100 USDC
+        executeAfter: block.timestamp + 1 days  // Condition embedded here!
     }))
 });
 
 ITaskFactory.TokenDeposit[] memory deposits = new ITaskFactory.TokenDeposit[](1);
 deposits[0] = ITaskFactory.TokenDeposit({
     token: USDC_ADDRESS,
-    amount: 1000e6
+    amount: 100e6
 });
 
 // Approve USDC
-IERC20(USDC_ADDRESS).approve(address(factory), 1000e6);
+IERC20(USDC_ADDRESS).approve(address(factory), 100e6);
 
 // Create task
 (uint256 taskId, address taskCore, address taskVault) = factory.createTaskWithTokens{
-    value: 0.01 ether // Reward
+    value: 0.01 ether  // Native reward for executor
 }(
     taskParams,
-    condition,
-    actions,
+    actions,           // No separate conditions parameter!
     deposits
 );
 ```
@@ -164,24 +431,23 @@ IERC20(USDC_ADDRESS).approve(address(factory), 1000e6);
 ### 3. Execute Task (Executor)
 
 ```solidity
-// Step 1: Executor commits to execution
-bytes32 nonce = keccak256(abi.encode(block.timestamp, msg.sender, taskId));
-bytes32 commitment = keccak256(abi.encode(nonce));
+// TESTNET: Direct execution (no commit-reveal)
+// Production: Would add commit-reveal protection
 
-executorHub.requestExecution(taskId, commitment);
+bool success = executorHub.executeTask(taskId);
 
-// Step 2: Wait 1 block
-
-// Step 3: Execute task
-bytes memory conditionProof = abi.encode(condition);
-bytes memory actionsProof = abi.encode(actions);
-
-bool success = executorHub.executeTask(
-    taskId,
-    nonce, // Reveal
-    conditionProof,
-    actionsProof
-);
+// TaskLogicV2 will:
+// 1. Load task from GlobalRegistry
+// 2. Check if task is executable
+// 3. Fetch actions from TaskCore.getActions()
+// 4. For each action:
+//    - Get adapter from ActionRegistry
+//    - Call adapter.canExecute(params) <- Condition check!
+//    - Call adapter.getTokenRequirements(params) <- Token requirement!
+//    - Call TaskVault.executeTokenAction() with adapter
+// 5. Calculate reward with RewardManager
+// 6. Release reward to executor
+// 7. Update task status in TaskCore
 ```
 
 ### 4. Cancel Task (Creator)
@@ -217,28 +483,42 @@ Before mainnet deployment:
 - [ ] Bug bounty program
 - [ ] Testnet deployment (min 30 days)
 
-### Known Limitations
+### Known Limitations & Testnet Mode
 
-1. **TaskLogic Simplified**: Current implementation has simplified condition/action verification. Production version needs full Merkle proof verification.
+1. **Testnet Mode (Simplified Security)**
+   - ✅ No executor registration requirement (anyone can execute)
+   - ✅ No commit-reveal protection (direct execution allowed)
+   - ✅ No stake requirement for executors
+   - ⚠️ Before mainnet: uncomment checks in [ExecutorHub:129-135](contracts/core/ExecutorHub.sol#L129-L135)
 
-2. **No Global Registry**: TaskFactory stores tasks internally. For production, add a GlobalRegistry contract for cross-task queries.
+2. **Limited Adapter Set**
+   - ✅ TimeBasedTransferAdapter (implemented & tested)
+   - ⏳ UniswapV2USDCETHBuyLimitAdapter (condition logic pending)
+   - ⏳ Aave, Compound, Generic adapters
 
-3. **Limited Adapter Set**: Only UniswapV2Adapter implemented. Need Aave, Compound, and generic adapters.
+3. **Gas Optimization Opportunities**
+   - Storage packing could be further optimized
+   - Consider using PUSH0 opcode (Ethereum Shanghai+)
+   - Batch operations could reduce transaction costs
 
-4. **No Upgradability**: Task instances are not upgradeable (by design). Core contracts need proxy pattern added.
-
-5. **No Pause Mechanism**: Missing global emergency pause. Should add Pausable to critical contracts.
+4. **Multi-Token Execution**
+   - Currently supports single-token adapters only
+   - Future: Handle multi-token adapters (partially in [TaskLogicV2:232](contracts/core/TaskLogicV2.sol#L232))
 
 ## Development Roadmap
 
 ### Phase 1: Core Enhancement (Current)
 - ✅ Implement all interfaces
-- ✅ Implement core contracts
-- ✅ Implement support contracts
-- ✅ Implement UniswapV2Adapter
-- ⏳ Add GlobalRegistry
-- ⏳ Complete TaskLogic verification
-- ⏳ Add UUPS proxy support
+- ✅ Implement core contracts (TaskCore, TaskVault, TaskFactory)
+- ✅ Implement support contracts (ExecutorHub, ActionRegistry, RewardManager)
+- ✅ Implement GlobalRegistry with task discovery
+- ✅ Implement TaskLogicV2 with adapter-based execution
+- ✅ Implement TimeBasedTransferAdapter
+- ✅ Remove ConditionOracle (move to adapters)
+- ✅ Move action storage on-chain
+- ✅ Add adapter token requirements pattern
+- ⏳ Complete UniswapV2USDCETHBuyLimitAdapter (condition logic)
+- ⏳ Add UUPS proxy support for upgradeable contracts
 
 ### Phase 2: Testing
 - ⏳ Unit tests (100% coverage)
@@ -282,18 +562,31 @@ npx hardhat deploy --network polkadotHubTestnet
 ## Contract Addresses
 
 ### Polkadot Hub Testnet
-*(To be deployed)*
 
+**Core Contracts:**
 - TaskFactory: `TBD`
-- TaskLogic: `TBD`
+- TaskCore (implementation): `TBD`
+- TaskVault (implementation): `TBD`
+- TaskLogicV2: `TBD`
 - ExecutorHub: `TBD`
-- ConditionOracle: `TBD`
+- GlobalRegistry: `TBD`
+
+**Support Contracts:**
 - ActionRegistry: `TBD`
 - RewardManager: `TBD`
-- UniswapV2Adapter: `TBD`
+
+**Adapters:**
+- TimeBasedTransferAdapter: `0x629cfCA0e279d895A798262568dBD8DaA7582912` ✅ (Deployed & Tested)
+- UniswapV2USDCETHBuyLimitAdapter: `TBD`
+
+**Test Results:**
+- ✅ Task #1: TimeBasedTransferAdapter
+  - Created: Block 2210601
+  - Executed: Successfully transferred 100 USDC
+  - Tx: `0xd48e5d55917bfb9e1ca51a55860e673c2b3d6aa7d226bd7bd13a6a25ebd4b4c0`
 
 ### Mainnet
-*(Not yet deployed)*
+*(Not yet deployed - Security audit required)*
 
 ## Contributing
 

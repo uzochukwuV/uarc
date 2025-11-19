@@ -11,6 +11,7 @@ interface TaskCardProps {
   onCancel?: (taskId: string) => void;
   onPause?: (taskId: string) => void;
   onResume?: (taskId: string) => void;
+  onExecute?: (taskId: string) => void;
 }
 
 const statusColors = {
@@ -27,11 +28,67 @@ const typeIcons = {
   AUTO_COMPOUND: Zap,
 };
 
-export function TaskCard({ task, showActions = false, onCancel, onPause, onResume }: TaskCardProps) {
+export function TaskCard({ task, showActions = false, onCancel, onPause, onResume, onExecute }: TaskCardProps) {
   const TypeIcon = typeIcons[task.type];
-  const progress = task.maxExecutions > 0 
-    ? (task.executionCount / task.maxExecutions) * 100 
+  const progress = task.maxExecutions > 0
+    ? (task.executionCount / task.maxExecutions) * 100
     : 0;
+
+  // Get executable status from smart contract
+  // isExecutable is determined by TaskCore.isExecutable() which checks:
+  // 1. Task is ACTIVE
+  // 2. Not expired
+  // 3. Execution count < maxExecutions
+  // 4. Time-based conditions met (if recurring)
+  const isExecutable = (task as any).isExecutable === true;
+
+  // Get remaining executions
+  const remainingExecutions = task.maxExecutions > 0
+    ? task.maxExecutions - task.executionCount
+    : -1;
+
+  // Get status message based on smart contract executable status
+  const getStatusMessage = () => {
+    if (task.status === TaskStatus.COMPLETED) return "Task Completed";
+    if (task.status === TaskStatus.PAUSED) return "Task Paused";
+    if (task.status === TaskStatus.CANCELLED) return "Task Cancelled";
+    if (task.status === TaskStatus.EXECUTING) return "Task Executing";
+
+    // Task is ACTIVE, check if executable
+    if (!isExecutable) {
+      const now = Math.floor(Date.now() / 1000);
+
+      // Check expiration
+      if (task.expiresAt && typeof task.expiresAt === 'number' && now > task.expiresAt) {
+        return "Task Expired";
+      }
+
+      // Check execution limit
+      if (task.maxExecutions > 0 && task.executionCount >= task.maxExecutions) {
+        return "Execution Limit Reached";
+      }
+
+      // Check time-based conditions (recurring tasks)
+      const recurringInterval = (task as any).recurringInterval;
+      const lastExecutionTime = (task as any).lastExecutionTime;
+      if (recurringInterval && recurringInterval > 0 && lastExecutionTime && lastExecutionTime > 0) {
+        const nextExecutionTime = lastExecutionTime + recurringInterval;
+        if (now < nextExecutionTime) {
+          const secondsUntilReady = nextExecutionTime - now;
+          return `Ready in ${secondsUntilReady}s`;
+        }
+      }
+
+      return "Not Executable";
+    }
+
+    // Task is executable
+    if (remainingExecutions > 0) {
+      return `Ready to Execute (${remainingExecutions} left)`;
+    }
+
+    return "Ready to Execute";
+  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -99,6 +156,19 @@ export function TaskCard({ task, showActions = false, onCancel, onPause, onResum
         </div>
       )}
 
+      {/* Status indicator */}
+      <div className="mb-4 p-3 rounded-lg bg-secondary/50">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">Status:</span>
+          <span className="text-sm font-semibold text-foreground">{getStatusMessage()}</span>
+        </div>
+        {task.maxExecutions > 0 && remainingExecutions >= 0 && (
+          <div className="text-xs text-muted-foreground mt-1">
+            Remaining: {remainingExecutions} execution{remainingExecutions !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
@@ -113,38 +183,80 @@ export function TaskCard({ task, showActions = false, onCancel, onPause, onResum
       </div>
 
       {showActions && (
-        <div className="flex items-center gap-2 pt-4 border-t border-border">
-          <Link href={`/tasks/${task.id}`} className="flex-1">
-            <Button variant="outline" className="w-full" data-testid={`button-view-${task.id}`}>
-              View Details
-            </Button>
-          </Link>
-          {task.status === TaskStatus.ACTIVE && onPause && (
+        <div className="space-y-3 pt-4 border-t border-border">
+          {/* Execute button - only show if task is executable */}
+          {isExecutable && onExecute && (
             <Button
-              variant="outline"
-              onClick={() => onPause(task.id)}
-              data-testid={`button-pause-${task.id}`}
+              className="w-full"
+              onClick={() => onExecute(task.id)}
+              data-testid={`button-execute-${task.id}`}
             >
-              Pause
+              Execute & Earn {task.rewardPerExecution} ETH
             </Button>
           )}
-          {task.status === TaskStatus.PAUSED && onResume && (
+
+          {/* Disabled execute button - show reason why execution is disabled */}
+          {!isExecutable && (
             <Button
-              onClick={() => onResume(task.id)}
-              data-testid={`button-resume-${task.id}`}
+              disabled
+              className="w-full"
+              data-testid={`button-execute-disabled-${task.id}`}
+              title={
+                task.status === TaskStatus.PAUSED
+                  ? "Task is paused"
+                  : task.status === TaskStatus.CANCELLED
+                  ? "Task is cancelled"
+                  : task.status === TaskStatus.COMPLETED
+                  ? "Task is completed"
+                  : "Task is not executable"
+              }
             >
-              Resume
+              {task.status === TaskStatus.COMPLETED
+                ? "Task Completed"
+                : `Cannot Execute (${task.status})`}
             </Button>
           )}
-          {(task.status === TaskStatus.ACTIVE || task.status === TaskStatus.PAUSED) && onCancel && (
-            <Button
-              variant="outline"
-              onClick={() => onCancel(task.id)}
-              data-testid={`button-cancel-${task.id}`}
-            >
-              Cancel
-            </Button>
-          )}
+
+          <div className="flex items-center gap-2">
+            <Link href={`/tasks/${task.id}`} className="flex-1">
+              <Button variant="outline" className="w-full" data-testid={`button-view-${task.id}`}>
+                View Details
+              </Button>
+            </Link>
+
+            {task.status === TaskStatus.ACTIVE && onPause && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPause(task.id)}
+                data-testid={`button-pause-${task.id}`}
+              >
+                Pause
+              </Button>
+            )}
+
+            {task.status === TaskStatus.PAUSED && onResume && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onResume(task.id)}
+                data-testid={`button-resume-${task.id}`}
+              >
+                Resume
+              </Button>
+            )}
+
+            {(task.status === TaskStatus.ACTIVE || task.status === TaskStatus.PAUSED) && onCancel && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCancel(task.id)}
+                data-testid={`button-cancel-${task.id}`}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </Card>

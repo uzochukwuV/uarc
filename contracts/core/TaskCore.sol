@@ -20,6 +20,11 @@ contract TaskCore is ITaskCore {
 
     bool private initialized;
 
+    // ============ Action Storage ============
+    // Store the actual actions for execution
+    // Action[] cannot be public (compiler limitation), so we use private with getter
+    ITaskCore.Action[] private storedActions;
+
     // ============ Modifiers ============
 
     modifier onlyCreator() {
@@ -67,7 +72,19 @@ contract TaskCore is ITaskCore {
     /// @inheritdoc ITaskCore
     function executeTask(address executor) external onlyLogic returns (bool success) {
         require(metadata.status == TaskStatus.ACTIVE, "Not active");
-        require(isExecutable(), "Not executable");
+
+        bool canExecute = isExecutable();
+
+        // Debug: Emit checkpoint before blocking
+        emit ExecutionCheckpoint(
+            taskId,
+            metadata.executionCount,
+            metadata.maxExecutions,
+            canExecute,
+            "executeTask_check"
+        );
+
+        require(canExecute, "Not executable");
 
         // Set to executing
         TaskStatus oldStatus = metadata.status;
@@ -86,9 +103,27 @@ contract TaskCore is ITaskCore {
             metadata.executionCount++;
             metadata.lastExecutionTime = block.timestamp;
 
+            // Debug: Emit checkpoint after increment
+            emit ExecutionCheckpoint(
+                taskId,
+                metadata.executionCount,
+                metadata.maxExecutions,
+                true,
+                "after_increment"
+            );
+
             // Check if task is completed
             if (metadata.maxExecutions > 0 && metadata.executionCount >= metadata.maxExecutions) {
                 _setStatus(TaskStatus.COMPLETED);
+
+                // Debug: Task completed
+                emit ExecutionCheckpoint(
+                    taskId,
+                    metadata.executionCount,
+                    metadata.maxExecutions,
+                    false,
+                    "task_completed"
+                );
             } else {
                 _setStatus(TaskStatus.ACTIVE);
             }
@@ -176,6 +211,41 @@ contract TaskCore is ITaskCore {
     /// @inheritdoc ITaskCore
     function getMetadata() external view returns (TaskMetadata memory) {
         return metadata;
+    }
+
+    // ============ Action Storage Functions ============
+
+    /// @notice Set the actions for this task (called by TaskFactory during creation)
+    /// @param actions Array of actions to execute
+    function setActions(ITaskCore.Action[] calldata actions) external {
+        // Only allow setting actions once, during initialization
+        // TaskFactory (caller in this case) is the only one who can call this
+        require(storedActions.length == 0, "Actions already set");
+
+        // Store actions
+        for (uint256 i = 0; i < actions.length; i++) {
+            storedActions.push(actions[i]);
+        }
+    }
+
+    /// @notice Get all actions for this task
+    /// @return Array of actions
+    function getActions() external view returns (ITaskCore.Action[] memory) {
+        return storedActions;
+    }
+
+    /// @notice Get a specific action by index
+    /// @param index Index of the action
+    /// @return The action at the specified index
+    function getAction(uint256 index) external view returns (ITaskCore.Action memory) {
+        require(index < storedActions.length, "Index out of bounds");
+        return storedActions[index];
+    }
+
+    /// @notice Get the number of actions
+    /// @return Number of stored actions
+    function getActionsLength() external view returns (uint256) {
+        return storedActions.length;
     }
 
     // ============ Internal Functions ============

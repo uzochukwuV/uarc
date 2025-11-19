@@ -62,4 +62,6 @@ CONTRACT_ABIS=(
 for abi in "${CONTRACT_ABIS[@]}"; do
   cp "../../../../../artifacts/contracts/$abi" "abis/"
 done
+
+taskerOnChain/TaskerFrontend/client/src/lib/contracts/abis
 ```

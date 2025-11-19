@@ -20,6 +20,12 @@ interface ITaskCore {
 
     // ============ Structs ============
 
+    struct Action {
+        bytes4 selector;    // Function selector to call
+        address protocol;   // Protocol/token address
+        bytes params;       // Encoded parameters for the action
+    }
+
     struct TaskMetadata {
         uint256 id;
         address creator;
@@ -55,6 +61,16 @@ interface ITaskCore {
     event TaskCancelled(uint256 indexed taskId, address indexed creator);
 
     event TaskRewardUpdated(uint256 indexed taskId, uint256 oldReward, uint256 newReward);
+
+    // ============ Debug Events ============
+
+    event ExecutionCheckpoint(
+        uint256 indexed taskId,
+        uint256 executionCount,
+        uint256 maxExecutions,
+        bool isExecutable,
+        string checkpoint
+    );
 
     // ============ Functions ============
 
@@ -101,4 +117,16 @@ interface ITaskCore {
 
     /// @notice Get task ID
     function taskId() external view returns (uint256);
+
+    /// @notice Set actions for this task (called by TaskFactory during creation)
+    function setActions(Action[] calldata actions) external;
+
+    /// @notice Get all actions for this task
+    function getActions() external view returns (Action[] memory);
+
+    /// @notice Get a specific action by index
+    function getAction(uint256 index) external view returns (Action memory);
+
+    /// @notice Get the number of actions
+    function getActionsLength() external view returns (uint256);
 }
