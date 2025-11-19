@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ITaskFactory.sol";
 import "../interfaces/ITaskCore.sol";
 import "../interfaces/ITaskVault.sol";
+import "../interfaces/IActionAdapter.sol";
+import "../interfaces/IActionRegistry.sol";
 
 /**
  * @title TaskFactory
@@ -222,6 +224,61 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         }
 
         if (actions.length == 0 || actions.length > 10) revert InvalidActions();
+
+        // ✅ NEW: Validate action parameters using adapter validators
+        _validateActionParams(actions);
+    }
+
+    /// @notice Validate action parameters using adapter's validateParams function
+    /// @dev Catches encoding and format errors early during task creation
+    function _validateActionParams(ActionParams[] calldata actions) internal view {
+        require(actionRegistry != address(0), "ActionRegistry not set");
+
+        for (uint256 i = 0; i < actions.length; i++) {
+            ActionParams calldata action = actions[i];
+
+            // Get adapter for this action
+            IActionRegistry.AdapterInfo memory adapterInfo =
+                IActionRegistry(actionRegistry).getAdapter(action.selector);
+
+            require(adapterInfo.isActive, "Adapter not active");
+
+            // Call adapter's validateParams to validate encoding and fields
+            (bool isValid, string memory errorMessage) =
+                IActionAdapter(adapterInfo.adapter).validateParams(action.params);
+
+            if (!isValid) {
+                revert ITaskFactory.InvalidActionParams(
+                    string(abi.encodePacked(
+                        "Action ",
+                        _uint2str(i),
+                        ": ",
+                        errorMessage
+                    ))
+                );
+            }
+        }
+    }
+
+    /// @notice Helper to convert uint to string for error messages
+    function _uint2str(uint256 _i) internal pure returns (string memory str) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        j = _i;
+        while (j != 0) {
+            bstr[--k] = bytes1(uint8(48 + (j % 10)));
+            j /= 10;
+        }
+        str = string(bstr);
     }
 
     function _hashActions(ActionParams[] calldata actions) internal pure returns (bytes32) {

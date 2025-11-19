@@ -20,6 +20,17 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "string",
+        name: "reason",
+        type: "string",
+      },
+    ],
+    name: "InvalidActionParams",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "InvalidActions",
     type: "error",

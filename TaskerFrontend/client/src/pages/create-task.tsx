@@ -17,6 +17,7 @@ import { useWaitForTransactionReceipt } from "wagmi";
 import { ethers } from "ethers";
 import { getContractAddress } from "@/lib/contracts/addresses";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getTemplate, TimeBasedTransferFormFields } from "@/templates";
 
 const templates = [
   {
@@ -220,27 +221,14 @@ export default function CreateTask() {
       ? BigInt(Math.floor(Date.now() / 1000) + parseInt(formData.expiresIn) * 86400)
       : 0n;
 
-    // Encode adapter-specific params
+    // Encode adapter-specific params using template
     let adapterParams: `0x${string}` = "0x";
     let tokenDeposits: Array<{ token: `0x${string}`; amount: bigint }> = [];
 
     if (selectedTemplate === "TIME_BASED_TRANSFER") {
-      // Calculate executeAfter timestamp (hours from now)
-      const hoursFromNow = parseFloat(formData.executeAfterHours || "1");
-      const executeAfter = BigInt(Math.floor(Date.now() / 1000) + Math.floor(hoursFromNow * 3600));
-
-      // CRITICAL: Encode as struct to match TimeBasedTransferAdapter expectations!
-      // TimeBasedTransferAdapter.sol expects: struct TransferParams { address token; address recipient; uint256 amount; uint256 executeAfter; }
-      // Must use tuple encoding to match struct memory layout
-      adapterParams = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["tuple(address,address,uint256,uint256)"],
-        [[
-          formData.tokenAddress,                        // token
-          formData.recipientAddress,                    // recipient
-          BigInt(formData.transferAmount),              // amount
-          executeAfter,                                 // executeAfter
-        ]]
-      ) as `0x${string}`;
+      // Use template to encode params (ensures consistency across frontend and template config)
+      const template = getTemplate(selectedTemplate);
+      adapterParams = template.encodeParams(formData);
 
       // Add token deposit (the tokens to be transferred)
       tokenDeposits = [
@@ -429,86 +417,13 @@ export default function CreateTask() {
                       </p>
                     </div>
 
-                    {/* Time-Based Transfer Specific Fields */}
+                    {/* Template-Specific Fields */}
                     {selectedTemplate === "TIME_BASED_TRANSFER" && (
-                      <>
-                        <div>
-                          <Label htmlFor="tokenAddress">Token to Transfer</Label>
-                          <Select
-                            value={formData.tokenAddress}
-                            onValueChange={(value) => handleInputChange("tokenAddress", value)}
-                          >
-                            <SelectTrigger id="tokenAddress" data-testid="select-token">
-                              <SelectValue placeholder="Select token to transfer" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={getContractAddress('MOCK_USDC', chainId)}>
-                                Mock USDC (Testing)
-                              </SelectItem>
-                              <SelectItem value="custom">
-                                Custom Token Address...
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {formData.tokenAddress === "custom" && (
-                            <Input
-                              className="mt-2"
-                              placeholder="0x... (Enter custom token address)"
-                              onChange={(e) => handleInputChange("tokenAddress", e.target.value)}
-                              data-testid="input-custom-token"
-                            />
-                          )}
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Select Mock USDC for testing or enter a custom token
-                          </p>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="recipientAddress">Recipient Address</Label>
-                          <Input
-                            id="recipientAddress"
-                            placeholder="0x... (who will receive tokens)"
-                            value={formData.recipientAddress}
-                            onChange={(e) => handleInputChange("recipientAddress", e.target.value)}
-                            data-testid="input-recipient-address"
-                          />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Address that will receive the tokens
-                          </p>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="transferAmount">Transfer Amount</Label>
-                          <Input
-                            id="transferAmount"
-                            type="number"
-                            placeholder="100"
-                            value={formData.transferAmount}
-                            onChange={(e) => handleInputChange("transferAmount", e.target.value)}
-                            data-testid="input-transfer-amount"
-                          />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Amount of tokens to transfer (in token's smallest unit)
-                          </p>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="executeAfterHours">Execute After (hours)</Label>
-                          <Input
-                            id="executeAfterHours"
-                            type="number"
-                            placeholder="1"
-                            step="0.1"
-                            min="0.1"
-                            value={formData.executeAfterHours}
-                            onChange={(e) => handleInputChange("executeAfterHours", e.target.value)}
-                            data-testid="input-execute-after-hours"
-                          />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Hours from now when the transfer can be executed
-                          </p>
-                        </div>
-                      </>
+                      <TimeBasedTransferFormFields
+                        formData={formData}
+                        chainId={chainId}
+                        onFieldChange={handleInputChange}
+                      />
                     )}
 
                     <div>

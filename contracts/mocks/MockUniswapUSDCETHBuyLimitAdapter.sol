@@ -135,6 +135,62 @@ contract MockUniswapUSDCETHBuyLimitAdapter is IActionAdapter {
     function name() external pure override returns (string memory) {
         return "MockUniswapUSDCETHBuyLimitAdapter";
     }
+
+    /// @inheritdoc IActionAdapter
+    function validateParams(bytes calldata params)
+        external
+        view
+        override
+        returns (bool isValid, string memory errorMessage)
+    {
+        try this.decodeParams(params) returns (BuyLimitParams memory p) {
+            // Validate router
+            if (p.router == address(0)) {
+                return (false, "Invalid router: zero address");
+            }
+
+            // Validate tokens
+            if (p.tokenIn == address(0)) {
+                return (false, "Invalid tokenIn: zero address");
+            }
+            if (p.tokenOut == address(0)) {
+                return (false, "Invalid tokenOut: zero address");
+            }
+
+            // Validate amounts
+            if (p.amountIn == 0) {
+                return (false, "Invalid amountIn: zero");
+            }
+            if (p.minAmountOut == 0) {
+                return (false, "Invalid minAmountOut: zero");
+            }
+
+            // Validate recipient
+            if (p.recipient == address(0)) {
+                return (false, "Invalid recipient: zero address");
+            }
+
+            // Validate price limit
+            if (p.maxPriceUSD == 0) {
+                return (false, "Invalid maxPriceUSD: zero");
+            }
+
+            return (true, "");
+        } catch Error(string memory reason) {
+            return (false, string(abi.encodePacked("Decoding failed: ", reason)));
+        } catch {
+            return (false, "Decoding failed: Invalid parameter encoding");
+        }
+    }
+
+    /// @notice Internal helper to decode params (used by validateParams)
+    function decodeParams(bytes calldata params)
+        external
+        pure
+        returns (BuyLimitParams memory)
+    {
+        return abi.decode(params, (BuyLimitParams));
+    }
 }
 
 // Minimal interfaces for mock contracts

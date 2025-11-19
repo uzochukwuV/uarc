@@ -21,6 +21,17 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "string",
+        name: "reason",
+        type: "string",
+      },
+    ],
+    name: "InvalidParams",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "OnlyActionRegistry",
     type: "error",
@@ -169,6 +180,30 @@ const _abi = [
       {
         internalType: "string",
         name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes",
+        name: "params",
+        type: "bytes",
+      },
+    ],
+    name: "validateParams",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "isValid",
+        type: "bool",
+      },
+      {
+        internalType: "string",
+        name: "errorMessage",
         type: "string",
       },
     ],

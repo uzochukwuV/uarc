@@ -26,27 +26,26 @@ export const timeBasedTransferConfig: TemplateConfig = {
       Math.floor(Date.now() / 1000) + Math.floor(hoursFromNow * 3600)
     );
 
-    // CRITICAL: Encode as 6 parameters to match TaskLogicV2 expectations!
-    // TaskLogicV2 expects Uniswap format: (router, tokenIn, tokenOut, amountIn, minAmountOut, recipient)
+    // Encode as 4-parameter struct to match TimeBasedTransferAdapter expectations!
+    // TimeBasedTransferAdapter.sol expects a struct with these exact fields:
     //
     // struct TransferParams {
-    //   address ignored1;        // router field (ignored, for TaskLogicV2 compatibility)
-    //   address token;           // tokenIn - Token to transfer
-    //   address ignored2;        // tokenOut field (ignored)
-    //   uint256 amount;          // amountIn - Amount to transfer
-    //   uint256 executeAfter;    // minAmountOut - repurposed as timestamp!
-    //   address recipient;       // recipient - Where to send tokens
+    //   address token;           // Token to transfer
+    //   address recipient;       // Where to send tokens
+    //   uint256 amount;          // Amount to transfer
+    //   uint256 executeAfter;    // Timestamp after which execution is allowed
     // }
+    //
+    // IMPORTANT: Must use tuple encoding ["tuple(address,address,uint256,uint256)"]
+    // to match Solidity struct memory layout (not loose type encoding)
     return ethers.AbiCoder.defaultAbiCoder().encode(
-      ["address", "address", "address", "uint256", "uint256", "address"],
-      [
-        ethers.ZeroAddress,         // router (ignored, for TaskLogicV2 compatibility)
-        formData.tokenAddress,      // tokenIn - TaskLogicV2 extracts this
-        ethers.ZeroAddress,         // tokenOut (ignored)
-        formData.transferAmount,    // amountIn - TaskLogicV2 extracts this
-        executeAfter,               // minAmountOut - repurposed as timestamp!
-        formData.recipientAddress,  // recipient
-      ]
+      ["tuple(address,address,uint256,uint256)"],
+      [[
+        formData.tokenAddress,              // token
+        formData.recipientAddress,          // recipient
+        BigInt(formData.transferAmount),    // amount
+        executeAfter,                       // executeAfter
+      ]]
     ) as `0x${string}`;
   },
 

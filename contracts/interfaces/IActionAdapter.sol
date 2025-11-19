@@ -22,6 +22,7 @@ interface IActionAdapter {
     error OnlyActionRegistry();
     error ProtocolNotSupported();
     error ExecutionFailed(string reason);
+    error InvalidParams(string reason);
 
     // ============ Functions ============
 
@@ -59,4 +60,14 @@ interface IActionAdapter {
 
     /// @notice Get adapter name/version
     function name() external view returns (string memory);
+
+    /// @notice Validate parameters before task creation
+    /// @dev Called during task creation to catch encoding/format errors early
+    /// @param params ABI-encoded parameters to validate
+    /// @return isValid Whether the parameters are valid
+    /// @return errorMessage Empty if valid, error description if invalid
+    function validateParams(bytes calldata params)
+        external
+        view
+        returns (bool isValid, string memory errorMessage);
 }

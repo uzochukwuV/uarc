@@ -172,4 +172,47 @@ contract TimeBasedTransferAdapter is IActionAdapter {
     function name() external pure override returns (string memory) {
         return "TimeBasedTransferAdapter";
     }
+
+    /// @inheritdoc IActionAdapter
+    /// @notice Validate parameters during task creation
+    /// @dev Catches encoding errors early instead of at execution time
+    function validateParams(bytes calldata params)
+        external
+        view
+        override
+        returns (bool isValid, string memory errorMessage)
+    {
+        // Try to decode parameters
+        try this.decodeParams(params) returns (TransferParams memory p) {
+            // Validate each field
+            if (p.token == address(0)) {
+                return (false, "Invalid token address (zero address)");
+            }
+            if (p.recipient == address(0)) {
+                return (false, "Invalid recipient address (zero address)");
+            }
+            if (p.amount == 0) {
+                return (false, "Invalid amount (zero)");
+            }
+            if (p.executeAfter == 0) {
+                return (false, "Invalid executeAfter timestamp (zero)");
+            }
+
+            // All validations passed
+            return (true, "");
+        } catch Error(string memory reason) {
+            return (false, string(abi.encodePacked("Decoding failed: ", reason)));
+        } catch {
+            return (false, "Decoding failed: Invalid parameter encoding");
+        }
+    }
+
+    /// @notice Internal helper to decode params (used by validateParams)
+    function decodeParams(bytes calldata params)
+        external
+        pure
+        returns (TransferParams memory)
+    {
+        return abi.decode(params, (TransferParams));
+    }
 }

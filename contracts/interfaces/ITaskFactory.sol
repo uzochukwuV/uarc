@@ -63,6 +63,7 @@ interface ITaskFactory {
     error InvalidActions();
     error InsufficientCreationFee();
     error DeploymentFailed();
+    error InvalidActionParams(string reason);
 
     // ============ Functions ============
 

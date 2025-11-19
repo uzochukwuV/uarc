@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -22,20 +23,47 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
+export declare namespace TimeBasedTransferAdapter {
+  export type TransferParamsStruct = {
+    token: AddressLike;
+    recipient: AddressLike;
+    amount: BigNumberish;
+    executeAfter: BigNumberish;
+  };
+
+  export type TransferParamsStructOutput = [
+    token: string,
+    recipient: string,
+    amount: bigint,
+    executeAfter: bigint
+  ] & {
+    token: string;
+    recipient: string;
+    amount: bigint;
+    executeAfter: bigint;
+  };
+}
+
 export interface TimeBasedTransferAdapterInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "canExecute"
+      | "decodeParams"
       | "execute"
       | "getTokenRequirements"
       | "isProtocolSupported"
       | "name"
+      | "validateParams"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "ActionExecuted"): EventFragment;
 
   encodeFunctionData(
     functionFragment: "canExecute",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "decodeParams",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
@@ -51,8 +79,16 @@ export interface TimeBasedTransferAdapterInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "validateParams",
+    values: [BytesLike]
+  ): string;
 
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "decodeParams",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getTokenRequirements",
@@ -63,6 +99,10 @@ export interface TimeBasedTransferAdapterInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "validateParams",
+    data: BytesLike
+  ): Result;
 }
 
 export namespace ActionExecutedEvent {
@@ -139,6 +179,12 @@ export interface TimeBasedTransferAdapter extends BaseContract {
     "view"
   >;
 
+  decodeParams: TypedContractMethod<
+    [params: BytesLike],
+    [TimeBasedTransferAdapter.TransferParamsStructOutput],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [vault: AddressLike, params: BytesLike],
     [[boolean, string] & { success: boolean; result: string }],
@@ -159,6 +205,12 @@ export interface TimeBasedTransferAdapter extends BaseContract {
 
   name: TypedContractMethod<[], [string], "view">;
 
+  validateParams: TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -168,6 +220,13 @@ export interface TimeBasedTransferAdapter extends BaseContract {
   ): TypedContractMethod<
     [params: BytesLike],
     [[boolean, string] & { canExec: boolean; reason: string }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "decodeParams"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [TimeBasedTransferAdapter.TransferParamsStructOutput],
     "view"
   >;
   getFunction(
@@ -190,6 +249,13 @@ export interface TimeBasedTransferAdapter extends BaseContract {
   getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "validateParams"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
 
   getEvent(
     key: "ActionExecuted"

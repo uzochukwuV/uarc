@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -22,6 +23,36 @@ import type {
   TypedContractMethod,
 } from "../../../common";
 
+export declare namespace MockUniswapUSDCETHBuyLimitAdapter {
+  export type BuyLimitParamsStruct = {
+    router: AddressLike;
+    tokenIn: AddressLike;
+    tokenOut: AddressLike;
+    amountIn: BigNumberish;
+    minAmountOut: BigNumberish;
+    recipient: AddressLike;
+    maxPriceUSD: BigNumberish;
+  };
+
+  export type BuyLimitParamsStructOutput = [
+    router: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountIn: bigint,
+    minAmountOut: bigint,
+    recipient: string,
+    maxPriceUSD: bigint
+  ] & {
+    router: string;
+    tokenIn: string;
+    tokenOut: string;
+    amountIn: bigint;
+    minAmountOut: bigint;
+    recipient: string;
+    maxPriceUSD: bigint;
+  };
+}
+
 export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
   getFunction(
     nameOrSignature:
@@ -30,10 +61,12 @@ export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
       | "USDC"
       | "WETH"
       | "canExecute"
+      | "decodeParams"
       | "execute"
       | "getTokenRequirements"
       | "isProtocolSupported"
       | "name"
+      | "validateParams"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "ActionExecuted"): EventFragment;
@@ -53,6 +86,10 @@ export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "decodeParams",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "execute",
     values: [AddressLike, BytesLike]
   ): string;
@@ -65,6 +102,10 @@ export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "validateParams",
+    values: [BytesLike]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "MOCK_ROUTER",
@@ -74,6 +115,10 @@ export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
   decodeFunctionResult(functionFragment: "USDC", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "WETH", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "decodeParams",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getTokenRequirements",
@@ -84,6 +129,10 @@ export interface MockUniswapUSDCETHBuyLimitAdapterInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "validateParams",
+    data: BytesLike
+  ): Result;
 }
 
 export namespace ActionExecutedEvent {
@@ -168,6 +217,12 @@ export interface MockUniswapUSDCETHBuyLimitAdapter extends BaseContract {
     "view"
   >;
 
+  decodeParams: TypedContractMethod<
+    [params: BytesLike],
+    [MockUniswapUSDCETHBuyLimitAdapter.BuyLimitParamsStructOutput],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [vault: AddressLike, params: BytesLike],
     [[boolean, string] & { success: boolean; result: string }],
@@ -187,6 +242,12 @@ export interface MockUniswapUSDCETHBuyLimitAdapter extends BaseContract {
   >;
 
   name: TypedContractMethod<[], [string], "view">;
+
+  validateParams: TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -208,6 +269,13 @@ export interface MockUniswapUSDCETHBuyLimitAdapter extends BaseContract {
     nameOrSignature: "canExecute"
   ): TypedContractMethod<[params: BytesLike], [[boolean, string]], "view">;
   getFunction(
+    nameOrSignature: "decodeParams"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [MockUniswapUSDCETHBuyLimitAdapter.BuyLimitParamsStructOutput],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<
     [vault: AddressLike, params: BytesLike],
@@ -227,6 +295,13 @@ export interface MockUniswapUSDCETHBuyLimitAdapter extends BaseContract {
   getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "validateParams"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
 
   getEvent(
     key: "ActionExecuted"

@@ -30,6 +30,7 @@ export interface IActionAdapterInterface extends Interface {
       | "getTokenRequirements"
       | "isProtocolSupported"
       | "name"
+      | "validateParams"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "ActionExecuted"): EventFragment;
@@ -51,6 +52,10 @@ export interface IActionAdapterInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "validateParams",
+    values: [BytesLike]
+  ): string;
 
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -63,6 +68,10 @@ export interface IActionAdapterInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "validateParams",
+    data: BytesLike
+  ): Result;
 }
 
 export namespace ActionExecutedEvent {
@@ -159,6 +168,12 @@ export interface IActionAdapter extends BaseContract {
 
   name: TypedContractMethod<[], [string], "view">;
 
+  validateParams: TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -190,6 +205,13 @@ export interface IActionAdapter extends BaseContract {
   getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "validateParams"
+  ): TypedContractMethod<
+    [params: BytesLike],
+    [[boolean, string] & { isValid: boolean; errorMessage: string }],
+    "view"
+  >;
 
   getEvent(
     key: "ActionExecuted"
