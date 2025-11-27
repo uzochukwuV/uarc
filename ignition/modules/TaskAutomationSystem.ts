@@ -1,92 +1,158 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 /**
- * Hardhat Ignition module for deploying the complete Task Automation System
+ * Hardhat Ignition module for deploying TaskerOnChain V2
+ * Post-Audit Architecture with Adapter-Based Conditions
  *
  * Deployment Order:
- * 1. PaymentEscrow
- * 2. ConditionChecker
- * 3. ActionRouter
- * 4. ExecutorManager
- * 5. ReputationSystem
- * 6. DynamicTaskRegistry
- * 7. UniswapLimitOrderAdapter
- * 8. Configure all contracts
+ * 1. Deploy Implementation Contracts (clones)
+ * 2. Deploy Core System Contracts
+ * 3. Deploy Adapters (optional)
+ * 4. Configure Contract Connections
+ * 5. Register Adapters
+ *
+ * Key Changes from V1:
+ * - ConditionOracle REMOVED (conditions now in adapters)
+ * - Actions stored ON-CHAIN during task creation
+ * - Token requirements declared by adapters
+ * - Adapters verify their own conditions via canExecute()
  */
-const TaskAutomationModule = buildModule("TaskAutomationSystem", (m) => {
+const TaskAutomationModule = buildModule("TaskerOnChainV2", (m) => {
 
   // ============ Parameters ============
 
-  // Default fee recipient (can be changed later)
-  const feeRecipient = m.getParameter("feeRecipient", m.getAccount(0));
+  const deployer = m.getAccount(0);
+  const deployTimeAdapter = m.getParameter("deployTimeAdapter", true);
 
-  // Platform fee (100 = 1%)
-  const platformFee = m.getParameter("platformFee", 100);
+  // ============ STEP 1: Deploy Implementation Contracts ============
 
-  // ============ 1. Deploy PaymentEscrow ============
+  // 1.1 TaskCore Implementation (clone template)
+  const taskCoreImpl = m.contract("TaskCore");
 
-  const paymentEscrow = m.contract("PaymentEscrow", [feeRecipient]);
+  // 1.2 TaskVault Implementation (clone template)
+  const taskVaultImpl = m.contract("TaskVault");
 
-  // ============ 2. Deploy ConditionChecker ============
+  // ============ STEP 2: Deploy Core System Contracts ============
 
-  const conditionChecker = m.contract("ConditionChecker");
+  // 2.1 ActionRegistry (adapter management)
+  const actionRegistry = m.contract("ActionRegistry", [deployer]);
 
-  // ============ 3. Deploy ActionRouter ============
+  // 2.2 ExecutorHub (executor management & execution entry point)
+  const executorHub = m.contract("ExecutorHub", [deployer]);
 
-  const actionRouter = m.contract("ActionRouter");
+  // 2.3 GlobalRegistry (task discovery & indexing)
+  const globalRegistry = m.contract("GlobalRegistry", [deployer]);
 
-  // ============ 4. Deploy ExecutorManager ============
+  // 2.4 RewardManager (reward calculation & distribution)
+  const rewardManager = m.contract("RewardManager", [deployer]);
 
-  const executorManager = m.contract("ExecutorManager");
+  // 2.5 TaskLogicV2 (execution orchestration - NO ConditionOracle!)
+  const taskLogic = m.contract("TaskLogicV2", [deployer]);
 
-  // ============ 5. Deploy ReputationSystem ============
+  // 2.6 TaskFactory (task creation with on-chain action storage)
+  const taskFactory = m.contract("TaskFactory", [
+    taskCoreImpl,
+    taskVaultImpl,
+    taskLogic,
+    executorHub,
+    actionRegistry,
+    rewardManager,
+    deployer,
+  ]);
 
-  const reputationSystem = m.contract("ReputationSystem");
+  // ============ STEP 3: Deploy Adapters ============
 
-  // ============ 6. Deploy DynamicTaskRegistry ============
+  // TimeBasedTransferAdapter (time-based token transfers with embedded conditions)
+  const timeBasedAdapter = deployTimeAdapter
+    ? m.contract("TimeBasedTransferAdapter")
+    : null;
 
-  const taskRegistry = m.contract("DynamicTaskRegistry");
+  // ============ STEP 4: Configure Contract Connections ============
 
-  // ============ 7. Deploy UniswapLimitOrderAdapter ============
+  // Configure TaskLogicV2
+  m.call(taskLogic, "setActionRegistry", [actionRegistry], {
+    id: "configure_tasklogic_registry",
+  });
 
-  const uniswapAdapter = m.contract("UniswapLimitOrderAdapter");
+  m.call(taskLogic, "setRewardManager", [rewardManager], {
+    id: "configure_tasklogic_rewards",
+  });
 
-  // ============ 8. Configure Contracts ============
+  m.call(taskLogic, "setExecutorHub", [executorHub], {
+    id: "configure_tasklogic_executor",
+  });
 
-  // Configure PaymentEscrow
-  m.call(paymentEscrow, "setTaskRegistry", [taskRegistry]);
+  m.call(taskLogic, "setTaskRegistry", [globalRegistry], {
+    id: "configure_tasklogic_global_registry",
+  });
 
-  // Configure ActionRouter
-  m.call(actionRouter, "setTaskRegistry", [taskRegistry]);
+  // Configure ExecutorHub
+  m.call(executorHub, "setTaskLogic", [taskLogic], {
+    id: "configure_executor_logic",
+  });
 
-  // Configure ExecutorManager
-  m.call(executorManager, "setTaskRegistry", [taskRegistry]);
+  m.call(executorHub, "setTaskRegistry", [globalRegistry], {
+    id: "configure_executor_registry",
+  });
 
-  // Configure ReputationSystem
-  m.call(reputationSystem, "authorizeUpdater", [taskRegistry]);
+  // Configure RewardManager
+  m.call(rewardManager, "setTaskLogic", [taskLogic], {
+    id: "configure_reward_logic",
+  });
 
-  // Configure UniswapAdapter
-  m.call(uniswapAdapter, "setActionRouter", [actionRouter]);
+  m.call(rewardManager, "setExecutorHub", [executorHub], {
+    id: "configure_reward_executor",
+  });
 
-  // Configure DynamicTaskRegistry with all dependencies
-  m.call(taskRegistry, "setConditionChecker", [conditionChecker]);
-  m.call(taskRegistry, "setActionRouter", [actionRouter]);
-  m.call(taskRegistry, "setExecutorManager", [executorManager]);
-  m.call(taskRegistry, "setPaymentEscrow", [paymentEscrow]);
-  m.call(taskRegistry, "setReputationSystem", [reputationSystem]);
-  m.call(taskRegistry, "setPlatformFee", [platformFee]);
+  m.call(rewardManager, "setGasReimbursementMultiplier", [100], {
+    id: "configure_reward_gas",
+  });
+
+  // Configure GlobalRegistry
+  m.call(globalRegistry, "authorizeFactory", [taskFactory], {
+    id: "configure_registry_factory",
+  });
+
+  // Configure TaskFactory
+  m.call(taskFactory, "setGlobalRegistry", [globalRegistry], {
+    id: "configure_factory_registry",
+  });
+
+  // ============ STEP 5: Register Adapters ============
+
+  // if (deployTimeAdapter && timeBasedAdapter) {
+  //   // Register TimeBasedTransferAdapter
+  //   // Selector: first 4 bytes of execute(address,bytes)
+  //   const executeSelector = "0x1cff79cd"; // execute(address,bytes)
+
+  //   m.call(actionRegistry, "registerAdapter", [
+  //     executeSelector,
+  //     timeBasedAdapter,
+  //     100000,  // gasLimit
+  //     true,    // requiresTokens
+  //   ], {
+  //     id: "register_time_adapter",
+  //   });
+  // }
 
   // ============ Return Deployed Contracts ============
 
-  return {
-    paymentEscrow,
-    conditionChecker,
-    actionRouter,
-    executorManager,
-    reputationSystem,
-    taskRegistry,
-    uniswapAdapter,
+  const returnObj: any = {
+    taskCoreImpl,
+    taskVaultImpl,
+    actionRegistry,
+    executorHub,
+    globalRegistry,
+    rewardManager,
+    taskLogic,
+    taskFactory,
   };
+
+  if (timeBasedAdapter) {
+    returnObj.timeBasedAdapter = timeBasedAdapter;
+  }
+
+  return returnObj;
 });
 
 export default TaskAutomationModule;

@@ -12,8 +12,7 @@ const config: HardhatUserConfig = {
             optimizer: {
                 enabled: true,
                 runs: 1, // Lower runs = smaller deployment size (trade-off: higher gas costs)
-            },
-            viaIR: true, // Enable IR-based compiler for smaller bytecode
+            }
         },
     },
     resolc: {
@@ -59,6 +58,12 @@ const config: HardhatUserConfig = {
             url: 'https://testnet-passet-hub-eth-rpc.polkadot.io',
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
         },
+        polygonAmoy : {
+            url:  "https://rpc-amoy.polygon.technology",
+            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
+            chainId: 80002 ,
+           
+        }
     }
 };
 

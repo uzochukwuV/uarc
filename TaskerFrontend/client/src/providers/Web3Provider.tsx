@@ -9,10 +9,10 @@ import {
   RainbowKitProvider,
   Chain,
 } from "@rainbow-me/rainbowkit";
-import { polygon, polygonMumbai } from "wagmi/chains";
+import { polygon, polygonMumbai, polygonAmoy } from "wagmi/chains";
 
-const polkadotHubTestnet: Chain = {
-  id: 420420422, // non-standard — replace with real EVM chainId if available
+const polkadotHubTestnet = {
+  id: 420420422,
   name: "Polkadot Hub Testnet",
   nativeCurrency: { name: "DOT", symbol: "DOT", decimals: 18 },
   rpcUrls: {
@@ -25,9 +25,10 @@ const polkadotHubTestnet: Chain = {
     },
   },
   testnet: true,
-};
+} as const satisfies Chain;
 
-const chains = [polkadotHubTestnet, polygonMumbai, polygon];
+// ✅ Order matters: Primary network (Polygon Amoy) first
+const chains = [polygonAmoy, polkadotHubTestnet, polygonMumbai, polygon] as const;
 
 const projectId =
   import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? "YOUR_PROJECT_ID";
@@ -43,7 +44,8 @@ if (!projectId || projectId === "YOUR_PROJECT_ID") {
 // For each chain provide a http transport using the first RPC url available.
 const transports: Record<number, ReturnType<typeof http>> = {};
 
-// Explicitly set up Polkadot Hub Testnet transport
+// Explicitly set up RPC endpoints for each chain
+transports[polygonAmoy.id] = http("https://rpc-amoy.polygon.technology");
 transports[420420422] = http("https://testnet-passet-hub-eth-rpc.polkadot.io");
 transports[polygonMumbai.id] = http();
 transports[polygon.id] = http();
@@ -54,8 +56,6 @@ const config = getDefaultConfig({
   projectId,
   chains,
   transports,
-  // You can pass wagmi createConfig options here as well, e.g. autoConnect:
-  autoConnect: true,
   // Optionally add a custom wallet list:
   // wallets: [ /* custom wallet connectors (rainbowWallet, injectedWallet, ...) */ ],
 });
