@@ -74,6 +74,42 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
+      name: "AaveLiquidationProtectionAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AaveLiquidationProtectionAdapter__factory>;
+    getContractFactory(
+      name: "IPool",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPool__factory>;
+    getContractFactory(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISwapRouter__factory>;
+    getContractFactory(
+      name: "DCAAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DCAAdapter__factory>;
+    getContractFactory(
+      name: "IQuoter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IQuoter__factory>;
+    getContractFactory(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISwapRouter__factory>;
+    getContractFactory(
+      name: "IAggregatorV3",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IAggregatorV3__factory>;
+    getContractFactory(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISwapRouter__factory>;
+    getContractFactory(
+      name: "StopLossTakeProfitAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.StopLossTakeProfitAdapter__factory>;
+    getContractFactory(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TimeBasedTransferAdapter__factory>;
@@ -89,6 +125,22 @@ declare module "hardhat/types/runtime" {
       name: "UniswapV2USDCETHBuyLimitAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UniswapV2USDCETHBuyLimitAdapter__factory>;
+    getContractFactory(
+      name: "IRewardDistributor",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IRewardDistributor__factory>;
+    getContractFactory(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISwapRouter__factory>;
+    getContractFactory(
+      name: "IYieldVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IYieldVault__factory>;
+    getContractFactory(
+      name: "YieldAutoCompoundAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.YieldAutoCompoundAdapter__factory>;
     getContractFactory(
       name: "ExecutorHub",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -262,6 +314,51 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
+      name: "AaveLiquidationProtectionAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AaveLiquidationProtectionAdapter>;
+    getContractAt(
+      name: "IPool",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPool>;
+    getContractAt(
+      name: "ISwapRouter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISwapRouter>;
+    getContractAt(
+      name: "DCAAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DCAAdapter>;
+    getContractAt(
+      name: "IQuoter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IQuoter>;
+    getContractAt(
+      name: "ISwapRouter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISwapRouter>;
+    getContractAt(
+      name: "IAggregatorV3",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IAggregatorV3>;
+    getContractAt(
+      name: "ISwapRouter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISwapRouter>;
+    getContractAt(
+      name: "StopLossTakeProfitAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.StopLossTakeProfitAdapter>;
+    getContractAt(
       name: "TimeBasedTransferAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -281,6 +378,26 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.UniswapV2USDCETHBuyLimitAdapter>;
+    getContractAt(
+      name: "IRewardDistributor",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IRewardDistributor>;
+    getContractAt(
+      name: "ISwapRouter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISwapRouter>;
+    getContractAt(
+      name: "IYieldVault",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IYieldVault>;
+    getContractAt(
+      name: "YieldAutoCompoundAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.YieldAutoCompoundAdapter>;
     getContractAt(
       name: "ExecutorHub",
       address: string | ethers.Addressable,
@@ -463,6 +580,42 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "AaveLiquidationProtectionAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.AaveLiquidationProtectionAdapter>;
+    deployContract(
+      name: "IPool",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPool>;
+    deployContract(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "DCAAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DCAAdapter>;
+    deployContract(
+      name: "IQuoter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IQuoter>;
+    deployContract(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "IAggregatorV3",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAggregatorV3>;
+    deployContract(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "StopLossTakeProfitAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StopLossTakeProfitAdapter>;
+    deployContract(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TimeBasedTransferAdapter>;
@@ -478,6 +631,22 @@ declare module "hardhat/types/runtime" {
       name: "UniswapV2USDCETHBuyLimitAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UniswapV2USDCETHBuyLimitAdapter>;
+    deployContract(
+      name: "IRewardDistributor",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IRewardDistributor>;
+    deployContract(
+      name: "ISwapRouter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "IYieldVault",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IYieldVault>;
+    deployContract(
+      name: "YieldAutoCompoundAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.YieldAutoCompoundAdapter>;
     deployContract(
       name: "ExecutorHub",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -651,6 +820,51 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "AaveLiquidationProtectionAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.AaveLiquidationProtectionAdapter>;
+    deployContract(
+      name: "IPool",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPool>;
+    deployContract(
+      name: "ISwapRouter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "DCAAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DCAAdapter>;
+    deployContract(
+      name: "IQuoter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IQuoter>;
+    deployContract(
+      name: "ISwapRouter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "IAggregatorV3",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAggregatorV3>;
+    deployContract(
+      name: "ISwapRouter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "StopLossTakeProfitAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StopLossTakeProfitAdapter>;
+    deployContract(
       name: "TimeBasedTransferAdapter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -670,6 +884,26 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UniswapV2USDCETHBuyLimitAdapter>;
+    deployContract(
+      name: "IRewardDistributor",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IRewardDistributor>;
+    deployContract(
+      name: "ISwapRouter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "IYieldVault",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IYieldVault>;
+    deployContract(
+      name: "YieldAutoCompoundAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.YieldAutoCompoundAdapter>;
     deployContract(
       name: "ExecutorHub",
       args: any[],

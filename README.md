@@ -113,7 +113,7 @@ npm install
 
 3. **Set up environment variables**
 ```bash
-npx hardhat vars set TEST_ACC_PRIVATE_KEY
+npx hardhat vars set TEST_ACC_PRIVATE_KEY    0xe5874de3b7843b86816959d7199ea6b0565191b329cf3b6e58051056ecccd89c
 # Enter your private key when prompted
 ```
 
@@ -271,7 +271,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for de
 npx hardhat node
 
 # Deploy to local network
-npx hardhat ignition deploy ./ignition/modules/Deploy.ts --network localhost
+npx hardhat ignition deploy ./ignition/modules/Deploy.ts --network polygonAmoy
 
 # Run tests in watch mode
 npx hardhat test --watch
