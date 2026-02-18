@@ -3,12 +3,19 @@
 /* eslint-disable */
 import type * as aaveLiquidationProtectionAdapterSol from "./AaveLiquidationProtectionAdapter.sol";
 export type { aaveLiquidationProtectionAdapterSol };
+import type * as asterDexEarnAdapterSol from "./AsterDEXEarnAdapter.sol";
+export type { asterDexEarnAdapterSol };
 import type * as dcaAdapterSol from "./DCAAdapter.sol";
 export type { dcaAdapterSol };
+import type * as pancakeSwapFarmAdapterSol from "./PancakeSwapFarmAdapter.sol";
+export type { pancakeSwapFarmAdapterSol };
+import type * as pancakeSwapV2LpAdapterSol from "./PancakeSwapV2LPAdapter.sol";
+export type { pancakeSwapV2LpAdapterSol };
 import type * as stopLossTakeProfitAdapterSol from "./StopLossTakeProfitAdapter.sol";
 export type { stopLossTakeProfitAdapterSol };
 import type * as uniswapV2UsdcethBuyLimitAdapterSol from "./UniswapV2USDCETHBuyLimitAdapter.sol";
 export type { uniswapV2UsdcethBuyLimitAdapterSol };
 import type * as yieldAutoCompoundAdapterSol from "./YieldAutoCompoundAdapter.sol";
 export type { yieldAutoCompoundAdapterSol };
+export type { MetaYieldVaultKeeperAdapter } from "./MetaYieldVaultKeeperAdapter";
 export type { TimeBasedTransferAdapter } from "./TimeBasedTransferAdapter";

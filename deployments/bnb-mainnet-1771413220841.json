@@ -1,0 +1,44 @@
+{
+  "network": "bnb",
+  "chainId": "56",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "timestamp": "2026-02-18T11:13:40.837Z",
+  "taskerOnChain": {
+    "TaskFactory": "0x8c997b6ed427B65A069A8247C3eBf6282a6B73aF",
+    "TaskLogicV2": "0xC863Ec8F9490CE43da46081cf590f41C90d9cf9B",
+    "ExecutorHub": "0x46AC1Ac9f4b78Ffe7cb4C7BBf19DCA4C1108BF43",
+    "ActionRegistry": "0x8a99fC73654F3B045dA2F01BfE26b04cc8Bc0fe2",
+    "GlobalRegistry": "0x69e8fDEE7F9B487729A03Aa956730fAea3035235",
+    "RewardManager": "0x5e44Ec1f583Da986e392370a31615491D0F6CCf5",
+    "TaskCoreImpl": "0x0f1961AD14F7a090AD2C5dE79E2D32ca93708916",
+    "TaskVaultImpl": "0x5Ba0Bc81bdF57C911e6688FA8E0d872bc4769F4C"
+  },
+  "metaYieldVault": {
+    "MetaYieldVault": "0xBe93D93B3841D04dCb783Dc6a636db4Eb9023Cc5",
+    "AsterDEXEarnAdapter": "0x476B5BF7F360166141469852fFEB24323Ca3b923",
+    "PancakeSwapV2LPAdapter": "0xDEA05423C59507fb767456E4a0fa656b87ab6e1c",
+    "PancakeSwapFarmAdapter": "0xA5cceDDFE1ECC25426b0624Bbf100946Bbe71A89",
+    "MetaYieldVaultKeeperAdapter": "0x6B7740ce667a6bE835A28566B6F87c9D34899196"
+  },
+  "keeperTasks": {
+    "harvest": {
+      "taskId": "0",
+      "taskVault": "0x4eB781765Bca29840c5614940a22c6eE1b9BDC32",
+      "interval": 3600,
+      "reward": "0.00002 BNB"
+    },
+    "rebalance": {
+      "taskId": "1",
+      "taskVault": "0x5e6Ce77B81892b43e2D8A3B35506403178bD3cfB",
+      "interval": 86400,
+      "reward": "0.00002 BNB"
+    }
+  },
+  "bscConstants": {
+    "USDT": "0x55d398326f99059fF775485246999027B3197955",
+    "WBNB": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    "CAKE": "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
+    "PANCAKE_ROUTER": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+    "MASTERCHEF_V2": "0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652"
+  }
+}

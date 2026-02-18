@@ -5,6 +5,12 @@ import "@nomicfoundation/hardhat-verify";
 import 'hardhat-tracer'; // 👈 Add trace support (like foundry -vvvv)
 import path from 'path';
 
+// BSC mainnet fork config
+// Set BSC_FORK_URL env var to enable forking:
+//   BSC_FORK_URL=https://rpc.ankr.com/bsc/<key> npx hardhat test test/BscForkAdapters.test.ts
+const BSC_FORK_URL = process.env.BSC_FORK_URL || '';
+const BSC_FORK_BLOCK = process.env.BSC_FORK_BLOCK ? parseInt(process.env.BSC_FORK_BLOCK) : undefined;
+
 const config: HardhatUserConfig = {
     solidity: {
         version: '0.8.28',
@@ -28,8 +34,22 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            // Standard Hardhat network without PolkaVM for fast local testing
-            // Uses Hardhat's built-in EVM (no external binaries needed)
+            // When BSC_FORK_URL is set, forks BSC mainnet for integration testing
+            // Usage: BSC_FORK_URL=https://rpc.ankr.com/bsc/<key> npx hardhat test
+            ...(BSC_FORK_URL ? {
+                forking: {
+                    url: BSC_FORK_URL,
+                    ...(BSC_FORK_BLOCK ? { blockNumber: BSC_FORK_BLOCK } : {}),
+                },
+                chainId: 56,
+            } : {}),
+        },
+        // Connects to a running 'npx hardhat node --fork <BSC_RPC>' instance
+        // Hardhat fork nodes always report chainId 31337 internally — do not override
+        // timeout=600s: needed for MetaYieldVault deposit which chains many RPC calls
+        bscFork: {
+            url: 'http://127.0.0.1:8545',
+            timeout: 600_000,
         },
         etherum : {
             url: "https://virtual.mainnet.eu.rpc.tenderly.co/82c86106-662e-4d7f-a974-c311987358ff",
@@ -63,8 +83,27 @@ const config: HardhatUserConfig = {
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
             chainId: 80002 ,
            
-        }
-    }
+        },
+        polygon : {
+            url:  "https://polygon.drpc.org",
+            accounts: vars.has('TEST_PRIVATE_KEY') ? [vars.get('TEST_PRIVATE_KEY')] : []
+        },
+        // BNB Chain mainnet — for MetaYieldVault + TaskerOnChain production deployment
+        // Set private key: npx hardhat vars set DEPLOYER_PRIVATE_KEY
+        // Set RPC (optional, falls back to public): npx hardhat vars set BSC_RPC_URL
+        bnb: {
+            url: vars.has('BSC_RPC_URL') ? vars.get('BSC_RPC_URL') : 'https://bsc-dataseed4.bnbchain.org',
+            accounts: vars.has('DEPLOYER_PRIVATE_KEY') ? [vars.get('DEPLOYER_PRIVATE_KEY')] : [],
+            chainId: 56,
+            timeout: 120_000,
+            gasPrice: 1_000_000_000, // 1 gwei — minimum accepted on BSC (saves ~66% gas cost)
+        },
+    },
+    etherscan: {
+        apiKey: {
+            bsc: "3IQTM6FU96R1JRBMBEBD3I67SUFP2YV3I1",
+        },
+    },
 };
 
 export default config;

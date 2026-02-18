@@ -34,6 +34,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1363__factory>;
     getContractFactory(
+      name: "IERC4626",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC4626__factory>;
+    getContractFactory(
       name: "Clones",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Clones__factory>;
@@ -41,6 +45,10 @@ declare module "hardhat/types/runtime" {
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
+    getContractFactory(
+      name: "ERC4626",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC4626__factory>;
     getContractFactory(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -66,6 +74,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
+      name: "SafeCast",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SafeCast__factory>;
+    getContractFactory(
       name: "Pausable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Pausable__factory>;
@@ -86,6 +98,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ISwapRouter__factory>;
     getContractFactory(
+      name: "AsterDEXEarnAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AsterDEXEarnAdapter__factory>;
+    getContractFactory(
+      name: "IMinterAster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMinterAster__factory>;
+    getContractFactory(
+      name: "ISimpleEarn",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISimpleEarn__factory>;
+    getContractFactory(
       name: "DCAAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DCAAdapter__factory>;
@@ -97,6 +121,34 @@ declare module "hardhat/types/runtime" {
       name: "ISwapRouter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ISwapRouter__factory>;
+    getContractFactory(
+      name: "MetaYieldVaultKeeperAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MetaYieldVaultKeeperAdapter__factory>;
+    getContractFactory(
+      name: "IMasterChefV2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMasterChefV2__factory>;
+    getContractFactory(
+      name: "PancakeSwapFarmAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PancakeSwapFarmAdapter__factory>;
+    getContractFactory(
+      name: "IPancakeFactory",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPancakeFactory__factory>;
+    getContractFactory(
+      name: "IPancakePair",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPancakePair__factory>;
+    getContractFactory(
+      name: "IPancakeRouter02",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPancakeRouter02__factory>;
+    getContractFactory(
+      name: "PancakeSwapV2LPAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PancakeSwapV2LPAdapter__factory>;
     getContractFactory(
       name: "IAggregatorV3",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -150,6 +202,30 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.GlobalRegistry__factory>;
     getContractFactory(
+      name: "IAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IAdapter__factory>;
+    getContractFactory(
+      name: "IMasterChefV2View",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMasterChefV2View__factory>;
+    getContractFactory(
+      name: "IPancakePair",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPancakePair__factory>;
+    getContractFactory(
+      name: "IPancakeRouter02",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPancakeRouter02__factory>;
+    getContractFactory(
+      name: "ISimpleEarnView",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ISimpleEarnView__factory>;
+    getContractFactory(
+      name: "MetaYieldVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MetaYieldVault__factory>;
+    getContractFactory(
       name: "TaskCore",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TaskCore__factory>;
@@ -174,6 +250,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IActionRegistry__factory>;
     getContractFactory(
+      name: "IAsterPerp",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IAsterPerp__factory>;
+    getContractFactory(
       name: "IConditionOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IConditionOracle__factory>;
@@ -181,6 +261,10 @@ declare module "hardhat/types/runtime" {
       name: "IExecutorHub",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IExecutorHub__factory>;
+    getContractFactory(
+      name: "IMetaYieldVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMetaYieldVault__factory>;
     getContractFactory(
       name: "IRewardManager",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -264,6 +348,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1363>;
     getContractAt(
+      name: "IERC4626",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC4626>;
+    getContractAt(
       name: "Clones",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -273,6 +362,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
+    getContractAt(
+      name: "ERC4626",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC4626>;
     getContractAt(
       name: "IERC20Metadata",
       address: string | ethers.Addressable,
@@ -304,6 +398,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
+      name: "SafeCast",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SafeCast>;
+    getContractAt(
       name: "Pausable",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -329,6 +428,21 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ISwapRouter>;
     getContractAt(
+      name: "AsterDEXEarnAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AsterDEXEarnAdapter>;
+    getContractAt(
+      name: "IMinterAster",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMinterAster>;
+    getContractAt(
+      name: "ISimpleEarn",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISimpleEarn>;
+    getContractAt(
       name: "DCAAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -343,6 +457,41 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ISwapRouter>;
+    getContractAt(
+      name: "MetaYieldVaultKeeperAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MetaYieldVaultKeeperAdapter>;
+    getContractAt(
+      name: "IMasterChefV2",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMasterChefV2>;
+    getContractAt(
+      name: "PancakeSwapFarmAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PancakeSwapFarmAdapter>;
+    getContractAt(
+      name: "IPancakeFactory",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPancakeFactory>;
+    getContractAt(
+      name: "IPancakePair",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPancakePair>;
+    getContractAt(
+      name: "IPancakeRouter02",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPancakeRouter02>;
+    getContractAt(
+      name: "PancakeSwapV2LPAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PancakeSwapV2LPAdapter>;
     getContractAt(
       name: "IAggregatorV3",
       address: string | ethers.Addressable,
@@ -409,6 +558,36 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.GlobalRegistry>;
     getContractAt(
+      name: "IAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IAdapter>;
+    getContractAt(
+      name: "IMasterChefV2View",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMasterChefV2View>;
+    getContractAt(
+      name: "IPancakePair",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPancakePair>;
+    getContractAt(
+      name: "IPancakeRouter02",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPancakeRouter02>;
+    getContractAt(
+      name: "ISimpleEarnView",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ISimpleEarnView>;
+    getContractAt(
+      name: "MetaYieldVault",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MetaYieldVault>;
+    getContractAt(
       name: "TaskCore",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -439,6 +618,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IActionRegistry>;
     getContractAt(
+      name: "IAsterPerp",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IAsterPerp>;
+    getContractAt(
       name: "IConditionOracle",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -448,6 +632,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IExecutorHub>;
+    getContractAt(
+      name: "IMetaYieldVault",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMetaYieldVault>;
     getContractAt(
       name: "IRewardManager",
       address: string | ethers.Addressable,
@@ -540,6 +729,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1363>;
     deployContract(
+      name: "IERC4626",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC4626>;
+    deployContract(
       name: "Clones",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Clones>;
@@ -547,6 +740,10 @@ declare module "hardhat/types/runtime" {
       name: "ERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
+    deployContract(
+      name: "ERC4626",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ERC4626>;
     deployContract(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -572,6 +769,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
+      name: "SafeCast",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCast>;
+    deployContract(
       name: "Pausable",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Pausable>;
@@ -592,6 +793,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISwapRouter>;
     deployContract(
+      name: "AsterDEXEarnAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.AsterDEXEarnAdapter>;
+    deployContract(
+      name: "IMinterAster",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMinterAster>;
+    deployContract(
+      name: "ISimpleEarn",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISimpleEarn>;
+    deployContract(
       name: "DCAAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DCAAdapter>;
@@ -603,6 +816,34 @@ declare module "hardhat/types/runtime" {
       name: "ISwapRouter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "MetaYieldVaultKeeperAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MetaYieldVaultKeeperAdapter>;
+    deployContract(
+      name: "IMasterChefV2",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMasterChefV2>;
+    deployContract(
+      name: "PancakeSwapFarmAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PancakeSwapFarmAdapter>;
+    deployContract(
+      name: "IPancakeFactory",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeFactory>;
+    deployContract(
+      name: "IPancakePair",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakePair>;
+    deployContract(
+      name: "IPancakeRouter02",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeRouter02>;
+    deployContract(
+      name: "PancakeSwapV2LPAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PancakeSwapV2LPAdapter>;
     deployContract(
       name: "IAggregatorV3",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -656,6 +897,30 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.GlobalRegistry>;
     deployContract(
+      name: "IAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAdapter>;
+    deployContract(
+      name: "IMasterChefV2View",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMasterChefV2View>;
+    deployContract(
+      name: "IPancakePair",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakePair>;
+    deployContract(
+      name: "IPancakeRouter02",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeRouter02>;
+    deployContract(
+      name: "ISimpleEarnView",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISimpleEarnView>;
+    deployContract(
+      name: "MetaYieldVault",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MetaYieldVault>;
+    deployContract(
       name: "TaskCore",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TaskCore>;
@@ -680,6 +945,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IActionRegistry>;
     deployContract(
+      name: "IAsterPerp",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAsterPerp>;
+    deployContract(
       name: "IConditionOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IConditionOracle>;
@@ -687,6 +956,10 @@ declare module "hardhat/types/runtime" {
       name: "IExecutorHub",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IExecutorHub>;
+    deployContract(
+      name: "IMetaYieldVault",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMetaYieldVault>;
     deployContract(
       name: "IRewardManager",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -770,6 +1043,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1363>;
     deployContract(
+      name: "IERC4626",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC4626>;
+    deployContract(
       name: "Clones",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -779,6 +1057,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
+    deployContract(
+      name: "ERC4626",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ERC4626>;
     deployContract(
       name: "IERC20Metadata",
       args: any[],
@@ -810,6 +1093,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
+      name: "SafeCast",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCast>;
+    deployContract(
       name: "Pausable",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -835,6 +1123,21 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISwapRouter>;
     deployContract(
+      name: "AsterDEXEarnAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.AsterDEXEarnAdapter>;
+    deployContract(
+      name: "IMinterAster",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMinterAster>;
+    deployContract(
+      name: "ISimpleEarn",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISimpleEarn>;
+    deployContract(
       name: "DCAAdapter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -849,6 +1152,41 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISwapRouter>;
+    deployContract(
+      name: "MetaYieldVaultKeeperAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MetaYieldVaultKeeperAdapter>;
+    deployContract(
+      name: "IMasterChefV2",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMasterChefV2>;
+    deployContract(
+      name: "PancakeSwapFarmAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PancakeSwapFarmAdapter>;
+    deployContract(
+      name: "IPancakeFactory",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeFactory>;
+    deployContract(
+      name: "IPancakePair",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakePair>;
+    deployContract(
+      name: "IPancakeRouter02",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeRouter02>;
+    deployContract(
+      name: "PancakeSwapV2LPAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PancakeSwapV2LPAdapter>;
     deployContract(
       name: "IAggregatorV3",
       args: any[],
@@ -915,6 +1253,36 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.GlobalRegistry>;
     deployContract(
+      name: "IAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAdapter>;
+    deployContract(
+      name: "IMasterChefV2View",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMasterChefV2View>;
+    deployContract(
+      name: "IPancakePair",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakePair>;
+    deployContract(
+      name: "IPancakeRouter02",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPancakeRouter02>;
+    deployContract(
+      name: "ISimpleEarnView",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ISimpleEarnView>;
+    deployContract(
+      name: "MetaYieldVault",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MetaYieldVault>;
+    deployContract(
       name: "TaskCore",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -945,6 +1313,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IActionRegistry>;
     deployContract(
+      name: "IAsterPerp",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAsterPerp>;
+    deployContract(
       name: "IConditionOracle",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -954,6 +1327,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IExecutorHub>;
+    deployContract(
+      name: "IMetaYieldVault",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMetaYieldVault>;
     deployContract(
       name: "IRewardManager",
       args: any[],

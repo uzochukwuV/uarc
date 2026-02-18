@@ -3,8 +3,10 @@
 /* eslint-disable */
 export type { IActionAdapter } from "./IActionAdapter";
 export type { IActionRegistry } from "./IActionRegistry";
+export type { IAsterPerp } from "./IAsterPerp";
 export type { IConditionOracle } from "./IConditionOracle";
 export type { IExecutorHub } from "./IExecutorHub";
+export type { IMetaYieldVault } from "./IMetaYieldVault";
 export type { IRewardManager } from "./IRewardManager";
 export type { ITaskCore } from "./ITaskCore";
 export type { ITaskFactory } from "./ITaskFactory";

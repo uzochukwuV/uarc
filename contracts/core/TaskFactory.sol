@@ -36,7 +36,7 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
     address public globalRegistry;
 
     // Configuration
-    uint256 public minTaskReward = 0.001 ether;
+    uint256 public minTaskReward = 0.0002 ether;
     uint256 public maxTaskDuration = 365 days;
     uint256 public creationFee = 0;
 
