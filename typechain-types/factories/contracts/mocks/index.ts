@@ -3,5 +3,8 @@
 /* eslint-disable */
 export * as mockUniswapRouterSol from "./MockUniswapRouter.sol";
 export * as mockUniswapUsdcethBuyLimitAdapterSol from "./MockUniswapUSDCETHBuyLimitAdapter.sol";
+export { MockChainlinkAggregator__factory } from "./MockChainlinkAggregator__factory";
 export { MockChainlinkPriceFeed__factory } from "./MockChainlinkPriceFeed__factory";
 export { MockERC20__factory } from "./MockERC20__factory";
+export { MockProtocol__factory } from "./MockProtocol__factory";
+export { MockUniswapV2Router__factory } from "./MockUniswapV2Router__factory";

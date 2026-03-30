@@ -75,7 +75,7 @@ const config: HardhatUserConfig = {
         },
         polkadotHubTestnet: {
             // polkavm: true,
-            url: 'https://testnet-passet-hub-eth-rpc.polkadot.io',
+            url: 'https://eth-rpc-testnet.polkadot.io',
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
         },
         polygonAmoy : {

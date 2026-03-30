@@ -1,0 +1,38 @@
+{
+  "network": "polygonAmoy",
+  "chainId": "80002",
+  "deployer": "0xa7793C5c4582C72B3aa5e78859d8Bd66998D43ce",
+  "timestamp": "2026-03-18T15:52:51.094Z",
+  "contracts": {
+    "implementations": {
+      "TaskCore": "0x15C89Ef2e96C43b0b450E4C9834Fe661CaC5d84C",
+      "TaskVault": "0x26dD83A5390344b5bB41Fb1b8D553b298622582A"
+    },
+    "core": {
+      "TaskFactory": "0x63F143de8B970B50002f114bc30de525AdA076b0",
+      "TaskLogicV2": "0xD97E0879dA340f314198Ba07f5795849200CbAE4",
+      "ExecutorHub": "0xfE4716f31d92A5d7d91E553FE874e5177118B255",
+      "GlobalRegistry": "0xaD401e1D1627096D8D104A2eAF001774c84506c2",
+      "RewardManager": "0x217DF628fdc946D56D6979feC25A1337F9016e5c",
+      "ActionRegistry": "0x88dA8609C2115A052cd20920E788D4aDd57F8760"
+    },
+    "adapters": {
+      "UniswapV2Adapter": "0x0000000000000000000000000000000000000000",
+      "GenericAdapter": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "configuration": {
+    "taskFactory": {
+      "minTaskReward": "0.0002 ETH",
+      "creationFee": "0.0 ETH"
+    },
+    "executorHub": {
+      "minStake": "0.1 ETH",
+      "executionModel": "Direct execution with on-chain actions"
+    },
+    "rewardManager": {
+      "platformFee": "1.00%",
+      "gasReimbursement": "100%"
+    }
+  }
+}

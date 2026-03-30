@@ -2,9 +2,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as metaYieldVaultSol from "./MetaYieldVault.sol";
+export * as taskCreatorSol from "./TaskCreator.sol";
+export * as taskExecutorSol from "./TaskExecutor.sol";
 export { ExecutorHub__factory } from "./ExecutorHub__factory";
 export { GlobalRegistry__factory } from "./GlobalRegistry__factory";
 export { TaskCore__factory } from "./TaskCore__factory";
 export { TaskFactory__factory } from "./TaskFactory__factory";
+export { TaskLogic__factory } from "./TaskLogic__factory";
 export { TaskLogicV2__factory } from "./TaskLogicV2__factory";
+export { TaskStorage__factory } from "./TaskStorage__factory";
 export { TaskVault__factory } from "./TaskVault__factory";

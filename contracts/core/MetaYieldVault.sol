@@ -197,9 +197,10 @@ contract MetaYieldVault is ERC4626, Ownable, ReentrancyGuard {
     /// @notice BNB price move (in bps) that triggers a switch to DEFENSIVE regime. Default: 3%.
     uint256 public regimeVolatilityThreshold = 300;
 
-    /// @notice Maximum tolerated USDF depeg from USDT before earn allocation is blocked. Default: 3%.
-    /// @dev Checked using asUSDF exchange rate and AMM spot price (if USDF/USDT pair exists).
-    uint256 public depegThresholdBps = 300;
+    /// @notice Maximum tolerated USDF depeg from USDT before earn allocation is blocked.
+    /// @dev 0 = disabled (default). Set via setDepegThreshold() once a reliable USDF/USDT
+    ///      AMM pair exists on PancakeSwap V2 and the price oracle is confirmed accurate.
+    uint256 public depegThresholdBps = 0;
 
     /// @notice Last observed BNB spot price in USDT (18 decimals, from PancakeSwap).
     uint256 public lastBnbPrice;
@@ -461,7 +462,8 @@ contract MetaYieldVault is ERC4626, Ownable, ReentrancyGuard {
      *                       E.g. 300 = 3%. Range: 50–1000.
      */
     function setDepegThreshold(uint256 _thresholdBps) external onlyOwner {
-        require(_thresholdBps >= 50 && _thresholdBps <= 1_000, "Depeg threshold: 0.5%-10%");
+        require(_thresholdBps == 0 || (_thresholdBps >= 50 && _thresholdBps <= 1_000),
+            "Depeg threshold: 0 (off) or 0.5%-10%");
         depegThresholdBps = _thresholdBps;
     }
 
@@ -553,34 +555,25 @@ contract MetaYieldVault is ERC4626, Ownable, ReentrancyGuard {
      *         When hedgeBps > 0, a proportional short BNB hedge is opened on Aster Perps.
      */
     /**
-     * @notice Two-layer USDF depeg detector. Returns true if either check fails.
+     * @notice USDF depeg detector using PancakeSwap V2 AMM spot price.
      *
-     * Check 1 — asUSDF exchange rate:
-     *   `exchangePrice()` = USDF per asUSDF. Should always be >= 1e18 (grows with yield).
-     *   If it drops below 1e18 the protocol itself has mis-accounted — treat as depeg.
+     * If a USDF/USDT V2 pair exists, checks that USDF trades within depegThresholdBps of peg.
+     * If no pair exists (getAmountsOut returns 0), the check is skipped — no false positives.
      *
-     * Check 2 — AMM spot price (if USDF/USDT V2 pair exists):
-     *   getAmountsOut(1 USDF) should return ~1 USDT.
-     *   If it returns 0 (no pair) the check is skipped rather than blocking.
-     *   If it returns < floor (1 - depegThresholdBps%), depeg is confirmed.
+     * Note: the asUSDF minter's exchangePrice() is intentionally NOT used here.
+     *       That rate represents asUSDF/USDF conversion (starts <1e18), not the USDF/USDT peg.
      */
     function _isUsdFDepegged() internal view returns (bool) {
-        // Check 1: exchange rate floor — oracle failure is treated as depeg (conservative)
-        try ISimpleEarnView(ASUSDF_MINTER).exchangePrice() returns (uint256 rate) {
-            if (rate < 1e18) return true; // asUSDF worth less than 1 USDF — protocol break
-        } catch {
-            return true;
-        }
+        // Guard disabled when threshold = 0 (default). Enable via setDepegThreshold()
+        // once a USDF/USDT V2 pair exists on PancakeSwap with reliable liquidity.
+        if (depegThresholdBps == 0) return false;
 
-        // Check 2: AMM USDF/USDT spot price (only meaningful if pair exists)
+        // AMM USDF/USDT spot price — only meaningful if a V2 pair exists on PancakeSwap
         uint256 usdfPrice = _getAmountOut(1 ether, USDF, USDT);
-        if (usdfPrice > 0) {
-            uint256 floor = 1e18 - (depegThresholdBps * 1e18 / MAX_BPS);
-            if (usdfPrice < floor) return true;
-        }
-        // usdfPrice == 0 means no USDF/USDT V2 pair — skip AMM check, don't block
+        if (usdfPrice == 0) return false; // no pair → can't determine depeg, don't block
 
-        return false;
+        uint256 floor = 1e18 - (depegThresholdBps * 1e18 / MAX_BPS);
+        return usdfPrice < floor;
     }
 
     function _allocateToEarn(uint256 usdtAmount) internal {
