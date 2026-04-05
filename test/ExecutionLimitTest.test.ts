@@ -166,7 +166,7 @@ describe("TaskerOnChain - Execution Limit Enforcement", function () {
 
       // Create task with maxExecutions: 1
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 1,
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -281,7 +281,7 @@ describe("TaskerOnChain - Execution Limit Enforcement", function () {
       console.log("\n========== TEST: Multiple Execution Limit ==========");
 
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 3,
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -384,7 +384,7 @@ describe("TaskerOnChain - Execution Limit Enforcement", function () {
       console.log("\n========== TEST: Unlimited Executions (maxExecutions: 0) ==========");
 
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 0, // ← UNLIMITED
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,

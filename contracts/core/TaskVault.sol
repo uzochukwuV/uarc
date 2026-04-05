@@ -26,7 +26,6 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
     uint256 private nativeReserved;
 
     mapping(address => uint256) private tokenBalances;
-    mapping(address => uint256) private tokenReserved;
 
     address[] private trackedTokens;
     mapping(address => bool) private isTracked;
@@ -50,9 +49,9 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
         _;
     }
 
-    modifier onlyCancelled() {
+    modifier onlyFinished() {
         ITaskCore.TaskStatus status = ITaskCore(taskCore).getMetadata().status;
-        if (status != ITaskCore.TaskStatus.CANCELLED) revert TaskNotCancelled();
+        if (status != ITaskCore.TaskStatus.CANCELLED && status != ITaskCore.TaskStatus.COMPLETED) revert TaskNotFinished();
         _;
     }
 
@@ -137,9 +136,7 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
 
         if (tokenBalances[token] < amount) revert InsufficientBalance();
 
-        // Reserve tokens
-        tokenBalances[token] -= amount;
-        tokenReserved[token] += amount;
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
 
         // Approve adapter to spend tokens
         IERC20(token).approve(adapter, amount);
@@ -158,26 +155,22 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
 
         emit RewardExecute(success);
 
-
         // Cleanup: remove approval
         IERC20(token).approve(adapter, 0);
 
-        // Unreserve tokens (adapter should have spent them or returned them)
-        tokenReserved[token] -= amount;
-
-        // If failed, tokens should have been returned to vault
-        if (success == false) {
-            // Reclaim tokens that weren't spent
-            uint256 currentBalance = IERC20(token).balanceOf(address(this));
-            uint256 expectedBalance = tokenBalances[token] + tokenReserved[token];
-
-            if (currentBalance > expectedBalance) {
-                // Adapter returned tokens
-                tokenBalances[token] += (currentBalance - expectedBalance);
-            }
+        // Measure actual spent tokens
+        uint256 balanceAfter = IERC20(token).balanceOf(address(this));
+        uint256 spent = balanceBefore > balanceAfter ? balanceBefore - balanceAfter : 0;
+        
+        // Safeguard: only deduct up to what was approved/requested
+        if (spent > amount) {
+            spent = amount;
         }
+        
+        // Deduct only the actually spent amount
+        tokenBalances[token] -= spent;
 
-        emit TokenActionExecuted(token, adapter, amount, success);
+        emit TokenActionExecuted(token, adapter, spent, success);
         return (success, result);
     }
 
@@ -187,7 +180,7 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
     function withdrawAll()
         external
         onlyCreator
-        onlyCancelled
+        onlyFinished
         nonReentrant
         returns (uint256 nativeAmount, TokenAmount[] memory tokens)
     {
@@ -200,7 +193,7 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
 
         for (uint256 i = 0; i < tokenCount; i++) {
             address token = trackedTokens[i];
-            uint256 available = tokenBalances[token] - tokenReserved[token];
+            uint256 available = tokenBalances[token];
 
             tokens[i] = TokenAmount({
                 token: token,
@@ -247,7 +240,7 @@ contract TaskVault is ITaskVault, ReentrancyGuard {
 
     /// @notice Get available token balance (not reserved)
     function getAvailableTokenBalance(address token) external view returns (uint256) {
-        return tokenBalances[token] - tokenReserved[token];
+        return tokenBalances[token];
     }
 
     // ============ Receive Function ============

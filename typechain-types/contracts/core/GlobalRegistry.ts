@@ -73,7 +73,6 @@ export interface GlobalRegistryInterface extends Interface {
       | "searchTasks"
       | "tasks"
       | "tasksByCreator"
-      | "tasksByStatus"
       | "totalTasks"
       | "transferOwnership"
       | "updateTaskStatus"
@@ -151,10 +150,6 @@ export interface GlobalRegistryInterface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "tasksByStatus",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "totalTasks",
     values?: undefined
   ): string;
@@ -224,10 +219,6 @@ export interface GlobalRegistryInterface extends Interface {
   decodeFunctionResult(functionFragment: "tasks", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tasksByCreator",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "tasksByStatus",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "totalTasks", data: BytesLike): Result;
@@ -478,12 +469,6 @@ export interface GlobalRegistry extends BaseContract {
     "view"
   >;
 
-  tasksByStatus: TypedContractMethod<
-    [arg0: BigNumberish, arg1: BigNumberish],
-    [bigint],
-    "view"
-  >;
-
   totalTasks: TypedContractMethod<[], [bigint], "view">;
 
   transferOwnership: TypedContractMethod<
@@ -602,13 +587,6 @@ export interface GlobalRegistry extends BaseContract {
     nameOrSignature: "tasksByCreator"
   ): TypedContractMethod<
     [arg0: AddressLike, arg1: BigNumberish],
-    [bigint],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "tasksByStatus"
-  ): TypedContractMethod<
-    [arg0: BigNumberish, arg1: BigNumberish],
     [bigint],
     "view"
   >;

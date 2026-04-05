@@ -229,7 +229,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       console.log("\n========== STEP 1: CREATE TASK ==========");
 
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400, // 1 day
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400, // 1 day
         maxExecutions: 1,
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -400,7 +400,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       // Create task with strict price limit (lower than current price)
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 1,
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -519,7 +519,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       // Create task with maxExecutions = 1
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 3600, // 1 hour
         maxExecutions: 1, // Only allow ONE execution
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -597,7 +597,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       const metadata1 = await taskCore.getMetadata();
       expect(metadata1.executionCount).to.equal(1);
-      expect(metadata1.status).to.equal(1); // COMPLETED status
+      expect(metadata1.status).to.equal(3); // COMPLETED status
       console.log(`✅ First execution succeeded`);
       console.log(`   Execution count: ${metadata1.executionCount}`);
       console.log(`   Status: COMPLETED`);
@@ -615,7 +615,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       // Verify task is still COMPLETED
       const metadata2 = await taskCore.getMetadata();
       expect(metadata2.executionCount).to.equal(1);
-      expect(metadata2.status).to.equal(1); // Still COMPLETED
+      expect(metadata2.status).to.equal(3); // Still COMPLETED
       console.log(`✅ Task remains COMPLETED after failed execution attempt`);
     });
 
@@ -624,7 +624,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       // Create task with maxExecutions = 3 (recurring)
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 3, // Allow up to 3 executions
         recurringInterval: 0, // No interval - can execute immediately
         rewardPerExecution: TASK_REWARD,
@@ -707,7 +707,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
         console.log(`   Execution count: ${metadata.executionCount}`);
 
         if (i === 3) {
-          expect(metadata.status).to.equal(1); // COMPLETED
+          expect(metadata.status).to.equal(3); // COMPLETED
           console.log(`   Status: COMPLETED`);
         } else {
           expect(metadata.status).to.equal(0); // ACTIVE
@@ -731,7 +731,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       // Create task
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 86400,
         maxExecutions: 5,
         recurringInterval: 0,
         rewardPerExecution: TASK_REWARD,
@@ -806,7 +806,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       console.log(`\n📝 Pausing task...`);
       await taskCore.connect(user).pause();
       const metadataPaused = await taskCore.getMetadata();
-      expect(metadataPaused.status).to.equal(2); // PAUSED status
+      expect(metadataPaused.status).to.equal(1); // PAUSED status
       console.log(`✅ Task paused`);
 
       // Try to execute - should fail
@@ -838,7 +838,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       console.log("\n========== TEST: PREVENT EXECUTION WHEN TASK IS EXPIRED ==========");
 
       // Create task that expires soon (15 seconds from now)
-      const now = Math.floor(Date.now() / 1000);
+      const now = (await ethers.provider.getBlock("latest")).timestamp;
       const taskParams = {
         expiresAt: now + 15, // Expires in 15 seconds
         maxExecutions: 5,
@@ -912,8 +912,12 @@ describe("TaskerOnChain - Complete Flow Test", function () {
       console.log(`✅ Task created with expiration in 15 seconds`);
 
       // Wait for task to expire
-      console.log(`\n📝 Waiting 16 seconds for task to expire...`);
-      await new Promise((resolve) => setTimeout(resolve, 16000));
+      console.log(`\n📝 Fast forwarding time by 16 seconds for task to expire...`);
+      await network.provider.send("evm_increaseTime", [16]);
+      await network.provider.send("evm_mine");
+
+      const metadataBeforeExp = await taskCore.getMetadata();
+      console.log(`\n📝 Task Metadata before expiration check: expiresAt=${metadataBeforeExp.expiresAt}, currentTimestamp=${(await ethers.provider.getBlock("latest")).timestamp}`);
 
       // Check task is expired
       const isExecutable = await taskCore.isExecutable();
@@ -937,7 +941,7 @@ describe("TaskerOnChain - Complete Flow Test", function () {
 
       // Create recurring task with 10 second interval
       const taskParams = {
-        expiresAt: Math.floor(Date.now() / 1000) + 180, // 3 minutes
+        expiresAt: (await ethers.provider.getBlock("latest"))!.timestamp + 180, // 3 minutes
         maxExecutions: 0, // Unlimited executions
         recurringInterval: 10, // 10 second interval between executions
         rewardPerExecution: TASK_REWARD,

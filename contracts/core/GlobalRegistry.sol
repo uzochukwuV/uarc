@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/ITaskCore.sol";
 
 /**
@@ -32,9 +33,11 @@ contract GlobalRegistry is Ownable {
     mapping(uint256 => TaskInfo) public tasks;
     uint256 public totalTasks;
 
+    using EnumerableSet for EnumerableSet.UintSet;
+
     // Indexing
     mapping(address => uint256[]) public tasksByCreator;
-    mapping(ITaskCore.TaskStatus => uint256[]) public tasksByStatus;
+    mapping(ITaskCore.TaskStatus => EnumerableSet.UintSet) private tasksByStatus;
 
     // Pagination helpers
     uint256[] public allTaskIds;
@@ -100,7 +103,7 @@ contract GlobalRegistry is Ownable {
         tasks[taskId] = info;
         allTaskIds.push(taskId);
         tasksByCreator[creator].push(taskId);
-        tasksByStatus[metadata.status].push(taskId);
+        tasksByStatus[metadata.status].add(taskId);
 
         totalTasks++;
 
@@ -121,6 +124,9 @@ contract GlobalRegistry is Ownable {
 
         ITaskCore.TaskStatus oldStatus = info.status;
         info.status = newStatus;
+
+        tasksByStatus[oldStatus].remove(taskId);
+        tasksByStatus[newStatus].add(taskId);
 
         emit TaskStatusUpdated(taskId, oldStatus, newStatus);
     }
@@ -170,7 +176,7 @@ contract GlobalRegistry is Ownable {
         view
         returns (uint256[] memory)
     {
-        return tasksByStatus[status];
+        return tasksByStatus[status].values();
     }
 
     /**
@@ -187,7 +193,7 @@ contract GlobalRegistry is Ownable {
         uint256 count = 0;
         TaskInfo[] memory result = new TaskInfo[](limit);
 
-        uint256[] memory activeTasks = tasksByStatus[ITaskCore.TaskStatus.ACTIVE];
+        uint256[] memory activeTasks = tasksByStatus[ITaskCore.TaskStatus.ACTIVE].values();
 
         for (uint256 i = offset; i < activeTasks.length && count < limit; i++) {
             TaskInfo storage info = tasks[activeTasks[i]];

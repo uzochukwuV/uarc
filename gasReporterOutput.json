@@ -36,6 +36,402 @@
  },
  "data": {
   "methods": {
+   "FHE_acfc53ee": {
+    "key": "acfc53ee",
+    "isCall": true,
+    "contract": "FHE",
+    "method": "NIL16",
+    "fnSig": "NIL16()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FHE_9e80b513": {
+    "key": "9e80b513",
+    "isCall": true,
+    "contract": "FHE",
+    "method": "NIL32",
+    "fnSig": "NIL32()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FHE_b1c48544": {
+    "key": "b1c48544",
+    "isCall": true,
+    "contract": "FHE",
+    "method": "NIL8",
+    "fnSig": "NIL8()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_002df619": {
+    "key": "002df619",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "add",
+    "fnSig": "add(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_ae104cfd": {
+    "key": "ae104cfd",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "and",
+    "fnSig": "and(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_4a5a1117": {
+    "key": "4a5a1117",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "cast",
+    "fnSig": "cast(uint8,bytes,uint8)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_7c4697ab": {
+    "key": "7c4697ab",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "decrypt",
+    "fnSig": "decrypt(uint8,bytes,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_1f4cda2f": {
+    "key": "1f4cda2f",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "div",
+    "fnSig": "div(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_92348b34": {
+    "key": "92348b34",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "eq",
+    "fnSig": "eq(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_1b1b484e": {
+    "key": "1b1b484e",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "getNetworkPublicKey",
+    "fnSig": "getNetworkPublicKey(int32)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_874b1c10": {
+    "key": "874b1c10",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "gt",
+    "fnSig": "gt(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_650de1cf": {
+    "key": "650de1cf",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "gte",
+    "fnSig": "gte(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_41304fac": {
+    "key": "41304fac",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "log",
+    "fnSig": "log(string)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_b9c7a54b": {
+    "key": "b9c7a54b",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "lt",
+    "fnSig": "lt(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_eb274b77": {
+    "key": "eb274b77",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "lte",
+    "fnSig": "lte(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_0b80518e": {
+    "key": "0b80518e",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "max",
+    "fnSig": "max(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_5211c679": {
+    "key": "5211c679",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "min",
+    "fnSig": "min(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_4284f765": {
+    "key": "4284f765",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "mul",
+    "fnSig": "mul(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_13c0c9ae": {
+    "key": "13c0c9ae",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "ne",
+    "fnSig": "ne(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_d260d9ab": {
+    "key": "d260d9ab",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "not",
+    "fnSig": "not(uint8,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_72d456f5": {
+    "key": "72d456f5",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "or",
+    "fnSig": "or(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_aa626e8a": {
+    "key": "aa626e8a",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "random",
+    "fnSig": "random(uint8,uint64,int32)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_eb376804": {
+    "key": "eb376804",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "rem",
+    "fnSig": "rem(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_7d23f1db": {
+    "key": "7d23f1db",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "req",
+    "fnSig": "req(uint8,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_d89b314e": {
+    "key": "d89b314e",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "rol",
+    "fnSig": "rol(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_2456e7f2": {
+    "key": "2456e7f2",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "ror",
+    "fnSig": "ror(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_a1848ff3": {
+    "key": "a1848ff3",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "sealOutput",
+    "fnSig": "sealOutput(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_c2d96952": {
+    "key": "c2d96952",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "select",
+    "fnSig": "select(uint8,bytes,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_ae42450a": {
+    "key": "ae42450a",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "shl",
+    "fnSig": "shl(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_9944d12d": {
+    "key": "9944d12d",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "shr",
+    "fnSig": "shr(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_ef432a33": {
+    "key": "ef432a33",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "square",
+    "fnSig": "square(uint8,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_cc2cbeff": {
+    "key": "cc2cbeff",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "sub",
+    "fnSig": "sub(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_ba19ac28": {
+    "key": "ba19ac28",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "trivialEncrypt",
+    "fnSig": "trivialEncrypt(bytes,uint8,int32)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_21b50ba3": {
+    "key": "21b50ba3",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "verify",
+    "fnSig": "verify(uint8,bytes,int32)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "FheOps_5e639f19": {
+    "key": "5e639f19",
+    "isCall": true,
+    "contract": "FheOps",
+    "method": "xor",
+    "fnSig": "xor(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "Precompiles_13d8d464": {
+    "key": "13d8d464",
+    "isCall": true,
+    "contract": "Precompiles",
+    "method": "Fheos",
+    "fnSig": "Fheos()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
    "Ownable_8da5cb5b": {
     "key": "8da5cb5b",
     "isCall": true,
@@ -86,20 +482,10 @@
     "contract": "IERC1363",
     "method": "approve",
     "fnSig": "approve(address,uint256)",
-    "intrinsicGas": [
-     21596
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     46312
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 46312,
-    "calldataGasAverage": 0,
-    "min": 46312,
-    "max": 46312
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "IERC1363_3177029f": {
     "key": "3177029f",
@@ -3187,26 +3573,10 @@
     "contract": "ExecutorHub",
     "method": "executeTask",
     "fnSig": "executeTask(uint256)",
-    "intrinsicGas": [
-     21192,
-     21192,
-     21192
-    ],
-    "callData": [
-     0,
-     0,
-     0
-    ],
-    "gasData": [
-     265741,
-     265741,
-     397931
-    ],
-    "numberOfCalls": 3,
-    "executionGasAverage": 309804,
-    "calldataGasAverage": 0,
-    "min": 265741,
-    "max": 397931
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "ExecutorHub_9ac2a011": {
     "key": "9ac2a011",
@@ -3258,20 +3628,10 @@
     "contract": "ExecutorHub",
     "method": "registerExecutor",
     "fnSig": "registerExecutor()",
-    "intrinsicGas": [
-     21064
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     140668
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 140668,
-    "calldataGasAverage": 0,
-    "min": 140668,
-    "max": 140668
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "ExecutorHub_715018a6": {
     "key": "715018a6",
@@ -3301,23 +3661,10 @@
     "contract": "ExecutorHub",
     "method": "setTaskLogic",
     "fnSig": "setTaskLogic(address)",
-    "intrinsicGas": [
-     21432,
-     21432
-    ],
-    "callData": [
-     0,
-     0
-    ],
-    "gasData": [
-     46119,
-     46141
-    ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 46130,
-    "calldataGasAverage": 0,
-    "min": 46119,
-    "max": 46141
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "ExecutorHub_b2d78069": {
     "key": "b2d78069",
@@ -3325,23 +3672,10 @@
     "contract": "ExecutorHub",
     "method": "setTaskRegistry",
     "fnSig": "setTaskRegistry(address)",
-    "intrinsicGas": [
-     21432,
-     21432
-    ],
-    "callData": [
-     0,
-     0
-    ],
-    "gasData": [
-     46317,
-     46427
-    ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 46372,
-    "calldataGasAverage": 0,
-    "min": 46317,
-    "max": 46427
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "ExecutorHub_fd3f729d": {
     "key": "fd3f729d",
@@ -3437,20 +3771,10 @@
     "contract": "GlobalRegistry",
     "method": "authorizeFactory",
     "fnSig": "authorizeFactory(address)",
-    "intrinsicGas": [
-     21432
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     47392
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 47392,
-    "calldataGasAverage": 0,
-    "min": 47392,
-    "max": 47392
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "GlobalRegistry_ecd24a82": {
     "key": "ecd24a82",
@@ -3612,17 +3936,6 @@
     "contract": "GlobalRegistry",
     "method": "tasksByCreator",
     "fnSig": "tasksByCreator(address,uint256)",
-    "intrinsicGas": [],
-    "callData": [],
-    "gasData": [],
-    "numberOfCalls": 0
-   },
-   "GlobalRegistry_90d7b57a": {
-    "key": "90d7b57a",
-    "isCall": true,
-    "contract": "GlobalRegistry",
-    "method": "tasksByStatus",
-    "fnSig": "tasksByStatus(uint8,uint256)",
     "intrinsicGas": [],
     "callData": [],
     "gasData": [],
@@ -4877,23 +5190,10 @@
     "contract": "TaskFactory",
     "method": "createTaskWithTokens",
     "fnSig": "createTaskWithTokens((uint256,uint256,uint256,uint256,bytes32),(bytes4,address,bytes)[],(address,uint256)[])",
-    "intrinsicGas": [
-     24920,
-     24920
-    ],
-    "callData": [
-     0,
-     0
-    ],
-    "gasData": [
-     1109384,
-     1109384
-    ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 1109384,
-    "calldataGasAverage": 0,
-    "min": 1109384,
-    "max": 1109384
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "TaskFactory_dce0b4e4": {
     "key": "dce0b4e4",
@@ -5033,20 +5333,10 @@
     "contract": "TaskFactory",
     "method": "setGlobalRegistry",
     "fnSig": "setGlobalRegistry(address)",
-    "intrinsicGas": [
-     21420
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     46107
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 46107,
-    "calldataGasAverage": 0,
-    "min": 46107,
-    "max": 46107
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "TaskFactory_dc4590be": {
     "key": "dc4590be",
@@ -5219,20 +5509,10 @@
     "contract": "TaskLogicV2",
     "method": "setActionRegistry",
     "fnSig": "setActionRegistry(address)",
-    "intrinsicGas": [
-     21432
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     46372
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 46372,
-    "calldataGasAverage": 0,
-    "min": 46372,
-    "max": 46372
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "TaskLogicV2_b8278f75": {
     "key": "b8278f75",
@@ -5240,23 +5520,10 @@
     "contract": "TaskLogicV2",
     "method": "setExecutorHub",
     "fnSig": "setExecutorHub(address)",
-    "intrinsicGas": [
-     21432,
-     21432
-    ],
-    "callData": [
-     0,
-     0
-    ],
-    "gasData": [
-     46339,
-     46383
-    ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 46361,
-    "calldataGasAverage": 0,
-    "min": 46339,
-    "max": 46383
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "TaskLogicV2_153ee554": {
     "key": "153ee554",
@@ -5264,20 +5531,10 @@
     "contract": "TaskLogicV2",
     "method": "setRewardManager",
     "fnSig": "setRewardManager(address)",
-    "intrinsicGas": [
-     21432
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     46141
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 46141,
-    "calldataGasAverage": 0,
-    "min": 46141,
-    "max": 46141
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "TaskLogicV2_b2d78069": {
     "key": "b2d78069",
@@ -5488,6 +5745,105 @@
     "gasData": [],
     "numberOfCalls": 0
    },
+   "ConfidentialTransferAdapter_6c5be56b": {
+    "key": "6c5be56b",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "canExecute",
+    "fnSig": "canExecute(bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_2d9fa4bd": {
+    "key": "2d9fa4bd",
+    "isCall": false,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "createConfidentialTask",
+    "fnSig": "createConfidentialTask((bytes,int32),(bytes,int32),address,address)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_1cff79cd": {
+    "key": "1cff79cd",
+    "isCall": false,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "execute",
+    "fnSig": "execute(address,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_db4b586a": {
+    "key": "db4b586a",
+    "isCall": false,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "executeConfidential",
+    "fnSig": "executeConfidential(uint256,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_a53a180c": {
+    "key": "a53a180c",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "getTokenRequirements",
+    "fnSig": "getTokenRequirements(bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_f7a7c56d": {
+    "key": "f7a7c56d",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "isProtocolSupported",
+    "fnSig": "isProtocolSupported(address)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_06fdde03": {
+    "key": "06fdde03",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "name",
+    "fnSig": "name()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_54a9914d": {
+    "key": "54a9914d",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "nextConfidentialTaskId",
+    "fnSig": "nextConfidentialTaskId()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTransferAdapter_656eee2b": {
+    "key": "656eee2b",
+    "isCall": true,
+    "contract": "ConfidentialTransferAdapter",
+    "method": "validateParams",
+    "fnSig": "validateParams(bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
    "IActionAdapter_6c5be56b": {
     "key": "6c5be56b",
     "isCall": true,
@@ -5560,20 +5916,10 @@
     "contract": "IActionRegistry",
     "method": "approveProtocol",
     "fnSig": "approveProtocol(address)",
-    "intrinsicGas": [
-     21432
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     47386
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 47386,
-    "calldataGasAverage": 0,
-    "min": 47386,
-    "max": 47386
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "IActionRegistry_eb61f1ab": {
     "key": "eb61f1ab",
@@ -5625,20 +5971,10 @@
     "contract": "IActionRegistry",
     "method": "registerAdapter",
     "fnSig": "registerAdapter(bytes4,address,uint256,bool)",
-    "intrinsicGas": [
-     21912
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     92937
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 92937,
-    "calldataGasAverage": 0,
-    "min": 92937,
-    "max": 92937
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "IActionRegistry_b5368415": {
     "key": "b5368415",
@@ -6823,20 +7159,10 @@
     "contract": "MockERC20",
     "method": "mint",
     "fnSig": "mint(address,uint256)",
-    "intrinsicGas": [
-     21608
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     68485
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 68485,
-    "calldataGasAverage": 0,
-    "min": 68485,
-    "max": 68485
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "MockERC20_06fdde03": {
     "key": "06fdde03",
@@ -7469,12 +7795,72 @@
     "callData": []
    },
    {
+    "name": "Arrays",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "AsterDEXEarnAdapter",
     "gasData": [],
     "callData": []
    },
    {
+    "name": "BindingsEaddress",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEbool",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint128",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint16",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint256",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint32",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint64",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "BindingsEuint8",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "Clones",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "Common",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "Comparators",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "ConfidentialTransferAdapter",
     "gasData": [],
     "callData": []
    },
@@ -7504,6 +7890,11 @@
     "callData": []
    },
    {
+    "name": "EnumerableSet",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "ERC20",
     "gasData": [],
     "callData": []
@@ -7520,6 +7911,16 @@
    },
    {
     "name": "ExecutorHub",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "FHE",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "FheOps",
     "gasData": [],
     "callData": []
    },
@@ -7630,6 +8031,11 @@
    },
    {
     "name": "IMockRouter",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "Impl",
     "gasData": [],
     "callData": []
    },
@@ -7745,55 +8151,8 @@
    },
    {
     "name": "Ownable",
-    "gasData": [
-     568146,
-     568146,
-     581939,
-     581939,
-     937505,
-     937505,
-     977359,
-     977359,
-     1412828,
-     1412828,
-     1491713,
-     1491713,
-     1499755,
-     1499755,
-     1538619,
-     1538619,
-     1545279,
-     1545279,
-     2085118,
-     2085118
-    ],
-    "callData": [
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
-    ],
-    "executionGasAverage": 1263826,
-    "calldataGasAverage": 0,
-    "min": 568146,
-    "max": 2085118,
-    "percent": 4.2
+    "gasData": [],
+    "callData": []
    },
    {
     "name": "PancakeSwapFarmAdapter",
@@ -7812,6 +8171,11 @@
    },
    {
     "name": "Pausable",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "Precompiles",
     "gasData": [],
     "callData": []
    },
@@ -7836,7 +8200,17 @@
     "callData": []
    },
    {
+    "name": "SlotDerivation",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "StopLossTakeProfitAdapter",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "StorageSlot",
     "gasData": [],
     "callData": []
    },

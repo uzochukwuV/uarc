@@ -27,7 +27,7 @@ interface ITaskVault {
     error OnlyTaskCore();
     error OnlyTaskLogic();
     error OnlyCreator();
-    error TaskNotCancelled();
+    error TaskNotFinished();
     error InsufficientBalance();
     error TransferFailed();
 
@@ -53,7 +53,7 @@ interface ITaskVault {
         bytes calldata actionData
     ) external returns (bool success, bytes memory result);
 
-    /// @notice Withdraw all funds (only creator, only when cancelled)
+    /// @notice Withdraw all funds (only creator, only when cancelled or completed)
     function withdrawAll() external returns (uint256 nativeAmount, TokenAmount[] memory tokens);
 
     /// @notice Get native balance
