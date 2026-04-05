@@ -23,55 +23,153 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export type InEuint128Struct = { data: BytesLike; securityZone: BigNumberish };
+export declare namespace ITaskVault {
+  export type TokenAmountStruct = { token: AddressLike; amount: BigNumberish };
 
-export type InEuint128StructOutput = [data: string, securityZone: bigint] & {
-  data: string;
-  securityZone: bigint;
-};
+  export type TokenAmountStructOutput = [token: string, amount: bigint] & {
+    token: string;
+    amount: bigint;
+  };
+}
 
 export interface ConfidentialTaskVaultInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "creator"
-      | "depositEncryptedToken"
-      | "executeConfidentialTokenAction"
+      | "depositNative"
+      | "depositToken"
+      | "executeTokenAction"
+      | "factory"
+      | "getAvailableForRewards"
+      | "getNativeBalance"
+      | "getTokenBalance"
       | "initialize"
+      | "releaseReward"
+      | "rewardManager"
+      | "taskCore"
+      | "taskLogic"
+      | "trackFHERC20Deposit"
+      | "transferFHERC20"
+      | "withdrawAll"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "ConfidentialTokenActionExecuted"
-      | "ConfidentialTokenDeposited"
+      | "ConfidentialActionExecuted"
+      | "FHERC20Deposited"
+      | "FundsWithdrawn"
+      | "Initialized"
+      | "NativeDeposited"
+      | "RewardReleased"
+      | "TokenActionExecuted"
+      | "TokenDeposited"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "creator", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "depositEncryptedToken",
-    values: [AddressLike, InEuint128Struct]
+    functionFragment: "depositNative",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "executeConfidentialTokenAction",
+    functionFragment: "depositToken",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "executeTokenAction",
     values: [AddressLike, AddressLike, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(functionFragment: "factory", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getAvailableForRewards",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getNativeBalance",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTokenBalance",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "releaseReward",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "rewardManager",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "taskCore", values?: undefined): string;
+  encodeFunctionData(functionFragment: "taskLogic", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "trackFHERC20Deposit",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferFHERC20",
+    values: [AddressLike, AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawAll",
+    values?: undefined
   ): string;
 
   decodeFunctionResult(functionFragment: "creator", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "depositEncryptedToken",
+    functionFragment: "depositNative",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "executeConfidentialTokenAction",
+    functionFragment: "depositToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "executeTokenAction",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "factory", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAvailableForRewards",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getNativeBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getTokenBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "releaseReward",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "rewardManager",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "taskCore", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "taskLogic", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "trackFHERC20Deposit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferFHERC20",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawAll",
+    data: BytesLike
+  ): Result;
 }
 
-export namespace ConfidentialTokenActionExecutedEvent {
+export namespace ConfidentialActionExecutedEvent {
   export type InputTuple = [
     token: AddressLike,
     adapter: AddressLike,
@@ -89,12 +187,114 @@ export namespace ConfidentialTokenActionExecutedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace ConfidentialTokenDepositedEvent {
-  export type InputTuple = [token: AddressLike, from: AddressLike];
-  export type OutputTuple = [token: string, from: string];
+export namespace FHERC20DepositedEvent {
+  export type InputTuple = [token: AddressLike];
+  export type OutputTuple = [token: string];
+  export interface OutputObject {
+    token: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace FundsWithdrawnEvent {
+  export type InputTuple = [
+    to: AddressLike,
+    nativeAmount: BigNumberish,
+    tokens: ITaskVault.TokenAmountStruct[]
+  ];
+  export type OutputTuple = [
+    to: string,
+    nativeAmount: bigint,
+    tokens: ITaskVault.TokenAmountStructOutput[]
+  ];
+  export interface OutputObject {
+    to: string;
+    nativeAmount: bigint;
+    tokens: ITaskVault.TokenAmountStructOutput[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace NativeDepositedEvent {
+  export type InputTuple = [from: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [from: string, amount: bigint];
+  export interface OutputObject {
+    from: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RewardReleasedEvent {
+  export type InputTuple = [executor: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [executor: string, amount: bigint];
+  export interface OutputObject {
+    executor: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenActionExecutedEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    adapter: AddressLike,
+    amount: BigNumberish,
+    success: boolean
+  ];
+  export type OutputTuple = [
+    token: string,
+    adapter: string,
+    amount: bigint,
+    success: boolean
+  ];
+  export interface OutputObject {
+    token: string;
+    adapter: string;
+    amount: bigint;
+    success: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenDepositedEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    from: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [token: string, from: string, amount: bigint];
   export interface OutputObject {
     token: string;
     from: string;
+    amount: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -147,26 +347,75 @@ export interface ConfidentialTaskVault extends BaseContract {
 
   creator: TypedContractMethod<[], [string], "view">;
 
-  depositEncryptedToken: TypedContractMethod<
-    [token: AddressLike, encryptedAmount: InEuint128Struct],
+  depositNative: TypedContractMethod<[], [void], "payable">;
+
+  depositToken: TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  executeConfidentialTokenAction: TypedContractMethod<
+  executeTokenAction: TypedContractMethod<
     [
       token: AddressLike,
       adapter: AddressLike,
-      encryptedAmount: BigNumberish,
+      amount: BigNumberish,
       actionData: BytesLike
     ],
     [[boolean, string] & { success: boolean; result: string }],
     "nonpayable"
   >;
 
+  factory: TypedContractMethod<[], [string], "view">;
+
+  getAvailableForRewards: TypedContractMethod<[], [bigint], "view">;
+
+  getNativeBalance: TypedContractMethod<[], [bigint], "view">;
+
+  getTokenBalance: TypedContractMethod<[token: AddressLike], [bigint], "view">;
+
   initialize: TypedContractMethod<
-    [_creator: AddressLike],
+    [
+      _taskCore: AddressLike,
+      _creator: AddressLike,
+      _rewardManager: AddressLike
+    ],
     [void],
+    "nonpayable"
+  >;
+
+  releaseReward: TypedContractMethod<
+    [executor: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  rewardManager: TypedContractMethod<[], [string], "view">;
+
+  taskCore: TypedContractMethod<[], [string], "view">;
+
+  taskLogic: TypedContractMethod<[], [string], "view">;
+
+  trackFHERC20Deposit: TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  transferFHERC20: TypedContractMethod<
+    [token: AddressLike, to: AddressLike, encryptedAmount: BigNumberish],
+    [bigint],
+    "nonpayable"
+  >;
+
+  withdrawAll: TypedContractMethod<
+    [],
+    [
+      [bigint, ITaskVault.TokenAmountStructOutput[]] & {
+        nativeAmount: bigint;
+        tokens: ITaskVault.TokenAmountStructOutput[];
+      }
+    ],
     "nonpayable"
   >;
 
@@ -178,64 +427,237 @@ export interface ConfidentialTaskVault extends BaseContract {
     nameOrSignature: "creator"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "depositEncryptedToken"
+    nameOrSignature: "depositNative"
+  ): TypedContractMethod<[], [void], "payable">;
+  getFunction(
+    nameOrSignature: "depositToken"
   ): TypedContractMethod<
-    [token: AddressLike, encryptedAmount: InEuint128Struct],
+    [token: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "executeConfidentialTokenAction"
+    nameOrSignature: "executeTokenAction"
   ): TypedContractMethod<
     [
       token: AddressLike,
       adapter: AddressLike,
-      encryptedAmount: BigNumberish,
+      amount: BigNumberish,
       actionData: BytesLike
     ],
     [[boolean, string] & { success: boolean; result: string }],
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "factory"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getAvailableForRewards"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getNativeBalance"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getTokenBalance"
+  ): TypedContractMethod<[token: AddressLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "initialize"
-  ): TypedContractMethod<[_creator: AddressLike], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [
+      _taskCore: AddressLike,
+      _creator: AddressLike,
+      _rewardManager: AddressLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "releaseReward"
+  ): TypedContractMethod<
+    [executor: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "rewardManager"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "taskCore"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "taskLogic"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "trackFHERC20Deposit"
+  ): TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "transferFHERC20"
+  ): TypedContractMethod<
+    [token: AddressLike, to: AddressLike, encryptedAmount: BigNumberish],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawAll"
+  ): TypedContractMethod<
+    [],
+    [
+      [bigint, ITaskVault.TokenAmountStructOutput[]] & {
+        nativeAmount: bigint;
+        tokens: ITaskVault.TokenAmountStructOutput[];
+      }
+    ],
+    "nonpayable"
+  >;
 
   getEvent(
-    key: "ConfidentialTokenActionExecuted"
+    key: "ConfidentialActionExecuted"
   ): TypedContractEvent<
-    ConfidentialTokenActionExecutedEvent.InputTuple,
-    ConfidentialTokenActionExecutedEvent.OutputTuple,
-    ConfidentialTokenActionExecutedEvent.OutputObject
+    ConfidentialActionExecutedEvent.InputTuple,
+    ConfidentialActionExecutedEvent.OutputTuple,
+    ConfidentialActionExecutedEvent.OutputObject
   >;
   getEvent(
-    key: "ConfidentialTokenDeposited"
+    key: "FHERC20Deposited"
   ): TypedContractEvent<
-    ConfidentialTokenDepositedEvent.InputTuple,
-    ConfidentialTokenDepositedEvent.OutputTuple,
-    ConfidentialTokenDepositedEvent.OutputObject
+    FHERC20DepositedEvent.InputTuple,
+    FHERC20DepositedEvent.OutputTuple,
+    FHERC20DepositedEvent.OutputObject
+  >;
+  getEvent(
+    key: "FundsWithdrawn"
+  ): TypedContractEvent<
+    FundsWithdrawnEvent.InputTuple,
+    FundsWithdrawnEvent.OutputTuple,
+    FundsWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NativeDeposited"
+  ): TypedContractEvent<
+    NativeDepositedEvent.InputTuple,
+    NativeDepositedEvent.OutputTuple,
+    NativeDepositedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardReleased"
+  ): TypedContractEvent<
+    RewardReleasedEvent.InputTuple,
+    RewardReleasedEvent.OutputTuple,
+    RewardReleasedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenActionExecuted"
+  ): TypedContractEvent<
+    TokenActionExecutedEvent.InputTuple,
+    TokenActionExecutedEvent.OutputTuple,
+    TokenActionExecutedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenDeposited"
+  ): TypedContractEvent<
+    TokenDepositedEvent.InputTuple,
+    TokenDepositedEvent.OutputTuple,
+    TokenDepositedEvent.OutputObject
   >;
 
   filters: {
-    "ConfidentialTokenActionExecuted(address,address,bool)": TypedContractEvent<
-      ConfidentialTokenActionExecutedEvent.InputTuple,
-      ConfidentialTokenActionExecutedEvent.OutputTuple,
-      ConfidentialTokenActionExecutedEvent.OutputObject
+    "ConfidentialActionExecuted(address,address,bool)": TypedContractEvent<
+      ConfidentialActionExecutedEvent.InputTuple,
+      ConfidentialActionExecutedEvent.OutputTuple,
+      ConfidentialActionExecutedEvent.OutputObject
     >;
-    ConfidentialTokenActionExecuted: TypedContractEvent<
-      ConfidentialTokenActionExecutedEvent.InputTuple,
-      ConfidentialTokenActionExecutedEvent.OutputTuple,
-      ConfidentialTokenActionExecutedEvent.OutputObject
+    ConfidentialActionExecuted: TypedContractEvent<
+      ConfidentialActionExecutedEvent.InputTuple,
+      ConfidentialActionExecutedEvent.OutputTuple,
+      ConfidentialActionExecutedEvent.OutputObject
     >;
 
-    "ConfidentialTokenDeposited(address,address)": TypedContractEvent<
-      ConfidentialTokenDepositedEvent.InputTuple,
-      ConfidentialTokenDepositedEvent.OutputTuple,
-      ConfidentialTokenDepositedEvent.OutputObject
+    "FHERC20Deposited(address)": TypedContractEvent<
+      FHERC20DepositedEvent.InputTuple,
+      FHERC20DepositedEvent.OutputTuple,
+      FHERC20DepositedEvent.OutputObject
     >;
-    ConfidentialTokenDeposited: TypedContractEvent<
-      ConfidentialTokenDepositedEvent.InputTuple,
-      ConfidentialTokenDepositedEvent.OutputTuple,
-      ConfidentialTokenDepositedEvent.OutputObject
+    FHERC20Deposited: TypedContractEvent<
+      FHERC20DepositedEvent.InputTuple,
+      FHERC20DepositedEvent.OutputTuple,
+      FHERC20DepositedEvent.OutputObject
+    >;
+
+    "FundsWithdrawn(address,uint256,tuple[])": TypedContractEvent<
+      FundsWithdrawnEvent.InputTuple,
+      FundsWithdrawnEvent.OutputTuple,
+      FundsWithdrawnEvent.OutputObject
+    >;
+    FundsWithdrawn: TypedContractEvent<
+      FundsWithdrawnEvent.InputTuple,
+      FundsWithdrawnEvent.OutputTuple,
+      FundsWithdrawnEvent.OutputObject
+    >;
+
+    "Initialized(uint64)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
+    "NativeDeposited(address,uint256)": TypedContractEvent<
+      NativeDepositedEvent.InputTuple,
+      NativeDepositedEvent.OutputTuple,
+      NativeDepositedEvent.OutputObject
+    >;
+    NativeDeposited: TypedContractEvent<
+      NativeDepositedEvent.InputTuple,
+      NativeDepositedEvent.OutputTuple,
+      NativeDepositedEvent.OutputObject
+    >;
+
+    "RewardReleased(address,uint256)": TypedContractEvent<
+      RewardReleasedEvent.InputTuple,
+      RewardReleasedEvent.OutputTuple,
+      RewardReleasedEvent.OutputObject
+    >;
+    RewardReleased: TypedContractEvent<
+      RewardReleasedEvent.InputTuple,
+      RewardReleasedEvent.OutputTuple,
+      RewardReleasedEvent.OutputObject
+    >;
+
+    "TokenActionExecuted(address,address,uint256,bool)": TypedContractEvent<
+      TokenActionExecutedEvent.InputTuple,
+      TokenActionExecutedEvent.OutputTuple,
+      TokenActionExecutedEvent.OutputObject
+    >;
+    TokenActionExecuted: TypedContractEvent<
+      TokenActionExecutedEvent.InputTuple,
+      TokenActionExecutedEvent.OutputTuple,
+      TokenActionExecutedEvent.OutputObject
+    >;
+
+    "TokenDeposited(address,address,uint256)": TypedContractEvent<
+      TokenDepositedEvent.InputTuple,
+      TokenDepositedEvent.OutputTuple,
+      TokenDepositedEvent.OutputObject
+    >;
+    TokenDeposited: TypedContractEvent<
+      TokenDepositedEvent.InputTuple,
+      TokenDepositedEvent.OutputTuple,
+      TokenDepositedEvent.OutputObject
     >;
   };
 }
