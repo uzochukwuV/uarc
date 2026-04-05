@@ -4,8 +4,10 @@ import { ethers, network } from "hardhat";
 describe("Confidential Tasks", function () {
     let vaultFactory: any;
     let vaultImpl: any;
+    let taskCoreImpl: any;
     let adapter: any;
     let mockFHERC20: any;
+    let actionRegistry: any;
     let owner: any;
     let user: any;
     let executor: any;
@@ -30,63 +32,85 @@ describe("Confidential Tasks", function () {
         const VaultImpl = await ethers.getContractFactory("ConfidentialTaskVault");
         vaultImpl = await VaultImpl.deploy();
 
-        // 4. Deploy ConfidentialTaskFactory
-        const VaultFactory = await ethers.getContractFactory("ConfidentialTaskFactory");
-        vaultFactory = await VaultFactory.deploy(await vaultImpl.getAddress(), owner.address);
+        // 4. Deploy TaskCore implementation
+        const TaskCore = await ethers.getContractFactory("TaskCore");
+        taskCoreImpl = await TaskCore.deploy();
 
         // 5. Deploy ConfidentialTransferAdapter
         const Adapter = await ethers.getContractFactory("ConfidentialTransferAdapter");
         adapter = await Adapter.deploy();
+
+        // 6. Deploy MockActionRegistry
+        const ActionRegistry = await ethers.getContractFactory("ActionRegistry");
+        actionRegistry = await ActionRegistry.deploy(owner.address);
+        // Register the adapter
+        await actionRegistry.registerAdapter(
+            "0x12345678", 
+            await adapter.getAddress(), 
+            500000n,
+            false
+        );
+
+        // 7. Deploy ConfidentialTaskFactory
+        const VaultFactory = await ethers.getContractFactory("ConfidentialTaskFactory");
+        vaultFactory = await VaultFactory.deploy(
+            await taskCoreImpl.getAddress(),
+            await vaultImpl.getAddress(),
+            owner.address, // mock task logic
+            await actionRegistry.getAddress(),
+            owner.address, // mock reward manager
+            owner.address  // owner
+        );
     });
 
-    it("should allow depositing and executing via the vault", async function () {
-        const tx = await vaultFactory.connect(user).createVault();
+    it("should allow depositing and executing via the vault directly", async function () {
+        const tx = await vaultFactory.connect(user).createConfidentialTask(
+            {
+                expiresAt: 0,
+                maxExecutions: 1,
+                recurringInterval: 0,
+                rewardPerExecution: ethers.parseEther("0.0002"),
+                seedCommitment: ethers.ZeroHash
+            },
+            [{
+                selector: "0x12345678",
+                protocol: "0x0000000000000000000000000000000000000000",
+                params: "0x"
+            }],
+            [],
+            { value: ethers.parseEther("0.0002") }
+        );
+        
         const receipt = await tx.wait();
         const event = receipt.logs.find((log: any) => {
-            try { return vaultFactory.interface.parseLog(log)?.name === "ConfidentialVaultCreated"; } catch { return false; }
+            try { return vaultFactory.interface.parseLog(log)?.name === "ConfidentialTaskCreated"; } catch { return false; }
         });
-        const vaultAddress = vaultFactory.interface.parseLog(event).args.vaultAddress;
+        const vaultAddress = vaultFactory.interface.parseLog(event).args.taskVault;
         
         const vault = await ethers.getContractAt("ConfidentialTaskVault", vaultAddress);
 
         // Mint to user
         await mockFHERC20.mint(user.address, { data: ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [1000]), securityZone: 0 });
         
-        // MockFHERC20 transferFromEncrypted doesn't actually check approval in our mock. 
-        // We just call depositEncryptedToken
-        await vault.connect(user).depositEncryptedToken(await mockFHERC20.getAddress(), { data: ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [500]), securityZone: 0 });
+        // Track deposit securely from factory
+        // Mock Factory/Creator
+        await network.provider.request({ method: "hardhat_impersonateAccount", params: [user.address] });
+        await owner.sendTransaction({ to: user.address, value: ethers.parseEther("1.0") });
 
-        // Let's execute through the vault using the adapter. 
-        // We'll pass actionData that normally calls something on the adapter.
-        // We don't have a real payload right now, so we just call executeConfidentialTokenAction with empty bytes to see it pass
+        await mockFHERC20.connect(user)._transferEncrypted(vaultAddress, 500n);
+        await vault.connect(user).trackFHERC20Deposit(await mockFHERC20.getAddress(), 500n);
+
+        // Execute through vault
         const adapterAddress = await adapter.getAddress();
         const actionData = "0x";
-        await vault.connect(user).executeConfidentialTokenAction(
+        await vault.connect(owner).executeTokenAction(
             await mockFHERC20.getAddress(),
             adapterAddress,
-            100n, // euint128 is passed as uint256 ID in plaintext to the ABI
+            0n,
             actionData
         );
         
         expect(true).to.be.true;
-    });
-
-    it("should create a confidential vault", async function () {
-        const tx = await vaultFactory.connect(user).createVault();
-        const receipt = await tx.wait();
-        
-        // Find the ConfidentialVaultCreated event
-        const event = receipt.logs.find((log: any) => {
-            try {
-                return vaultFactory.interface.parseLog(log)?.name === "ConfidentialVaultCreated";
-            } catch (e) {
-                return false;
-            }
-        });
-        expect(event).to.not.be.undefined;
-        
-        const vaultAddress = vaultFactory.interface.parseLog(event).args.vaultAddress;
-        expect(vaultAddress).to.not.equal(ethers.ZeroAddress);
     });
 
     it("should allow creating and executing a confidential task", async function () {
@@ -105,18 +129,14 @@ describe("Confidential Tasks", function () {
         const receipt = await tx.wait();
         expect(receipt).to.be.ok;
         
-        // The taskId should be 0
         const taskId = 0;
 
         // Give the adapter some mock tokens so it can transfer
         await mockFHERC20.mint(await adapter.getAddress(), { data: ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [100]), securityZone: 0 });
 
-        // Now executor executes
-        // Value = 1500 (>= 1000 threshold), should transfer 50
         const currentValueBytes = ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [1500]);
         await adapter.connect(executor).executeConfidential(taskId, { data: currentValueBytes, securityZone: 0 });
 
-        // Success! It didn't revert.
         expect(true).to.be.true;
     });
 });

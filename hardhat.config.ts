@@ -19,6 +19,7 @@ const config: HardhatUserConfig = {
     solidity: {
         version: '0.8.28',
         settings: {
+            evmVersion: 'cancun',
             optimizer: {
                 enabled: true,
                 runs: 1, // Lower runs = smaller deployment size (trade-off: higher gas costs)
