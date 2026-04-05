@@ -3,5 +3,6 @@
 /* eslint-disable */
 import type * as confidentialTaskFactorySol from "./ConfidentialTaskFactory.sol";
 export type { confidentialTaskFactorySol };
+import type * as confidentialTransferAdapterSol from "./ConfidentialTransferAdapter.sol";
+export type { confidentialTransferAdapterSol };
 export type { ConfidentialTaskVault } from "./ConfidentialTaskVault";
-export type { ConfidentialTransferAdapter } from "./ConfidentialTransferAdapter";

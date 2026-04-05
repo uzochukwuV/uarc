@@ -142,8 +142,8 @@ export type { IConfidentialTaskVault } from "./contracts/fhenix/ConfidentialTask
 export { IConfidentialTaskVault__factory } from "./factories/contracts/fhenix/ConfidentialTaskFactory.sol/IConfidentialTaskVault__factory";
 export type { ConfidentialTaskVault } from "./contracts/fhenix/ConfidentialTaskVault";
 export { ConfidentialTaskVault__factory } from "./factories/contracts/fhenix/ConfidentialTaskVault__factory";
-export type { ConfidentialTransferAdapter } from "./contracts/fhenix/ConfidentialTransferAdapter";
-export { ConfidentialTransferAdapter__factory } from "./factories/contracts/fhenix/ConfidentialTransferAdapter__factory";
+export type { ConfidentialTransferAdapter } from "./contracts/fhenix/ConfidentialTransferAdapter.sol/ConfidentialTransferAdapter";
+export { ConfidentialTransferAdapter__factory } from "./factories/contracts/fhenix/ConfidentialTransferAdapter.sol/ConfidentialTransferAdapter__factory";
 export type { IActionAdapter } from "./contracts/interfaces/IActionAdapter";
 export { IActionAdapter__factory } from "./factories/contracts/interfaces/IActionAdapter__factory";
 export type { IActionRegistry } from "./contracts/interfaces/IActionRegistry";

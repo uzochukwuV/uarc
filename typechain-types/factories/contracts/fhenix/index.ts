@@ -2,5 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as confidentialTaskFactorySol from "./ConfidentialTaskFactory.sol";
+export * as confidentialTransferAdapterSol from "./ConfidentialTransferAdapter.sol";
 export { ConfidentialTaskVault__factory } from "./ConfidentialTaskVault__factory";
-export { ConfidentialTransferAdapter__factory } from "./ConfidentialTransferAdapter__factory";

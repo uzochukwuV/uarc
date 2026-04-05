@@ -23,6 +23,13 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
+export type InEuint128Struct = { data: BytesLike; securityZone: BigNumberish };
+
+export type InEuint128StructOutput = [data: string, securityZone: bigint] & {
+  data: string;
+  securityZone: bigint;
+};
+
 export declare namespace ITaskVault {
   export type TokenAmountStruct = { token: AddressLike; amount: BigNumberish };
 
@@ -36,6 +43,7 @@ export interface ConfidentialTaskVaultInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "creator"
+      | "depositFHERC20"
       | "depositNative"
       | "depositToken"
       | "executeTokenAction"
@@ -66,6 +74,10 @@ export interface ConfidentialTaskVaultInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "creator", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "depositFHERC20",
+    values: [AddressLike, InEuint128Struct]
+  ): string;
   encodeFunctionData(
     functionFragment: "depositNative",
     values?: undefined
@@ -119,6 +131,10 @@ export interface ConfidentialTaskVaultInterface extends Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "creator", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "depositFHERC20",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "depositNative",
     data: BytesLike
@@ -347,6 +363,12 @@ export interface ConfidentialTaskVault extends BaseContract {
 
   creator: TypedContractMethod<[], [string], "view">;
 
+  depositFHERC20: TypedContractMethod<
+    [token: AddressLike, amount: InEuint128Struct],
+    [void],
+    "nonpayable"
+  >;
+
   depositNative: TypedContractMethod<[], [void], "payable">;
 
   depositToken: TypedContractMethod<
@@ -426,6 +448,13 @@ export interface ConfidentialTaskVault extends BaseContract {
   getFunction(
     nameOrSignature: "creator"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "depositFHERC20"
+  ): TypedContractMethod<
+    [token: AddressLike, amount: InEuint128Struct],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "depositNative"
   ): TypedContractMethod<[], [void], "payable">;

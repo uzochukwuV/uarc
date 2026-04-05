@@ -5707,19 +5707,19 @@
     "method": "executeTokenAction",
     "fnSig": "executeTokenAction(address,address,uint256,bytes)",
     "intrinsicGas": [
-     22184
+     22756
     ],
     "callData": [
      0
     ],
     "gasData": [
-     63952
+     50911
     ],
     "numberOfCalls": 1,
-    "executionGasAverage": 63952,
+    "executionGasAverage": 50911,
     "calldataGasAverage": 0,
-    "min": 63952,
-    "max": 63952
+    "min": 50911,
+    "max": 50911
    },
    "TaskVault_02d05d3f": {
     "key": "02d05d3f",
@@ -5912,14 +5912,14 @@
      0
     ],
     "gasData": [
-     651564,
-     651564
+     651634,
+     651634
     ],
     "numberOfCalls": 2,
-    "executionGasAverage": 651564,
+    "executionGasAverage": 651634,
     "calldataGasAverage": 0,
-    "min": 651564,
-    "max": 651564
+    "min": 651634,
+    "max": 651634
    },
    "ConfidentialTaskFactory_dce0b4e4": {
     "key": "dce0b4e4",
@@ -6108,10 +6108,10 @@
     "gasData": [],
     "numberOfCalls": 0
    },
-   "IConfidentialTaskVault_db6b5246": {
+   "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault_db6b5246": {
     "key": "db6b5246",
     "isCall": false,
-    "contract": "IConfidentialTaskVault",
+    "contract": "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault",
     "method": "depositNative",
     "fnSig": "depositNative()",
     "intrinsicGas": [],
@@ -6119,10 +6119,10 @@
     "gasData": [],
     "numberOfCalls": 0
    },
-   "IConfidentialTaskVault_c0c53b8b": {
+   "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault_c0c53b8b": {
     "key": "c0c53b8b",
     "isCall": false,
-    "contract": "IConfidentialTaskVault",
+    "contract": "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault",
     "method": "initialize",
     "fnSig": "initialize(address,address,address)",
     "intrinsicGas": [],
@@ -6130,26 +6130,16 @@
     "gasData": [],
     "numberOfCalls": 0
    },
-   "IConfidentialTaskVault_10d4a1f7": {
+   "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault_10d4a1f7": {
     "key": "10d4a1f7",
     "isCall": false,
-    "contract": "IConfidentialTaskVault",
+    "contract": "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault",
     "method": "trackFHERC20Deposit",
     "fnSig": "trackFHERC20Deposit(address,uint256)",
-    "intrinsicGas": [
-     21584
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     119090
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 119090,
-    "calldataGasAverage": 0,
-    "min": 119090,
-    "max": 119090
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
    },
    "ConfidentialTaskVault_12119471": {
     "key": "12119471",
@@ -6161,6 +6151,27 @@
     "callData": [],
     "gasData": [],
     "numberOfCalls": 0
+   },
+   "ConfidentialTaskVault_20924559": {
+    "key": "20924559",
+    "isCall": false,
+    "contract": "ConfidentialTaskVault",
+    "method": "depositFHERC20",
+    "fnSig": "depositFHERC20(address,(bytes,int32))",
+    "intrinsicGas": [
+     22132
+    ],
+    "callData": [
+     0
+    ],
+    "gasData": [
+     165507
+    ],
+    "numberOfCalls": 1,
+    "executionGasAverage": 165507,
+    "calldataGasAverage": 0,
+    "min": 165507,
+    "max": 165507
    },
    "ConfidentialTaskVault_02d05d3f": {
     "key": "02d05d3f",
@@ -6353,14 +6364,14 @@
      0
     ],
     "gasData": [
-     143251,
-     143251
+     143240,
+     143240
     ],
     "numberOfCalls": 2,
-    "executionGasAverage": 143251,
+    "executionGasAverage": 143240,
     "calldataGasAverage": 0,
-    "min": 143251,
-    "max": 143251
+    "min": 143240,
+    "max": 143240
    },
    "ConfidentialTransferAdapter_1cff79cd": {
     "key": "1cff79cd",
@@ -6372,27 +6383,6 @@
     "callData": [],
     "gasData": [],
     "numberOfCalls": 0
-   },
-   "ConfidentialTransferAdapter_db4b586a": {
-    "key": "db4b586a",
-    "isCall": false,
-    "contract": "ConfidentialTransferAdapter",
-    "method": "executeConfidential",
-    "fnSig": "executeConfidential(uint256,(bytes,int32))",
-    "intrinsicGas": [
-     21892
-    ],
-    "callData": [
-     0
-    ],
-    "gasData": [
-     75092
-    ],
-    "numberOfCalls": 1,
-    "executionGasAverage": 75092,
-    "calldataGasAverage": 0,
-    "min": 75092,
-    "max": 75092
    },
    "ConfidentialTransferAdapter_a53a180c": {
     "key": "a53a180c",
@@ -6444,6 +6434,17 @@
     "contract": "ConfidentialTransferAdapter",
     "method": "validateParams",
     "fnSig": "validateParams(bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "fhenix/ConfidentialTransferAdapter.sol:IConfidentialTaskVault_b54c3d00": {
+    "key": "b54c3d00",
+    "isCall": false,
+    "contract": "fhenix/ConfidentialTransferAdapter.sol:IConfidentialTaskVault",
+    "method": "transferFHERC20",
+    "fnSig": "transferFHERC20(address,address,uint256)",
     "intrinsicGas": [],
     "callData": [],
     "gasData": [],
@@ -8848,15 +8849,26 @@
     "callData": []
    },
    {
+    "name": "fhenix/ConfidentialTaskFactory.sol:IConfidentialTaskVault",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "fhenix/ConfidentialTransferAdapter.sol:IConfidentialTaskVault",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "FheOps",
     "gasData": [
      573289,
      735034,
-     759131,
+     774036,
      850251,
      1467201,
-     1791143,
-     1794998
+     1812478,
+     1987136,
+     1987136
     ],
     "callData": [
      0,
@@ -8865,13 +8877,14 @@
      0,
      0,
      0,
+     0,
      0
     ],
-    "executionGasAverage": 1138721,
+    "executionGasAverage": 1273320,
     "calldataGasAverage": 0,
     "min": 573289,
-    "max": 1794998,
-    "percent": 3.8
+    "max": 1987136,
+    "percent": 4.2
    },
    {
     "name": "GlobalRegistry",
@@ -8910,11 +8923,6 @@
    },
    {
     "name": "IConditionOracle",
-    "gasData": [],
-    "callData": []
-   },
-   {
-    "name": "IConfidentialTaskVault",
     "gasData": [],
     "callData": []
    },

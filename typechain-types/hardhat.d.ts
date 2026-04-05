@@ -306,6 +306,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ConfidentialTransferAdapter__factory>;
     getContractFactory(
+      name: "IConfidentialTaskVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IConfidentialTaskVault__factory>;
+    getContractFactory(
       name: "IActionAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IActionAdapter__factory>;
@@ -760,6 +764,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ConfidentialTransferAdapter>;
     getContractAt(
+      name: "IConfidentialTaskVault",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IConfidentialTaskVault>;
+    getContractAt(
       name: "IActionAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -1163,6 +1172,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ConfidentialTransferAdapter>;
     deployContract(
+      name: "IConfidentialTaskVault",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IConfidentialTaskVault>;
+    deployContract(
       name: "IActionAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IActionAdapter>;
@@ -1616,6 +1629,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ConfidentialTransferAdapter>;
+    deployContract(
+      name: "IConfidentialTaskVault",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IConfidentialTaskVault>;
     deployContract(
       name: "IActionAdapter",
       args: any[],
