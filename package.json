@@ -18,6 +18,7 @@
     "solc": "^0.8.28"
   },
   "dependencies": {
+    "@fhenixprotocol/contracts": "^0.3.1",
     "@nomicfoundation/hardhat-toolbox": "^6.0.0"
   }
 }

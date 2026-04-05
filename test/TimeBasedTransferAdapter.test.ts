@@ -80,7 +80,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100; // In the past
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -93,7 +93,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -106,7 +106,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime + 3600; // 1 hour in future
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -120,7 +120,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime + 1000;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -134,7 +134,7 @@ describe("TimeBasedTransferAdapter", function () {
 
   describe("canExecute - Parameter Validation", function () {
     it("Should validate token address (zero address)", async function () {
-      const params = buildParams({
+      const params = await buildParams({
         token: ethers.ZeroAddress,
       });
 
@@ -146,7 +146,7 @@ describe("TimeBasedTransferAdapter", function () {
     });
 
     it("Should validate recipient address (zero address)", async function () {
-      const params = buildParams({
+      const params = await buildParams({
         recipient: ethers.ZeroAddress,
       });
 
@@ -157,7 +157,7 @@ describe("TimeBasedTransferAdapter", function () {
     });
 
     it("Should validate amount (zero)", async function () {
-      const params = buildParams({
+      const params = await buildParams({
         amount: 0n,
       });
 
@@ -173,7 +173,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100; // In the past
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         recipient: recipient.address,
         amount: TRANSFER_AMOUNT,
@@ -212,7 +212,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         amount: TRANSFER_AMOUNT,
       });
@@ -240,7 +240,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime + 3600; // 1 hour in future
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -257,7 +257,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         recipient: ethers.ZeroAddress,
       });
@@ -275,7 +275,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         amount: 0n,
       });
@@ -295,7 +295,7 @@ describe("TimeBasedTransferAdapter", function () {
 
       const hugeAmount = ethers.parseUnits("1000000", 6); // 1M USDC
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         amount: hugeAmount,
       });
@@ -312,7 +312,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -328,7 +328,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime - 100;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
         token: user.address, // EOA, not ERC20 contract
       });
@@ -347,7 +347,7 @@ describe("TimeBasedTransferAdapter", function () {
       const currentTime = await time.latest();
       const executeAfter = currentTime + 1000;
 
-      const params = buildParams({
+      const params = await buildParams({
         executeAfter,
       });
 
@@ -385,9 +385,9 @@ describe("TimeBasedTransferAdapter", function () {
       const time2 = currentTime + 200;
       const time3 = currentTime + 300;
 
-      const params1 = buildParams({ executeAfter: time1, amount: ethers.parseUnits("100", 6) });
-      const params2 = buildParams({ executeAfter: time2, amount: ethers.parseUnits("200", 6) });
-      const params3 = buildParams({ executeAfter: time3, amount: ethers.parseUnits("300", 6) });
+      const params1 = await buildParams({ executeAfter: time1, amount: ethers.parseUnits("100", 6) });
+      const params2 = await buildParams({ executeAfter: time2, amount: ethers.parseUnits("200", 6) });
+      const params3 = await buildParams({ executeAfter: time3, amount: ethers.parseUnits("300", 6) });
 
       await mockUSDC.connect(vault).approve(
         await adapter.getAddress(),
@@ -424,8 +424,8 @@ describe("TimeBasedTransferAdapter", function () {
   /**
    * Build encoded TransferParams with sensible defaults
    */
-  function buildParams(overrides: any = {}): string {
-    const currentTime = Math.floor(Date.now() / 1000);
+  async function buildParams(overrides: any = {}): Promise<string> {
+    const currentTime = (await ethers.provider.getBlock("latest"))!.timestamp;
 
     const defaults = {
       token: mockUSDC.target,

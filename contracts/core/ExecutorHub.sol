@@ -53,6 +53,17 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     /// @dev TESTNET: Free registration, no stake required
     function registerExecutor() external payable {
         if (executors[msg.sender].isActive) revert AlreadyRegistered();
+        if (executors[msg.sender].isSlashed) revert ExecutorBlacklisted();
+
+        // If previously registered, don't reset reputation
+        if (executors[msg.sender].registeredAt != 0) {
+            executors[msg.sender].isActive = true;
+            executors[msg.sender].stakedAmount += uint128(msg.value);
+            totalExecutors++;
+            emit ExecutorRegistered(msg.sender, msg.value);
+            return;
+        }
+
         // TESTNET: No minimum stake requirement
         // Production: uncomment to require stake
         // if (msg.value < minStakeAmount) revert InsufficientStake();

@@ -31,7 +31,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "TaskNotCancelled",
+    name: "TaskNotFinished",
     type: "error",
   },
   {
