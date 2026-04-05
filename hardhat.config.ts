@@ -11,6 +11,10 @@ import path from 'path';
 const BSC_FORK_URL = process.env.BSC_FORK_URL || '';
 const BSC_FORK_BLOCK = process.env.BSC_FORK_BLOCK ? parseInt(process.env.BSC_FORK_BLOCK) : undefined;
 
+// Base mainnet fork config
+const BASE_FORK_URL = process.env.BASE_FORK_URL || '';
+const BASE_FORK_BLOCK = process.env.BASE_FORK_BLOCK ? parseInt(process.env.BASE_FORK_BLOCK) : undefined;
+
 const config: HardhatUserConfig = {
     solidity: {
         version: '0.8.28',
@@ -34,15 +38,24 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            // When BSC_FORK_URL is set, forks BSC mainnet for integration testing
-            // Usage: BSC_FORK_URL=https://rpc.ankr.com/bsc/<key> npx hardhat test
+            // When BSC_FORK_URL or BASE_FORK_URL is set, forks mainnet for integration testing
             ...(BSC_FORK_URL ? {
                 forking: {
                     url: BSC_FORK_URL,
                     ...(BSC_FORK_BLOCK ? { blockNumber: BSC_FORK_BLOCK } : {}),
                 },
                 chainId: 56,
+            } : BASE_FORK_URL ? {
+                forking: {
+                    url: BASE_FORK_URL,
+                    ...(BASE_FORK_BLOCK ? { blockNumber: BASE_FORK_BLOCK } : {}),
+                },
+                chainId: 8453,
             } : {}),
+        },
+        baseFork: {
+            url: 'http://127.0.0.1:8545',
+            timeout: 600_000,
         },
         // Connects to a running 'npx hardhat node --fork <BSC_RPC>' instance
         // Hardhat fork nodes always report chainId 31337 internally — do not override

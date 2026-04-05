@@ -3,15 +3,9 @@
 /* eslint-disable */
 import type * as metaYieldVaultSol from "./MetaYieldVault.sol";
 export type { metaYieldVaultSol };
-import type * as taskCreatorSol from "./TaskCreator.sol";
-export type { taskCreatorSol };
-import type * as taskExecutorSol from "./TaskExecutor.sol";
-export type { taskExecutorSol };
 export type { ExecutorHub } from "./ExecutorHub";
 export type { GlobalRegistry } from "./GlobalRegistry";
 export type { TaskCore } from "./TaskCore";
 export type { TaskFactory } from "./TaskFactory";
-export type { TaskLogic } from "./TaskLogic";
 export type { TaskLogicV2 } from "./TaskLogicV2";
-export type { TaskStorage } from "./TaskStorage";
 export type { TaskVault } from "./TaskVault";
