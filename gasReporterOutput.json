@@ -432,6 +432,94 @@
     "gasData": [],
     "numberOfCalls": 0
    },
+   "Permissioned_84b0196e": {
+    "key": "84b0196e",
+    "isCall": true,
+    "contract": "Permissioned",
+    "method": "eip712Domain",
+    "fnSig": "eip712Domain()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_60277204": {
+    "key": "60277204",
+    "isCall": true,
+    "contract": "IFHERC20",
+    "method": "balanceOfEncrypted",
+    "fnSig": "balanceOfEncrypted(address,(bytes32,bytes))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_bf34a8ab": {
+    "key": "bf34a8ab",
+    "isCall": false,
+    "contract": "IFHERC20",
+    "method": "_transferEncrypted",
+    "fnSig": "_transferEncrypted(address,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_8468bfc0": {
+    "key": "8468bfc0",
+    "isCall": false,
+    "contract": "IFHERC20",
+    "method": "_transferFromEncrypted",
+    "fnSig": "_transferFromEncrypted(address,address,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_f9e23e05": {
+    "key": "f9e23e05",
+    "isCall": true,
+    "contract": "IFHERC20",
+    "method": "allowanceEncrypted",
+    "fnSig": "allowanceEncrypted(address,address,(bytes32,bytes))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_398038ac": {
+    "key": "398038ac",
+    "isCall": false,
+    "contract": "IFHERC20",
+    "method": "approveEncrypted",
+    "fnSig": "approveEncrypted(address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_ce03f2e1": {
+    "key": "ce03f2e1",
+    "isCall": false,
+    "contract": "IFHERC20",
+    "method": "transferEncrypted",
+    "fnSig": "transferEncrypted(address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IFHERC20_dfbe0e2c": {
+    "key": "dfbe0e2c",
+    "isCall": false,
+    "contract": "IFHERC20",
+    "method": "transferFromEncrypted",
+    "fnSig": "transferFromEncrypted(address,address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
    "Ownable_8da5cb5b": {
     "key": "8da5cb5b",
     "isCall": true,
@@ -878,6 +966,17 @@
     "contract": "IERC4626",
     "method": "withdraw",
     "fnSig": "withdraw(uint256,address,address)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "IERC5267_84b0196e": {
+    "key": "84b0196e",
+    "isCall": true,
+    "contract": "IERC5267",
+    "method": "eip712Domain",
+    "fnSig": "eip712Domain()",
     "intrinsicGas": [],
     "callData": [],
     "gasData": [],
@@ -1428,6 +1527,17 @@
     "contract": "Pausable",
     "method": "paused",
     "fnSig": "paused()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "EIP712_84b0196e": {
+    "key": "84b0196e",
+    "isCall": true,
+    "contract": "EIP712",
+    "method": "eip712Domain",
+    "fnSig": "eip712Domain()",
     "intrinsicGas": [],
     "callData": [],
     "gasData": [],
@@ -5745,6 +5855,166 @@
     "gasData": [],
     "numberOfCalls": 0
    },
+   "ConfidentialTaskFactory_5d12928b": {
+    "key": "5d12928b",
+    "isCall": false,
+    "contract": "ConfidentialTaskFactory",
+    "method": "createVault",
+    "fnSig": "createVault()",
+    "intrinsicGas": [
+     21064,
+     21064,
+     21064,
+     21064
+    ],
+    "callData": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "gasData": [
+     119980,
+     119980,
+     137080,
+     137080
+    ],
+    "numberOfCalls": 4,
+    "executionGasAverage": 128530,
+    "calldataGasAverage": 0,
+    "min": 119980,
+    "max": 137080
+   },
+   "ConfidentialTaskFactory_12ac1763": {
+    "key": "12ac1763",
+    "isCall": true,
+    "contract": "ConfidentialTaskFactory",
+    "method": "nextVaultId",
+    "fnSig": "nextVaultId()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskFactory_8da5cb5b": {
+    "key": "8da5cb5b",
+    "isCall": true,
+    "contract": "ConfidentialTaskFactory",
+    "method": "owner",
+    "fnSig": "owner()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskFactory_715018a6": {
+    "key": "715018a6",
+    "isCall": false,
+    "contract": "ConfidentialTaskFactory",
+    "method": "renounceOwnership",
+    "fnSig": "renounceOwnership()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskFactory_f2fde38b": {
+    "key": "f2fde38b",
+    "isCall": false,
+    "contract": "ConfidentialTaskFactory",
+    "method": "transferOwnership",
+    "fnSig": "transferOwnership(address)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskFactory_bba48a90": {
+    "key": "bba48a90",
+    "isCall": true,
+    "contract": "ConfidentialTaskFactory",
+    "method": "vaultImplementation",
+    "fnSig": "vaultImplementation()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskFactory_8c64ea4a": {
+    "key": "8c64ea4a",
+    "isCall": true,
+    "contract": "ConfidentialTaskFactory",
+    "method": "vaults",
+    "fnSig": "vaults(uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskVault_02d05d3f": {
+    "key": "02d05d3f",
+    "isCall": true,
+    "contract": "ConfidentialTaskVault",
+    "method": "creator",
+    "fnSig": "creator()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "ConfidentialTaskVault_6476d778": {
+    "key": "6476d778",
+    "isCall": false,
+    "contract": "ConfidentialTaskVault",
+    "method": "depositEncryptedToken",
+    "fnSig": "depositEncryptedToken(address,(bytes,int32))",
+    "intrinsicGas": [
+     22132
+    ],
+    "callData": [
+     0
+    ],
+    "gasData": [
+     181213
+    ],
+    "numberOfCalls": 1,
+    "executionGasAverage": 181213,
+    "calldataGasAverage": 0,
+    "min": 181213,
+    "max": 181213
+   },
+   "ConfidentialTaskVault_69c17c14": {
+    "key": "69c17c14",
+    "isCall": false,
+    "contract": "ConfidentialTaskVault",
+    "method": "executeConfidentialTokenAction",
+    "fnSig": "executeConfidentialTokenAction(address,address,uint256,bytes)",
+    "intrinsicGas": [
+     22196
+    ],
+    "callData": [
+     0
+    ],
+    "gasData": [
+     83025
+    ],
+    "numberOfCalls": 1,
+    "executionGasAverage": 83025,
+    "calldataGasAverage": 0,
+    "min": 83025,
+    "max": 83025
+   },
+   "ConfidentialTaskVault_c4d66de8": {
+    "key": "c4d66de8",
+    "isCall": false,
+    "contract": "ConfidentialTaskVault",
+    "method": "initialize",
+    "fnSig": "initialize(address)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
    "ConfidentialTransferAdapter_6c5be56b": {
     "key": "6c5be56b",
     "isCall": true,
@@ -5762,10 +6032,23 @@
     "contract": "ConfidentialTransferAdapter",
     "method": "createConfidentialTask",
     "fnSig": "createConfidentialTask((bytes,int32),(bytes,int32),address,address)",
-    "intrinsicGas": [],
-    "callData": [],
-    "gasData": [],
-    "numberOfCalls": 0
+    "intrinsicGas": [
+     23188,
+     23188
+    ],
+    "callData": [
+     0,
+     0
+    ],
+    "gasData": [
+     143941,
+     143941
+    ],
+    "numberOfCalls": 2,
+    "executionGasAverage": 143941,
+    "calldataGasAverage": 0,
+    "min": 143941,
+    "max": 143941
    },
    "ConfidentialTransferAdapter_1cff79cd": {
     "key": "1cff79cd",
@@ -5784,10 +6067,20 @@
     "contract": "ConfidentialTransferAdapter",
     "method": "executeConfidential",
     "fnSig": "executeConfidential(uint256,(bytes,int32))",
-    "intrinsicGas": [],
-    "callData": [],
-    "gasData": [],
-    "numberOfCalls": 0
+    "intrinsicGas": [
+     21892
+    ],
+    "callData": [
+     0
+    ],
+    "gasData": [
+     78604
+    ],
+    "numberOfCalls": 1,
+    "executionGasAverage": 78604,
+    "calldataGasAverage": 0,
+    "min": 78604,
+    "max": 78604
    },
    "ConfidentialTransferAdapter_a53a180c": {
     "key": "a53a180c",
@@ -7219,6 +7512,118 @@
     "gasData": [],
     "numberOfCalls": 0
    },
+   "MockFHERC20_60277204": {
+    "key": "60277204",
+    "isCall": true,
+    "contract": "MockFHERC20",
+    "method": "balanceOfEncrypted",
+    "fnSig": "balanceOfEncrypted(address,(bytes32,bytes))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_bf34a8ab": {
+    "key": "bf34a8ab",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "_transferEncrypted",
+    "fnSig": "_transferEncrypted(address,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_8468bfc0": {
+    "key": "8468bfc0",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "_transferFromEncrypted",
+    "fnSig": "_transferFromEncrypted(address,address,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_f9e23e05": {
+    "key": "f9e23e05",
+    "isCall": true,
+    "contract": "MockFHERC20",
+    "method": "allowanceEncrypted",
+    "fnSig": "allowanceEncrypted(address,address,(bytes32,bytes))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_398038ac": {
+    "key": "398038ac",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "approveEncrypted",
+    "fnSig": "approveEncrypted(address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_84b0196e": {
+    "key": "84b0196e",
+    "isCall": true,
+    "contract": "MockFHERC20",
+    "method": "eip712Domain",
+    "fnSig": "eip712Domain()",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_d1f3317c": {
+    "key": "d1f3317c",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "mint",
+    "fnSig": "mint(address,(bytes,int32))",
+    "intrinsicGas": [
+     22132,
+     22108
+    ],
+    "callData": [
+     0,
+     0
+    ],
+    "gasData": [
+     39276,
+     50770
+    ],
+    "numberOfCalls": 2,
+    "executionGasAverage": 45023,
+    "calldataGasAverage": 0,
+    "min": 39276,
+    "max": 50770
+   },
+   "MockFHERC20_ce03f2e1": {
+    "key": "ce03f2e1",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "transferEncrypted",
+    "fnSig": "transferEncrypted(address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MockFHERC20_dfbe0e2c": {
+    "key": "dfbe0e2c",
+    "isCall": false,
+    "contract": "MockFHERC20",
+    "method": "transferFromEncrypted",
+    "fnSig": "transferFromEncrypted(address,address,(bytes,int32))",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
    "mocks/MockUniswapRouter.sol:IERC20Metadata_313ce567": {
     "key": "313ce567",
     "isCall": true,
@@ -7423,6 +7828,182 @@
     "contract": "MockUniswapUSDCETHBuyLimitAdapter",
     "method": "validateParams",
     "fnSig": "validateParams(bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_002df619": {
+    "key": "002df619",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "add",
+    "fnSig": "add(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_b8fa1043": {
+    "key": "b8fa1043",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "boolToBytes",
+    "fnSig": "boolToBytes(bool)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_4a5a1117": {
+    "key": "4a5a1117",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "cast",
+    "fnSig": "cast(uint8,bytes,uint8)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_7c4697ab": {
+    "key": "7c4697ab",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "decrypt",
+    "fnSig": "decrypt(uint8,bytes,uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_650de1cf": {
+    "key": "650de1cf",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "gte",
+    "fnSig": "gte(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_b9c7a54b": {
+    "key": "b9c7a54b",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "lt",
+    "fnSig": "lt(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_eb274b77": {
+    "key": "eb274b77",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "lte",
+    "fnSig": "lte(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_55e5e6c5": {
+    "key": "55e5e6c5",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "maxValue",
+    "fnSig": "maxValue(uint8)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_4284f765": {
+    "key": "4284f765",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "mul",
+    "fnSig": "mul(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_7d23f1db": {
+    "key": "7d23f1db",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "req",
+    "fnSig": "req(uint8,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_a1848ff3": {
+    "key": "a1848ff3",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "sealOutput",
+    "fnSig": "sealOutput(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_c2d96952": {
+    "key": "c2d96952",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "select",
+    "fnSig": "select(uint8,bytes,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_cc2cbeff": {
+    "key": "cc2cbeff",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "sub",
+    "fnSig": "sub(uint8,bytes,bytes)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_ba19ac28": {
+    "key": "ba19ac28",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "trivialEncrypt",
+    "fnSig": "trivialEncrypt(bytes,uint8,int32)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_c7559da4": {
+    "key": "c7559da4",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "uint256ToBytes",
+    "fnSig": "uint256ToBytes(uint256)",
+    "intrinsicGas": [],
+    "callData": [],
+    "gasData": [],
+    "numberOfCalls": 0
+   },
+   "MyMockFheOps_21b50ba3": {
+    "key": "21b50ba3",
+    "isCall": true,
+    "contract": "MyMockFheOps",
+    "method": "verify",
+    "fnSig": "verify(uint8,bytes,int32)",
     "intrinsicGas": [],
     "callData": [],
     "gasData": [],
@@ -7860,6 +8441,16 @@
     "callData": []
    },
    {
+    "name": "ConfidentialTaskFactory",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "ConfidentialTaskVault",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "ConfidentialTransferAdapter",
     "gasData": [],
     "callData": []
@@ -7886,6 +8477,16 @@
    },
    {
     "name": "DCAAdapter",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "ECDSA",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "EIP712",
     "gasData": [],
     "callData": []
    },
@@ -7921,8 +8522,25 @@
    },
    {
     "name": "FheOps",
-    "gasData": [],
-    "callData": []
+    "gasData": [
+     369095,
+     741173,
+     760197,
+     785578,
+     878952
+    ],
+    "callData": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "executionGasAverage": 706999,
+    "calldataGasAverage": 0,
+    "min": 369095,
+    "max": 878952,
+    "percent": 2.4
    },
    {
     "name": "GlobalRegistry",
@@ -7995,12 +8613,22 @@
     "callData": []
    },
    {
+    "name": "IERC5267",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "IERC721Errors",
     "gasData": [],
     "callData": []
    },
    {
     "name": "IExecutorHub",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "IFHERC20",
     "gasData": [],
     "callData": []
    },
@@ -8115,6 +8743,11 @@
     "callData": []
    },
    {
+    "name": "MessageHashUtils",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "MetaYieldVault",
     "gasData": [],
     "callData": []
@@ -8135,6 +8768,11 @@
     "callData": []
    },
    {
+    "name": "MockFHERC20",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "mocks/MockUniswapRouter.sol:IERC20Metadata",
     "gasData": [],
     "callData": []
@@ -8146,6 +8784,11 @@
    },
    {
     "name": "MockUniswapUSDCETHBuyLimitAdapter",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "MyMockFheOps",
     "gasData": [],
     "callData": []
    },
@@ -8175,6 +8818,11 @@
     "callData": []
    },
    {
+    "name": "Permissioned",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "Precompiles",
     "gasData": [],
     "callData": []
@@ -8200,6 +8848,16 @@
     "callData": []
    },
    {
+    "name": "ShortStrings",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "SignedMath",
+    "gasData": [],
+    "callData": []
+   },
+   {
     "name": "SlotDerivation",
     "gasData": [],
     "callData": []
@@ -8211,6 +8869,11 @@
    },
    {
     "name": "StorageSlot",
+    "gasData": [],
+    "callData": []
+   },
+   {
+    "name": "Strings",
     "gasData": [],
     "callData": []
    },
