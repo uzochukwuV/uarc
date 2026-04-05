@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@fhenixprotocol/contracts/FHE.sol";
+import "@fhenixprotocol/contracts/experimental/token/FHERC20/IFHERC20.sol";
 import "../interfaces/IActionAdapter.sol";
 
 /**
@@ -14,7 +15,7 @@ contract ConfidentialTransferAdapter is IActionAdapter {
 
     struct ConfidentialParams {
         euint32 encryptedThreshold;   // e.g., A target price or timestamp
-        euint256 encryptedAmount;     // How much to transfer
+        euint128 encryptedAmount;     // How much to transfer
         address recipient;            // To whom
         address fherc20Token;         // The confidential token contract
     }
@@ -32,7 +33,7 @@ contract ConfidentialTransferAdapter is IActionAdapter {
      */
     function createConfidentialTask(
         inEuint32 calldata inThreshold,
-        inEuint256 calldata inAmount,
+        inEuint128 calldata inAmount,
         address recipient,
         address token
     ) external returns (uint256) {
@@ -40,7 +41,7 @@ contract ConfidentialTransferAdapter is IActionAdapter {
         
         confidentialTasks[taskId] = ConfidentialParams({
             encryptedThreshold: FHE.asEuint32(inThreshold),
-            encryptedAmount: FHE.asEuint256(inAmount),
+            encryptedAmount: FHE.asEuint128(inAmount),
             recipient: recipient,
             fherc20Token: token
         });
@@ -62,10 +63,10 @@ contract ConfidentialTransferAdapter is IActionAdapter {
         ebool conditionMet = FHE.gte(currentValue, params.encryptedThreshold);
         
         // If condition met -> amount, else -> 0
-        euint256 transferAmount = FHE.select(conditionMet, params.encryptedAmount, FHE.asEuint256(0));
+        euint128 transferAmount = FHE.select(conditionMet, params.encryptedAmount, FHE.asEuint128(0));
         
-        // Pseudo-code for FHERC20 transfer (assuming an FHERC20 interface):
-        // IFHERC20(params.fherc20Token).transferConfidential(params.recipient, transferAmount);
+        // Execute the FHERC20 transfer
+        IFHERC20(params.fherc20Token)._transferEncrypted(params.recipient, transferAmount);
         
         // Here the executor pays gas and triggers the evaluation, but cannot see:
         // 1. The original threshold.
