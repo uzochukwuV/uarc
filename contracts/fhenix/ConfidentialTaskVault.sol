@@ -63,8 +63,8 @@ contract ConfidentialTaskVault is ITaskVault, Initializable, ReentrancyGuard {
         _;
     }
 
-    modifier onlyFactoryOrCreator() {
-        if (msg.sender != factory && msg.sender != creator) revert Unauthorized();
+    modifier onlyFactory() {
+        if (msg.sender != factory) revert Unauthorized();
         _;
     }
 
@@ -120,11 +120,12 @@ contract ConfidentialTaskVault is ITaskVault, Initializable, ReentrancyGuard {
         emit TokenDeposited(token, msg.sender, amount);
     }
 
-    /// @notice securely track an FHERC20 deposit sent via the Factory or Creator
-    function trackFHERC20Deposit(address token, euint128 amount) external onlyFactoryOrCreator {
+    /// @notice securely track an FHERC20 deposit sent via the Factory
+    function trackFHERC20Deposit(address token, euint128 amount) external onlyFactory {
         require(token != address(0), "Invalid FHERC20 token");
         
         if (!isFHERC20Tracked[token]) {
+            require(trackedFHERC20Tokens.length < 5, "Max FHERC20 limit reached"); // Prevent Gas DoS
             trackedFHERC20Tokens.push(token);
             isFHERC20Tracked[token] = true;
         }
@@ -133,6 +134,28 @@ contract ConfidentialTaskVault is ITaskVault, Initializable, ReentrancyGuard {
             encryptedTokenBalances[token] = FHE.add(encryptedTokenBalances[token], amount);
         } else {
             encryptedTokenBalances[token] = amount;
+        }
+
+        emit FHERC20Deposited(token);
+    }
+
+    /// @notice allows a creator to deposit FHERC20 tokens securely after creation
+    function depositFHERC20(address token, inEuint128 calldata amount) external onlyCreator nonReentrant {
+        require(token != address(0), "Invalid token");
+        
+        if (!isFHERC20Tracked[token]) {
+            require(trackedFHERC20Tokens.length < 5, "Max FHERC20 limit reached"); // Prevent Gas DoS
+            trackedFHERC20Tokens.push(token);
+            isFHERC20Tracked[token] = true;
+        }
+
+        // Securely pull the encrypted payload from the creator using the inEuint interface
+        euint128 actualTransferred = IFHERC20(token).transferFromEncrypted(msg.sender, address(this), amount);
+
+        if (FHE.isInitialized(encryptedTokenBalances[token])) {
+            encryptedTokenBalances[token] = FHE.add(encryptedTokenBalances[token], actualTransferred);
+        } else {
+            encryptedTokenBalances[token] = actualTransferred;
         }
 
         emit FHERC20Deposited(token);

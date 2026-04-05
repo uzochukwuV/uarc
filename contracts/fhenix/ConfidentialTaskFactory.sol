@@ -102,6 +102,8 @@ contract ConfidentialTaskFactory is Ownable, ReentrancyGuard {
         // Validate parameters securely
         _validateTaskParams(params, actions);
 
+        require(deposits.length <= 5, "Max 5 FHERC20 deposits allowed");
+        
         if (creationFee > 0) {
             require(msg.value >= creationFee, "Insufficient creation fee");
         }

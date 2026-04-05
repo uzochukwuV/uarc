@@ -5,6 +5,10 @@ import "@fhenixprotocol/contracts/FHE.sol";
 import "@fhenixprotocol/contracts/experimental/token/FHERC20/IFHERC20.sol";
 import "../interfaces/IActionAdapter.sol";
 
+interface IConfidentialTaskVault {
+    function transferFHERC20(address token, address to, euint128 encryptedAmount) external returns (euint128);
+}
+
 /**
  * @title ConfidentialTransferAdapter
  * @notice Demonstrates FHenix integration for confidential execution conditions.
@@ -49,37 +53,12 @@ contract ConfidentialTransferAdapter is IActionAdapter {
         return taskId;
     }
 
-    /**
-     * @notice Executor submits current value (e.g. current price/time) as encrypted data
-     * @dev We use an encrypted input so the Executor doesn't leak the exact condition 
-     *      they are testing against on the public mempool.
-     */
-    function executeConfidential(uint256 taskId, inEuint32 calldata inCurrentValue) external {
-        ConfidentialParams memory params = confidentialTasks[taskId];
-        
-        euint32 currentValue = FHE.asEuint32(inCurrentValue);
-        
-        // Evaluate: is current value >= threshold?
-        ebool conditionMet = FHE.gte(currentValue, params.encryptedThreshold);
-        
-        // If condition met -> amount, else -> 0
-        euint128 transferAmount = FHE.select(conditionMet, params.encryptedAmount, FHE.asEuint128(0));
-        
-        // Execute the FHERC20 transfer
-        IFHERC20(params.fherc20Token)._transferEncrypted(params.recipient, transferAmount);
-        
-        // Here the executor pays gas and triggers the evaluation, but cannot see:
-        // 1. The original threshold.
-        // 2. The transfer amount.
-        // 3. Whether the condition evaluated to true or false natively (unless balance changes are publicly leaked).
-    }
-
     // ==========================================
     // IActionAdapter implementations for standard 
-    // public integration (placeholder)
+    // integration with TaskVault
     // ==========================================
     
-    function getTokenRequirements(bytes calldata params)
+    function getTokenRequirements(bytes calldata /* params */)
         external
         pure
         override
@@ -89,9 +68,9 @@ contract ConfidentialTransferAdapter is IActionAdapter {
         amounts = new uint256[](0);
     }
 
-    function canExecute(bytes calldata params)
+    function canExecute(bytes calldata /* params */)
         external
-        view
+        pure
         override
         returns (bool canExec, string memory reason)
     {
@@ -100,26 +79,47 @@ contract ConfidentialTransferAdapter is IActionAdapter {
         return (true, "Confidential execution: always attemptable");
     }
 
+    /**
+     * @notice Executor submits current value (e.g. current price/time) as encrypted data
+     *         packed inside the `params` via TaskCore execution flow.
+     */
     function execute(address vault, bytes calldata params)
         external
         override
         returns (bool success, bytes memory result)
     {
-        // Integration point with public TaskVault
-        // The actual confidential transfer is handled in `executeConfidential`
+        // Decode the parameters provided by the executor during `executeTask`
+        (uint256 taskId, inEuint32 memory inCurrentValue) = abi.decode(params, (uint256, inEuint32));
+        
+        ConfidentialParams memory cParams = confidentialTasks[taskId];
+        require(cParams.fherc20Token != address(0), "Task not found");
+        
+        euint32 currentValue = FHE.asEuint32(inCurrentValue);
+        
+        // Evaluate: is current value >= threshold?
+        ebool conditionMet = FHE.gte(currentValue, cParams.encryptedThreshold);
+        
+        // If condition met -> amount, else -> 0
+        euint128 transferAmount = FHE.select(conditionMet, cParams.encryptedAmount, FHE.asEuint128(0));
+        
+        // Securely instruct the vault to transfer the encrypted amount.
+        // The vault physically holds the FHERC20 tokens and only allows this transfer
+        // because the adapter is the `activeAdapter` in the current context.
+        IConfidentialTaskVault(vault).transferFHERC20(cParams.fherc20Token, cParams.recipient, transferAmount);
+        
         return (true, bytes("Confidential executed"));
     }
 
-    function validateParams(bytes calldata params)
+    function validateParams(bytes calldata /* params */)
         external
-        view
+        pure
         override
         returns (bool isValid, string memory errorMessage)
     {
         return (true, "");
     }
 
-    function isProtocolSupported(address protocol) external pure override returns (bool) {
+    function isProtocolSupported(address /* protocol */) external pure override returns (bool) {
         return true;
     }
 
