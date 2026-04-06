@@ -6,6 +6,7 @@
 
 export enum TaskTemplateType {
   TIME_BASED_TRANSFER = "TIME_BASED_TRANSFER",
+  CONFIDENTIAL_TIME_BASED_TRANSFER = "CONFIDENTIAL_TIME_BASED_TRANSFER",
   LIMIT_ORDER = "LIMIT_ORDER",
   DCA = "DCA",
   AUTO_COMPOUND = "AUTO_COMPOUND",
@@ -28,9 +29,10 @@ export interface TemplateFormData {
   maxExecutions: string;
   expiresIn: string;
   adapterAddress: string;
+  isConfidential?: boolean;
 
   // Template-specific fields (stored as key-value pairs)
-  [key: string]: string;
+  [key: string]: any;
 }
 
 export interface TemplateConfig {

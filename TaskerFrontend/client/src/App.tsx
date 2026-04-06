@@ -28,15 +28,19 @@ function Router() {
   );
 }
 
+import { FhenixProvider } from "@/providers/FhenixProvider";
+
 function App() {
   return (
     <Web3Provider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </QueryClientProvider>
+      <FhenixProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </FhenixProvider>
     </Web3Provider>
   );
 }
