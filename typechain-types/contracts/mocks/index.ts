@@ -7,3 +7,5 @@ import type * as mockUniswapUsdcethBuyLimitAdapterSol from "./MockUniswapUSDCETH
 export type { mockUniswapUsdcethBuyLimitAdapterSol };
 export type { MockChainlinkPriceFeed } from "./MockChainlinkPriceFeed";
 export type { MockERC20 } from "./MockERC20";
+export type { MockFHERC20 } from "./MockFHERC20";
+export type { MyMockFheOps } from "./MyMockFheOps";

@@ -30,9 +30,9 @@ export type InEuint32StructOutput = [data: string, securityZone: bigint] & {
   securityZone: bigint;
 };
 
-export type InEuint256Struct = { data: BytesLike; securityZone: BigNumberish };
+export type InEuint128Struct = { data: BytesLike; securityZone: BigNumberish };
 
-export type InEuint256StructOutput = [data: string, securityZone: bigint] & {
+export type InEuint128StructOutput = [data: string, securityZone: bigint] & {
   data: string;
   securityZone: bigint;
 };
@@ -59,7 +59,7 @@ export interface ConfidentialTransferAdapterInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createConfidentialTask",
-    values: [InEuint32Struct, InEuint256Struct, AddressLike, AddressLike]
+    values: [InEuint32Struct, InEuint128Struct, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -193,7 +193,7 @@ export interface ConfidentialTransferAdapter extends BaseContract {
   createConfidentialTask: TypedContractMethod<
     [
       inThreshold: InEuint32Struct,
-      inAmount: InEuint256Struct,
+      inAmount: InEuint128Struct,
       recipient: AddressLike,
       token: AddressLike
     ],
@@ -251,7 +251,7 @@ export interface ConfidentialTransferAdapter extends BaseContract {
   ): TypedContractMethod<
     [
       inThreshold: InEuint32Struct,
-      inAmount: InEuint256Struct,
+      inAmount: InEuint128Struct,
       recipient: AddressLike,
       token: AddressLike
     ],

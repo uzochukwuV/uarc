@@ -3,4 +3,8 @@
 /* eslint-disable */
 import type * as fheOsSol from "./FheOS.sol";
 export type { fheOsSol };
+import type * as access from "./access";
+export type { access };
+import type * as experimental from "./experimental";
+export type { experimental };
 export type { FHE } from "./FHE";

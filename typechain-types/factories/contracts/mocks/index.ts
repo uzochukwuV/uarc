@@ -5,3 +5,5 @@ export * as mockUniswapRouterSol from "./MockUniswapRouter.sol";
 export * as mockUniswapUsdcethBuyLimitAdapterSol from "./MockUniswapUSDCETHBuyLimitAdapter.sol";
 export { MockChainlinkPriceFeed__factory } from "./MockChainlinkPriceFeed__factory";
 export { MockERC20__factory } from "./MockERC20__factory";
+export { MockFHERC20__factory } from "./MockFHERC20__factory";
+export { MyMockFheOps__factory } from "./MyMockFheOps__factory";
