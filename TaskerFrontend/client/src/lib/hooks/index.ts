@@ -32,3 +32,5 @@ export {
   useMarketplaceTasks,
   type TaskWithMetadata,
 } from './useTasksWithMetadata';
+
+export * from './useCreateConfidentialTask';

@@ -6,18 +6,21 @@
 
 import { TaskTemplateType, TemplateConfig } from './types';
 import { timeBasedTransferConfig } from './TimeBasedTransfer';
+import { confidentialTimeBasedTransferConfig } from './ConfidentialTimeBasedTransfer';
 
 // Export types
 export * from './types';
 
 // Export template components
 export { TimeBasedTransferFormFields } from './TimeBasedTransfer';
+export { ConfidentialTimeBasedTransferFormFields } from './ConfidentialTimeBasedTransfer';
 
 /**
  * Registry of all available templates
  */
 export const TEMPLATE_REGISTRY: Record<TaskTemplateType, TemplateConfig> = {
   [TaskTemplateType.TIME_BASED_TRANSFER]: timeBasedTransferConfig,
+  [TaskTemplateType.CONFIDENTIAL_TIME_BASED_TRANSFER]: confidentialTimeBasedTransferConfig,
 
   // Placeholder configs for future templates
   [TaskTemplateType.LIMIT_ORDER]: {
