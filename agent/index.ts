@@ -1,59 +1,71 @@
 import { ethers } from 'ethers';
 import manifest from './manifest.json';
 import * as readline from 'readline';
+import { Mistral } from '@mistralai/mistralai';
 
-// Note: In production, you would use an LLM API like OpenAI or Anthropic.
-// We're mocking the LLM call here to demonstrate the parsing flow locally.
-async function mockLLMParsing(intent: string, manifestContent: any): Promise<any> {
-    const lowerIntent = intent.toLowerCase();
+// Initialize Mistral Client
+const apiKey = process.env.MISTRAL_API_KEY || "MZQObVTrMQoqmADbPDgLpTxNwAg07FT7";
+const client = new Mistral({ apiKey: apiKey });
 
-    // 1. Parsing "buy $200 ETH on Uniswap if price drops below $2000"
-    if (lowerIntent.includes('uniswap') && lowerIntent.includes('price drops')) {
-        return {
-            summary: "I'll buy $200 ETH via Uniswap when ETH drops below $2000. Max spend: $200. My fee: $0.002 per execution. Confirm?",
-            condition: {
-                id: "price_below",
-                params: {
-                    priceFeed: "<ETH_USD_CHAINLINK_FEED>",
-                    threshold: ethers.parseUnits('2000', 8).toString() // Assuming 8 decimals for USD feeds
-                }
-            },
-            action: {
-                id: "uniswap_swap",
-                params: {
-                    poolId: "<ETH_USDC_UNISWAP_POOL_ID>",
-                    amountIn: ethers.parseUnits('200', 6).toString(), // USDC has 6 decimals
-                    tokenOut: "<WETH_ADDRESS>",
-                    minAmountOut: "0" // For simplicity
-                }
-            }
-        };
+// Using the generated wallet
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f';
+const RPC_URL = 'https://rpc.testnet.arc.network';
+const CHAIN_ID = 5042002;
+
+const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+const agentWallet = new ethers.Wallet(PRIVATE_KEY, provider);
+
+console.log(`Agent started. Connected to ${manifest.network} (Chain ID: ${manifest.chainId})`);
+console.log(`Wallet address: ${agentWallet.address}`);
+async function mistralLLMParsing(intent: string, manifestContent: any): Promise<any> {
+    
+
+    const systemPrompt = `
+You are the TaskerOnChain V2 AI Agent. Your job is to translate natural language intents into on-chain automation parameters.
+
+Here is the protocol manifest containing all available conditions and actions:
+${JSON.stringify(manifest, null, 2)}
+
+When the user provides an intent, you must:
+1. Identify the correct 'condition' and 'action' from the manifest.
+2. Extract or infer the required parameters for both.
+3. If amount is in dollars, convert it to 6 decimals (e.g. 200 -> 200000000). If threshold is in dollars, convert to 8 decimals (e.g. 2000 -> 200000000000).
+4. Output ONLY a valid JSON object matching this schema, no markdown blocks, no other text:
+{
+  "summary": "A human-readable summary of what will happen",
+  "condition": { "id": "...", "params": { ... } },
+  "action": { "id": "...", "params": { ... } }
+}
+If you are missing critical information, use placeholders like '<USDC_ADDRESS>' which the backend will resolve via tools.
+`;
+
+    const chatResponse = await client.chat.complete({
+        model: 'mistral-large-latest',
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: intent }
+        ],
+        responseFormat: {
+            type: "json_object"
+        }
+    });
+
+    const content = chatResponse.choices?.[0]?.message?.content;
+    if (!content) {
+        throw new Error("Failed to get response from Mistral AI.");
+    }
+    
+    // Clean up potential markdown formatting if model didn't perfectly respect JSON mode
+    let jsonStr = typeof content === 'string' ? content : JSON.stringify(content);
+    if (typeof jsonStr === 'string' && jsonStr.startsWith('```json')) {
+        jsonStr = jsonStr.replace(/```json\n/g, '').replace(/\n```/g, '');
     }
 
-    // 2. Parsing "lend my USDC on Aave if my wallet balance goes above 500"
-    if (lowerIntent.includes('aave') && lowerIntent.includes('balance goes above')) {
-        return {
-            summary: "I'll lend 500 USDC on Aave when your wallet balance goes above 500 USDC. My fee: $0.002 per execution. Confirm?",
-            condition: {
-                id: "balance_above",
-                params: {
-                    wallet: "<USER_WALLET_ADDRESS>",
-                    token: "<USDC_ADDRESS>",
-                    threshold: ethers.parseUnits('500', 6).toString()
-                }
-            },
-            action: {
-                id: "aave_lend",
-                params: {
-                    asset: "<USDC_ADDRESS>",
-                    amount: ethers.parseUnits('500', 6).toString(),
-                    onBehalfOf: "<USER_WALLET_ADDRESS>"
-                }
-            }
-        };
+    try {
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        throw new Error(`Failed to parse JSON from Mistral AI. Content was: ${content}`);
     }
-
-    throw new Error("I couldn't parse that intent. Please try something like 'buy $200 ETH on Uniswap if price drops below $2000'.");
 }
 
 /**
@@ -76,7 +88,7 @@ async function resolvePlaceholder(placeholder: string, userAddress: string): Pro
 async function createAutomationTx(intent: string, walletAddress: string) {
     console.log(`\n🤖 Analyzing intent: "${intent}"`);
 
-    const systemPrompt = `
+const systemPrompt = `
 You are the TaskerOnChain V2 AI Agent. Your job is to translate natural language intents into on-chain automation parameters.
 
 Here is the protocol manifest containing all available conditions and actions:
@@ -85,7 +97,8 @@ ${JSON.stringify(manifest, null, 2)}
 When the user provides an intent, you must:
 1. Identify the correct 'condition' and 'action' from the manifest.
 2. Extract or infer the required parameters for both.
-3. Output a valid JSON object matching this schema:
+3. If amount is in dollars, convert it to 6 decimals (e.g. 200 -> 200000000). If threshold is in dollars, convert to 8 decimals (e.g. 2000 -> 200000000000).
+4. Output ONLY a valid JSON object matching this schema, no markdown blocks, no other text:
 {
   "summary": "A human-readable summary of what will happen",
   "condition": { "id": "...", "params": { ... } },
@@ -95,10 +108,10 @@ If you are missing critical information, use placeholders like '<USDC_ADDRESS>' 
 `;
 
     // 1. LLM parses intent using the manifest and system prompt
-    console.log(`\n🧠 LLM is processing intent using the Manifest...`);
+    console.log(`\n🧠 Mistral AI is processing intent using the Manifest...`);
     let parsedData;
     try {
-        parsedData = await mockLLMParsing(intent, manifest);
+        parsedData = await mistralLLMParsing(intent, manifest);
     } catch (e: any) {
         console.log(`❌ ${e.message}`);
         return;

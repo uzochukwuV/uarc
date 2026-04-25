@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@fhenixprotocol/contracts": "^0.3.1",
+    "@mistralai/mistralai": "^2.2.1",
     "@nomicfoundation/hardhat-toolbox": "^6.0.0"
   }
 }
