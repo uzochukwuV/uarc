@@ -70,47 +70,10 @@ const config: HardhatUserConfig = {
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
             chainId: 8
         },
-        polkavmLocal: {
-            polkavm: true,
-            url: 'http://127.0.0.1:8545',
-            nodeConfig: {
-                nodeBinaryPath: path.join(__dirname, 'binaries', 'substrate-node'),
-                rpcPort: 8000,
-                dev: true,
-            },
-            adapterConfig: {
-                adapterBinaryPath: path.join(__dirname, 'binaries', 'eth-rpc'),
-                dev: true,
-            },
-        },
-        localNode: {
-            polkavm: true,
-            url: `http://127.0.0.1:8545`,
-        },
-        polkadotHubTestnet: {
-            // polkavm: true,
-            url: 'https://eth-rpc-testnet.polkadot.io',
-            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
-        },
-        polygonAmoy : {
-            url:  "https://rpc-amoy.polygon.technology",
-            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
-            chainId: 80002 ,
-           
-        },
-        polygon : {
-            url:  "https://polygon.drpc.org",
-            accounts: vars.has('TEST_PRIVATE_KEY') ? [vars.get('TEST_PRIVATE_KEY')] : []
-        },
-        // BNB Chain mainnet — for MetaYieldVault + TaskerOnChain production deployment
-        // Set private key: npx hardhat vars set DEPLOYER_PRIVATE_KEY
-        // Set RPC (optional, falls back to public): npx hardhat vars set BSC_RPC_URL
-        bnb: {
-            url: vars.has('BSC_RPC_URL') ? vars.get('BSC_RPC_URL') : 'https://bsc-dataseed4.bnbchain.org',
-            accounts: vars.has('DEPLOYER_PRIVATE_KEY') ? [vars.get('DEPLOYER_PRIVATE_KEY')] : [],
-            chainId: 56,
-            timeout: 120_000,
-            gasPrice: 1_000_000_000, // 1 gwei — minimum accepted on BSC (saves ~66% gas cost)
+        arcTestnet: {
+            url: 'https://rpc.testnet.arc.network',
+            chainId: 5042002,
+            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : ['0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'],
         },
     },
     etherscan: {

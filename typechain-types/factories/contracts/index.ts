@@ -3,7 +3,6 @@
 /* eslint-disable */
 export * as adapters from "./adapters";
 export * as core from "./core";
-export * as fhenix from "./fhenix";
 export * as interfaces from "./interfaces";
 export * as mocks from "./mocks";
 export * as support from "./support";

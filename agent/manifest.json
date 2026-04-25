@@ -1,0 +1,47 @@
+{
+  "protocol": "TaskerOnChain V2",
+  "network": "Arc Testnet",
+  "chainId": 5042002,
+  "nativeToken": "USDC",
+  "contracts": {
+    "TaskFactory": {
+      "address": "",
+      "description": "Deploys tasks. Use createTaskWithTokens to schedule automation.",
+      "methods": [
+        {
+          "name": "createTaskWithTokens",
+          "description": "Creates a task with ERC20 token deposits",
+          "inputs": [
+            { "name": "taskParams", "type": "tuple", "description": "maxExecutions, expiresAt, rewardPerExecution, executor" },
+            { "name": "actions", "type": "tuple[]", "description": "adapter operations to execute. target, selector, data, protocol" },
+            { "name": "deposits", "type": "tuple[]", "description": "token address and amount to deposit" }
+          ]
+        }
+      ]
+    },
+    "TimeBasedTransferAdapter": {
+      "address": "",
+      "description": "Adapter for scheduling a token transfer after a specific timestamp.",
+      "methods": [
+        {
+          "name": "execute",
+          "description": "Executes the transfer if the timestamp has passed",
+          "inputs": [
+            { "name": "taskId", "type": "uint256" },
+            { "name": "params", "type": "bytes", "description": "abi.encode(address token, uint256 amount, uint256 executeAfter, address recipient)" }
+          ]
+        }
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "webSearch",
+      "description": "Searches the web for missing parameters (e.g. token addresses, protocols on Arc Testnet)."
+    },
+    {
+      "name": "createTask",
+      "description": "Formulates the transaction payload and calls createTaskWithTokens."
+    }
+  ]
+}
