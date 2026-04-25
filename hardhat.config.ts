@@ -41,7 +41,7 @@ const config: HardhatUserConfig = {
         hardhat: {
             // Fork Arc Testnet for local testing
             forking: {
-                url: 'https://rpc.testnet.arc.network',
+                url: 'https://rpc.drpc.testnet.arc.network',
             },
             chainId: 5042002,
         },
@@ -62,7 +62,7 @@ const config: HardhatUserConfig = {
             chainId: 8
         },
         arcTestnet: {
-            url: 'https://rpc.testnet.arc.network',
+            url: 'https://rpc.drpc.testnet.arc.network',
             chainId: 5042002,
             accounts: ['0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f'],
         },
