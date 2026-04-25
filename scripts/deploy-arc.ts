@@ -99,7 +99,19 @@ async function main() {
   const curveAdapter = await CurveAdapter.deploy();
   await curveAdapter.waitForDeployment();
   const curveAdapterAddress = await curveAdapter.getAddress();
-  console.log("   ✅ CurveSwapAdapter:", curveAdapterAddress, "\n");
+  console.log("   ✅ CurveSwapAdapter:", curveAdapterAddress);
+
+  const CCTPAdapter = await ethers.getContractFactory("CCTPTransferAdapter");
+  const cctpAdapter = await CCTPAdapter.deploy();
+  await cctpAdapter.waitForDeployment();
+  const cctpAdapterAddress = await cctpAdapter.getAddress();
+  console.log("   ✅ CCTPTransferAdapter:", cctpAdapterAddress);
+
+  const StorkAdapter = await ethers.getContractFactory("StorkPriceTransferAdapter");
+  const storkAdapter = await StorkAdapter.deploy();
+  await storkAdapter.waitForDeployment();
+  const storkAdapterAddress = await storkAdapter.getAddress();
+  console.log("   ✅ StorkPriceTransferAdapter:", storkAdapterAddress, "\n");
 
   // ============================================================
   // STEP 4: CONFIGURE CONTRACTS
@@ -143,7 +155,23 @@ async function main() {
     300000,  
     true     
   );
-  console.log("   ✅ CurveSwapAdapter registered\n");
+  console.log("   ✅ CurveSwapAdapter registered");
+
+  await actionRegistry.registerAdapter(
+    executeSelector,
+    cctpAdapterAddress,
+    300000,  
+    true     
+  );
+  console.log("   ✅ CCTPTransferAdapter registered");
+
+  await actionRegistry.registerAdapter(
+    executeSelector,
+    storkAdapterAddress,
+    150000,  
+    true     
+  );
+  console.log("   ✅ StorkPriceTransferAdapter registered\n");
 
   // ============================================================
   // SAVE DEPLOYMENT INFO
@@ -160,7 +188,9 @@ async function main() {
       RewardManager: rewardManagerAddress,
       ActionRegistry: actionRegistryAddress,
       TimeBasedTransferAdapter: timeAdapterAddress,
-      CurveSwapAdapter: curveAdapterAddress
+      CurveSwapAdapter: curveAdapterAddress,
+      CCTPTransferAdapter: cctpAdapterAddress,
+      StorkPriceTransferAdapter: storkAdapterAddress
     }
   };
 

@@ -78,6 +78,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
+      name: "CCTPTransferAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CCTPTransferAdapter__factory>;
+    getContractFactory(
+      name: "ITokenMessenger",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ITokenMessenger__factory>;
+    getContractFactory(
       name: "CurveSwapAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.CurveSwapAdapter__factory>;
@@ -85,6 +93,14 @@ declare module "hardhat/types/runtime" {
       name: "ICurvePool",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ICurvePool__factory>;
+    getContractFactory(
+      name: "IStorkOracle",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IStorkOracle__factory>;
+    getContractFactory(
+      name: "StorkPriceTransferAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.StorkPriceTransferAdapter__factory>;
     getContractFactory(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -247,6 +263,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
+      name: "CCTPTransferAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CCTPTransferAdapter>;
+    getContractAt(
+      name: "ITokenMessenger",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ITokenMessenger>;
+    getContractAt(
       name: "CurveSwapAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -256,6 +282,16 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ICurvePool>;
+    getContractAt(
+      name: "IStorkOracle",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IStorkOracle>;
+    getContractAt(
+      name: "StorkPriceTransferAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.StorkPriceTransferAdapter>;
     getContractAt(
       name: "TimeBasedTransferAdapter",
       address: string | ethers.Addressable,
@@ -422,6 +458,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "CCTPTransferAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CCTPTransferAdapter>;
+    deployContract(
+      name: "ITokenMessenger",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ITokenMessenger>;
+    deployContract(
       name: "CurveSwapAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.CurveSwapAdapter>;
@@ -429,6 +473,14 @@ declare module "hardhat/types/runtime" {
       name: "ICurvePool",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ICurvePool>;
+    deployContract(
+      name: "IStorkOracle",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IStorkOracle>;
+    deployContract(
+      name: "StorkPriceTransferAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StorkPriceTransferAdapter>;
     deployContract(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -591,6 +643,16 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "CCTPTransferAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CCTPTransferAdapter>;
+    deployContract(
+      name: "ITokenMessenger",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ITokenMessenger>;
+    deployContract(
       name: "CurveSwapAdapter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -600,6 +662,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ICurvePool>;
+    deployContract(
+      name: "IStorkOracle",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IStorkOracle>;
+    deployContract(
+      name: "StorkPriceTransferAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StorkPriceTransferAdapter>;
     deployContract(
       name: "TimeBasedTransferAdapter",
       args: any[],

@@ -8,10 +8,10 @@ const manifestPath = path.join(__dirname, "../agent/manifest.json");
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 
 // Setup Network and Wallet
-const RPC_URL = 'https://rpc.drpc.testnet.arc.network';
-const CHAIN_ID = 5042002;
+const RPC_URL = 'http://127.0.0.1:8545';
+const CHAIN_ID = 31337; // Hardhat local chain ID
 const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
-const PRIVATE_KEY = process.env.PRIVATE_KEY || '0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f';
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
 // Setup Mistral AI
@@ -74,8 +74,14 @@ If you are missing critical information, use placeholders like '<USDC_ADDRESS>' 
 async function resolvePlaceholder(placeholder: string, userAddress: string): Promise<string> {
     const mockDb: Record<string, string> = {
         "<USDC_ADDRESS>": "0x3600000000000000000000000000000000000000",
+        "<EURC_ADDRESS>": "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",
+        "<STORK_ORACLE_ADDRESS>": "0xacC0a0cF13571d30B4b8637996F5D6D774d4fd62",
+        "<CCTP_MESSENGER_ADDRESS>": "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
         "<WALLET_ADDRESS>": userAddress,
-        "<RECIPIENT_ADDRESS>": "0x1111111111111111111111111111111111111111" // Dummy recipient
+        "<RECIPIENT_ADDRESS>": "0x1111111111111111111111111111111111111111", // Dummy recipient
+        "<DESTINATION_DOMAIN>": "0", // Ethereum
+        "<MINT_RECIPIENT>": "0x0000000000000000000000001111111111111111111111111111111111111111", // Bytes32 format
+        "<THRESHOLD_USD>": "100000000" // 1 USD (Stork uses 8 decimals)
     };
     return mockDb[placeholder] || placeholder;
 }
@@ -114,8 +120,16 @@ async function main() {
             parsedData.action.params[key] = await resolvePlaceholder(value, wallet.address);
         }
     }
+    for (const [key, value] of Object.entries(parsedData.condition?.params || {})) {
+        if (typeof value === 'string' && value.startsWith('<') && value.endsWith('>')) {
+            parsedData.condition.params[key] = await resolvePlaceholder(value, wallet.address);
+        }
+    }
 
     console.log(`\n⚙️  Resolved Action Params:`, parsedData.action.params);
+    if (parsedData.condition) {
+        console.log(`⚙️  Resolved Condition Params:`, parsedData.condition.params);
+    }
 
     // 3. Build Contract Call
     const taskFactoryAddress = manifest.contracts.TaskFactory;
