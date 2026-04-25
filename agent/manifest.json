@@ -4,6 +4,9 @@
   "chainId": 5042002,
   "nativeToken": "USDC",
   "gasFeeEstimation": "0.002",
+  "contracts": {
+    "TaskFactory": "0xcAc0367AD75D3E46E1a3Ef7004797953DdE9D05A"
+  },
   "conditions": [
     {
       "id": "price_below",
@@ -23,26 +26,33 @@
         "token": "address",
         "threshold": "uint256"
       }
-    },
-    {
-      "id": "time_passed",
-      "address": "0x3333333333333333333333333333333333333333",
-      "description": "Triggers when a specific block timestamp has passed",
-      "params": {
-        "executeAfter": "uint256"
-      }
     }
   ],
   "actions": [
     {
-      "id": "uniswap_swap",
-      "address": "0x4444444444444444444444444444444444444444",
-      "description": "Swaps exact USDC for a token via Uniswap V3",
+      "id": "time_based_transfer",
+      "address": "0x8Ae9d987687a06FcE01DF3A3D4FF3A961267b45E",
+      "description": "Transfers tokens to a recipient ONLY AFTER a specific timestamp has passed",
       "params": {
-        "poolId": "bytes32",
-        "amountIn": "uint256",
+        "token": "address",
+        "amount": "uint256",
+        "executeAfter": "uint256",
+        "recipient": "address"
+      }
+    },
+    {
+      "id": "curve_swap",
+      "address": "0xB2Ac489686F17D98ACFf9c51d18fCCeF14B77982",
+      "description": "Swaps tokens using Curve Finance",
+      "params": {
+        "pool": "address",
+        "tokenIn": "address",
         "tokenOut": "address",
-        "minAmountOut": "uint256"
+        "i": "int128",
+        "j": "int128",
+        "amountIn": "uint256",
+        "minAmountOut": "uint256",
+        "recipient": "address"
       }
     },
     {
@@ -53,16 +63,6 @@
         "asset": "address",
         "amount": "uint256",
         "onBehalfOf": "address"
-      }
-    },
-    {
-      "id": "token_transfer",
-      "address": "0x6666666666666666666666666666666666666666",
-      "description": "Transfers a specified amount of ERC20 tokens to a recipient",
-      "params": {
-        "token": "address",
-        "amount": "uint256",
-        "recipient": "address"
       }
     }
   ]

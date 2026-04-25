@@ -74,10 +74,17 @@ If you are missing critical information, use placeholders like '<USDC_ADDRESS>' 
 async function resolvePlaceholder(placeholder: string, userAddress: string): Promise<string> {
     const mockDb: Record<string, string> = {
         "<ETH_USD_CHAINLINK_FEED>": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-        "<ETH_USDC_UNISWAP_POOL_ID>": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8000000000000000000000000",
-        "<WETH_ADDRESS>": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-        "<USDC_ADDRESS>": "0x3600000000000000000000000000000000000000",
-        "<USER_WALLET_ADDRESS>": userAddress
+        "<CURVE_USDC_EURC_POOL>": "0x1234567890123456789012345678901234567890", // Mock Pool
+        "<CURVE_USDC_EURC_POOL_ADDRESS>": "0x1234567890123456789012345678901234567890", // Mock Pool
+        "<EURC_ADDRESS>": "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", // Arc Testnet EURC
+        "<USDC_ADDRESS>": "0x3600000000000000000000000000000000000000", // Arc Testnet USDC
+        "<WALLET_ADDRESS>": userAddress,
+        "<USER_WALLET_ADDRESS>": userAddress,
+        "<USDC_PRICE_FEED_ADDRESS>": "0x8888888888888888888888888888888888888888",
+        "<THRESHOLD_IN_USD_8_DECIMALS>": "100000000", // $1
+        "<USDC_POOL_INDEX>": "0",
+        "<EURC_POOL_INDEX>": "1",
+        "<MIN_EURC_AMOUNT_OUT>": "9000000" // $9 with slippage
     };
     return mockDb[placeholder] || placeholder;
 }

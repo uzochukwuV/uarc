@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
         arcTestnet: {
             url: 'https://rpc.testnet.arc.network',
             chainId: 5042002,
-            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : ['0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'],
+            accounts: ['0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f'],
         },
     },
     etherscan: {

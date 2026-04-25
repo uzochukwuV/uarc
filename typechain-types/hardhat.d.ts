@@ -78,6 +78,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
+      name: "CurveSwapAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CurveSwapAdapter__factory>;
+    getContractFactory(
+      name: "ICurvePool",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ICurvePool__factory>;
+    getContractFactory(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TimeBasedTransferAdapter__factory>;
@@ -141,6 +149,10 @@ declare module "hardhat/types/runtime" {
       name: "ITaskVault",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ITaskVault__factory>;
+    getContractFactory(
+      name: "MockCurvePool",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockCurvePool__factory>;
     getContractFactory(
       name: "MockERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -235,6 +247,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
+      name: "CurveSwapAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CurveSwapAdapter>;
+    getContractAt(
+      name: "ICurvePool",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ICurvePool>;
+    getContractAt(
       name: "TimeBasedTransferAdapter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -314,6 +336,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ITaskVault>;
+    getContractAt(
+      name: "MockCurvePool",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockCurvePool>;
     getContractAt(
       name: "MockERC20",
       address: string | ethers.Addressable,
@@ -395,6 +422,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "CurveSwapAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CurveSwapAdapter>;
+    deployContract(
+      name: "ICurvePool",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ICurvePool>;
+    deployContract(
       name: "TimeBasedTransferAdapter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TimeBasedTransferAdapter>;
@@ -458,6 +493,10 @@ declare module "hardhat/types/runtime" {
       name: "ITaskVault",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ITaskVault>;
+    deployContract(
+      name: "MockCurvePool",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockCurvePool>;
     deployContract(
       name: "MockERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -552,6 +591,16 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "CurveSwapAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CurveSwapAdapter>;
+    deployContract(
+      name: "ICurvePool",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ICurvePool>;
+    deployContract(
       name: "TimeBasedTransferAdapter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -631,6 +680,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ITaskVault>;
+    deployContract(
+      name: "MockCurvePool",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockCurvePool>;
     deployContract(
       name: "MockERC20",
       args: any[],
