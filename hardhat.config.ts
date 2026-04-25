@@ -39,20 +39,11 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            // When BSC_FORK_URL or BASE_FORK_URL is set, forks mainnet for integration testing
-            ...(BSC_FORK_URL ? {
-                forking: {
-                    url: BSC_FORK_URL,
-                    ...(BSC_FORK_BLOCK ? { blockNumber: BSC_FORK_BLOCK } : {}),
-                },
-                chainId: 56,
-            } : BASE_FORK_URL ? {
-                forking: {
-                    url: BASE_FORK_URL,
-                    ...(BASE_FORK_BLOCK ? { blockNumber: BASE_FORK_BLOCK } : {}),
-                },
-                chainId: 8453,
-            } : {}),
+            // Fork Arc Testnet for local testing
+            forking: {
+                url: 'https://rpc.testnet.arc.network',
+            },
+            chainId: 5042002,
         },
         baseFork: {
             url: 'http://127.0.0.1:8545',
