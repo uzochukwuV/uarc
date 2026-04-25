@@ -3,3 +3,5 @@
 /* eslint-disable */
 export type { MockCurvePool } from "./MockCurvePool";
 export type { MockERC20 } from "./MockERC20";
+export type { MockStorkOracle } from "./MockStorkOracle";
+export type { MockTokenMessenger } from "./MockTokenMessenger";

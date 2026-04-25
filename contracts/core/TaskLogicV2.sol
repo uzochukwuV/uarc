@@ -186,16 +186,17 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
      * @return bool Whether action succeeded
      */
     function _executeAction(address taskVault, ITaskCore.Action memory action) internal returns (bool) {
-        // Get adapter from registry
-        IActionRegistry.AdapterInfo memory adapterInfo =
-            IActionRegistry(actionRegistry).getAdapter(action.selector);
+        // Look up adapter by its contract address (action.protocol holds the adapter address)
+        // This allows multiple adapters with the same function selector to coexist
+        IActionRegistry.AdapterInfo memory adapterInfo;
+        try IActionRegistry(actionRegistry).getAdapterByAddress(action.protocol) returns (IActionRegistry.AdapterInfo memory info) {
+            adapterInfo = info;
+        } catch {
+            // Fallback: lookup by selector for backwards compatibility
+            adapterInfo = IActionRegistry(actionRegistry).getAdapter(action.selector);
+        }
 
         if (!adapterInfo.isActive) revert ActionsFailed();
-
-        // Check protocol is approved
-        if (!IActionRegistry(actionRegistry).isProtocolApproved(action.protocol)) {
-            revert ActionsFailed();
-        }
 
         // ✅ REFACTORED: Use adapter's getTokenRequirements() instead of hardcoded decoding
         // This allows adapters to use ANY parameter structure they need

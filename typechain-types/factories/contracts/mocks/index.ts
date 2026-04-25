@@ -3,3 +3,5 @@
 /* eslint-disable */
 export { MockCurvePool__factory } from "./MockCurvePool__factory";
 export { MockERC20__factory } from "./MockERC20__factory";
+export { MockStorkOracle__factory } from "./MockStorkOracle__factory";
+export { MockTokenMessenger__factory } from "./MockTokenMessenger__factory";

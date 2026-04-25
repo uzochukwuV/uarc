@@ -49,8 +49,11 @@ interface IActionRegistry {
     /// @notice Revoke protocol approval
     function revokeProtocol(address protocol) external;
 
-    /// @notice Get adapter info
+    /// @notice Get adapter info by function selector
     function getAdapter(bytes4 selector) external view returns (AdapterInfo memory);
+
+    /// @notice Get adapter info by adapter contract address
+    function getAdapterByAddress(address adapterAddr) external view returns (AdapterInfo memory);
 
     /// @notice Check if action is allowed
     function isActionAllowed(bytes4 selector, address protocol) external view returns (bool);

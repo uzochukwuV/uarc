@@ -14,6 +14,7 @@ contract ActionRegistry is IActionRegistry, Ownable {
     // ============ State Variables ============
 
     mapping(bytes4 => AdapterInfo) private adapters;
+    mapping(address => AdapterInfo) private adaptersByAddress;
     mapping(address => bool) private approvedProtocols;
 
     // ============ Constructor ============
@@ -32,12 +33,14 @@ contract ActionRegistry is IActionRegistry, Ownable {
         if (adapter == address(0)) revert InvalidAdapter();
         require(gasLimit > 0 && gasLimit <= 5000000, "Invalid gas limit");
 
-        adapters[selector] = AdapterInfo({
+        AdapterInfo memory info = AdapterInfo({
             adapter: adapter,
             isActive: true,
             gasLimit: gasLimit,
             requiresTokens: requiresTokens
         });
+        adapters[selector] = info;
+        adaptersByAddress[adapter] = info;
 
         emit AdapterRegistered(selector, adapter);
     }
@@ -74,6 +77,13 @@ contract ActionRegistry is IActionRegistry, Ownable {
     /// @inheritdoc IActionRegistry
     function getAdapter(bytes4 selector) external view returns (AdapterInfo memory) {
         AdapterInfo memory info = adapters[selector];
+        if (info.adapter == address(0)) revert AdapterNotFound();
+        return info;
+    }
+
+    /// @notice Get adapter info by adapter contract address
+    function getAdapterByAddress(address adapterAddr) external view returns (AdapterInfo memory) {
+        AdapterInfo memory info = adaptersByAddress[adapterAddr];
         if (info.adapter == address(0)) revert AdapterNotFound();
         return info;
     }
