@@ -5,8 +5,6 @@ import type * as adapters from "./adapters";
 export type { adapters };
 import type * as core from "./core";
 export type { core };
-import type * as fhenix from "./fhenix";
-export type { fhenix };
 import type * as interfaces from "./interfaces";
 export type { interfaces };
 import type * as mocks from "./mocks";

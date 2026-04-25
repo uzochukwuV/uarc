@@ -3,10 +3,8 @@
 /* eslint-disable */
 export { IActionAdapter__factory } from "./IActionAdapter__factory";
 export { IActionRegistry__factory } from "./IActionRegistry__factory";
-export { IAsterPerp__factory } from "./IAsterPerp__factory";
 export { IConditionOracle__factory } from "./IConditionOracle__factory";
 export { IExecutorHub__factory } from "./IExecutorHub__factory";
-export { IMetaYieldVault__factory } from "./IMetaYieldVault__factory";
 export { IRewardManager__factory } from "./IRewardManager__factory";
 export { ITaskCore__factory } from "./ITaskCore__factory";
 export { ITaskFactory__factory } from "./ITaskFactory__factory";

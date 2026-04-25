@@ -39,20 +39,11 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            // When BSC_FORK_URL or BASE_FORK_URL is set, forks mainnet for integration testing
-            ...(BSC_FORK_URL ? {
-                forking: {
-                    url: BSC_FORK_URL,
-                    ...(BSC_FORK_BLOCK ? { blockNumber: BSC_FORK_BLOCK } : {}),
-                },
-                chainId: 56,
-            } : BASE_FORK_URL ? {
-                forking: {
-                    url: BASE_FORK_URL,
-                    ...(BASE_FORK_BLOCK ? { blockNumber: BASE_FORK_BLOCK } : {}),
-                },
-                chainId: 8453,
-            } : {}),
+            // Fork Arc Testnet for local testing
+            forking: {
+                url: 'https://rpc.drpc.testnet.arc.network',
+            },
+            chainId: 5042002,
         },
         baseFork: {
             url: 'http://127.0.0.1:8545',
@@ -70,47 +61,10 @@ const config: HardhatUserConfig = {
             accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
             chainId: 8
         },
-        polkavmLocal: {
-            polkavm: true,
-            url: 'http://127.0.0.1:8545',
-            nodeConfig: {
-                nodeBinaryPath: path.join(__dirname, 'binaries', 'substrate-node'),
-                rpcPort: 8000,
-                dev: true,
-            },
-            adapterConfig: {
-                adapterBinaryPath: path.join(__dirname, 'binaries', 'eth-rpc'),
-                dev: true,
-            },
-        },
-        localNode: {
-            polkavm: true,
-            url: `http://127.0.0.1:8545`,
-        },
-        polkadotHubTestnet: {
-            // polkavm: true,
-            url: 'https://eth-rpc-testnet.polkadot.io',
-            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
-        },
-        polygonAmoy : {
-            url:  "https://rpc-amoy.polygon.technology",
-            accounts: vars.has('TEST_ACC_PRIVATE_KEY') ? [vars.get('TEST_ACC_PRIVATE_KEY')] : [],
-            chainId: 80002 ,
-           
-        },
-        polygon : {
-            url:  "https://polygon.drpc.org",
-            accounts: vars.has('TEST_PRIVATE_KEY') ? [vars.get('TEST_PRIVATE_KEY')] : []
-        },
-        // BNB Chain mainnet — for MetaYieldVault + TaskerOnChain production deployment
-        // Set private key: npx hardhat vars set DEPLOYER_PRIVATE_KEY
-        // Set RPC (optional, falls back to public): npx hardhat vars set BSC_RPC_URL
-        bnb: {
-            url: vars.has('BSC_RPC_URL') ? vars.get('BSC_RPC_URL') : 'https://bsc-dataseed4.bnbchain.org',
-            accounts: vars.has('DEPLOYER_PRIVATE_KEY') ? [vars.get('DEPLOYER_PRIVATE_KEY')] : [],
-            chainId: 56,
-            timeout: 120_000,
-            gasPrice: 1_000_000_000, // 1 gwei — minimum accepted on BSC (saves ~66% gas cost)
+        arcTestnet: {
+            url: 'https://rpc.drpc.testnet.arc.network',
+            chainId: 5042002,
+            accounts: ['0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f'],
         },
     },
     etherscan: {

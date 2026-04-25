@@ -334,7 +334,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
 
       const executeTx = await executorHub
         .connect(executor)
-        .executeTask(taskId, actionsProof);
+        .executeTask(taskId);
 
       const executeReceipt = await executeTx.wait();
       console.log("✅ Task executed! Transaction hash:", executeReceipt?.hash);
