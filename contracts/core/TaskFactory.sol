@@ -237,9 +237,15 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < actions.length; i++) {
             ActionParams calldata action = actions[i];
 
-            // Get adapter for this action
-            IActionRegistry.AdapterInfo memory adapterInfo =
-                IActionRegistry(actionRegistry).getAdapter(action.selector);
+            // Get adapter by address (action.protocol is the adapter contract address)
+            // This allows multiple adapters with the same function selector to coexist
+            IActionRegistry.AdapterInfo memory adapterInfo;
+            try IActionRegistry(actionRegistry).getAdapterByAddress(action.protocol) returns (IActionRegistry.AdapterInfo memory info) {
+                adapterInfo = info;
+            } catch {
+                // Fallback: lookup by selector for backwards compatibility
+                adapterInfo = IActionRegistry(actionRegistry).getAdapter(action.selector);
+            }
 
             require(adapterInfo.isActive, "Adapter not active");
 

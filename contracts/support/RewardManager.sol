@@ -143,7 +143,7 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
     }
 
     function setGasReimbursementMultiplier(uint256 _multiplier) external onlyOwner {
-        require(_multiplier >= 100 && _multiplier <= 200, "Invalid multiplier");
+        require(_multiplier <= 200, "Invalid multiplier");
         gasReimbursementMultiplier = _multiplier;
     }
 
