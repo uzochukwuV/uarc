@@ -3,45 +3,67 @@
   "network": "Arc Testnet",
   "chainId": 5042002,
   "nativeToken": "USDC",
-  "contracts": {
-    "TaskFactory": {
-      "address": "",
-      "description": "Deploys tasks. Use createTaskWithTokens to schedule automation.",
-      "methods": [
-        {
-          "name": "createTaskWithTokens",
-          "description": "Creates a task with ERC20 token deposits",
-          "inputs": [
-            { "name": "taskParams", "type": "tuple", "description": "maxExecutions, expiresAt, rewardPerExecution, executor" },
-            { "name": "actions", "type": "tuple[]", "description": "adapter operations to execute. target, selector, data, protocol" },
-            { "name": "deposits", "type": "tuple[]", "description": "token address and amount to deposit" }
-          ]
-        }
-      ]
+  "gasFeeEstimation": "0.002",
+  "conditions": [
+    {
+      "id": "price_below",
+      "address": "0x1111111111111111111111111111111111111111",
+      "description": "Triggers when asset price drops below a specific threshold (USD)",
+      "params": {
+        "priceFeed": "address",
+        "threshold": "uint256"
+      }
     },
-    "TimeBasedTransferAdapter": {
-      "address": "",
-      "description": "Adapter for scheduling a token transfer after a specific timestamp.",
-      "methods": [
-        {
-          "name": "execute",
-          "description": "Executes the transfer if the timestamp has passed",
-          "inputs": [
-            { "name": "taskId", "type": "uint256" },
-            { "name": "params", "type": "bytes", "description": "abi.encode(address token, uint256 amount, uint256 executeAfter, address recipient)" }
-          ]
-        }
-      ]
+    {
+      "id": "balance_above",
+      "address": "0x2222222222222222222222222222222222222222",
+      "description": "Triggers when a specific wallet balance goes above a threshold",
+      "params": {
+        "wallet": "address",
+        "token": "address",
+        "threshold": "uint256"
+      }
+    },
+    {
+      "id": "time_passed",
+      "address": "0x3333333333333333333333333333333333333333",
+      "description": "Triggers when a specific block timestamp has passed",
+      "params": {
+        "executeAfter": "uint256"
+      }
     }
-  },
-  "tools": [
+  ],
+  "actions": [
     {
-      "name": "webSearch",
-      "description": "Searches the web for missing parameters (e.g. token addresses, protocols on Arc Testnet)."
+      "id": "uniswap_swap",
+      "address": "0x4444444444444444444444444444444444444444",
+      "description": "Swaps exact USDC for a token via Uniswap V3",
+      "params": {
+        "poolId": "bytes32",
+        "amountIn": "uint256",
+        "tokenOut": "address",
+        "minAmountOut": "uint256"
+      }
     },
     {
-      "name": "createTask",
-      "description": "Formulates the transaction payload and calls createTaskWithTokens."
+      "id": "aave_lend",
+      "address": "0x5555555555555555555555555555555555555555",
+      "description": "Supplies an asset to the Aave lending pool",
+      "params": {
+        "asset": "address",
+        "amount": "uint256",
+        "onBehalfOf": "address"
+      }
+    },
+    {
+      "id": "token_transfer",
+      "address": "0x6666666666666666666666666666666666666666",
+      "description": "Transfers a specified amount of ERC20 tokens to a recipient",
+      "params": {
+        "token": "address",
+        "amount": "uint256",
+        "recipient": "address"
+      }
     }
   ]
 }
