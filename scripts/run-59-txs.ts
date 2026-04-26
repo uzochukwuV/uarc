@@ -49,19 +49,36 @@ async function main() {
     const {
         TaskFactory: taskFactoryAddress,
         ActionRegistry: actionRegistryAddress,
-    } = manifest.contracts;
+    } = manifest.contracts ?? {};
 
-    const { MockUSDC: usdcAddress, MockEURO: euroAddress } = manifest.tokens;
-    const { MockStorkUSDC: storkUsdcAddress, MockStorkEURO: storkEuroAddress } = manifest.oracles;
-    const { MockTokenMessenger: messengerAddress } = manifest.cctp;
-    const {
-        TimeBasedTransferAdapter: timeAdapterAddress,
-        CCTPTransferAdapter: cctpAdapterAddress,
-        StorkPriceTransferAdapter: storkAdapterAddress,
-    } = manifest.adapters;
+    const usdcAddress = manifest.tokens?.MockUSDC;
+    const euroAddress = manifest.tokens?.MockEURO;
+    const storkUsdcAddress = manifest.oracles?.MockStorkUSDC;
+    const storkEuroAddress = manifest.oracles?.MockStorkEURO;
+    const messengerAddress = manifest.cctp?.MockTokenMessenger;
+    const timeAdapterAddress = manifest.adapters?.TimeBasedTransferAdapter
+        ?? manifest.actions?.find((a: any) => a.id === "time_based_transfer")?.address;
+    const cctpAdapterAddress = manifest.adapters?.CCTPTransferAdapter
+        ?? manifest.actions?.find((a: any) => a.id === "cctp_bridge")?.address;
+    const storkAdapterAddress = manifest.adapters?.StorkPriceTransferAdapter
+        ?? manifest.actions?.find((a: any) => a.id === "stork_price_transfer")?.address;
+
+    if (!taskFactoryAddress || !actionRegistryAddress) {
+        console.error("❌ manifest.json is missing required contract addresses under manifest.contracts.");
+        console.error("   Ensure you have run deploy-arc-full.ts and that agent/manifest.json is up to date.");
+        process.exit(1);
+    }
+
+    if (!usdcAddress || !euroAddress || !storkUsdcAddress || !storkEuroAddress || !messengerAddress || !timeAdapterAddress || !cctpAdapterAddress || !storkAdapterAddress) {
+        console.error("❌ manifest.json is missing required token/oracle/cctp/adapter addresses.");
+        console.error("   Expected keys: manifest.tokens.MockUSDC, manifest.tokens.MockEURO, manifest.oracles.MockStorkUSDC, manifest.oracles.MockStorkEURO, manifest.cctp.MockTokenMessenger, manifest.adapters.*");
+        console.error("   If agent/manifest.json is incomplete, rerun deploy-arc-full.ts or restore the correct manifest file.");
+        process.exit(1);
+    }
 
     // Load contracts
     const taskFactory = await ethers.getContractAt("TaskFactory", taskFactoryAddress, deployer);
+    const creationFee = await taskFactory.creationFee();
     const usdc = await ethers.getContractAt("MockERC20", usdcAddress, deployer);
     const euro = await ethers.getContractAt("MockERC20", euroAddress, deployer);
     const storkOracle = await ethers.getContractAt("MockStorkOracle", storkUsdcAddress, deployer);
@@ -105,6 +122,7 @@ async function main() {
     let txCount = 0;
     const now = Math.floor(Date.now() / 1000);
     const recipient = deployerAddress; // Send back to deployer for testing
+    const REWARD_PER_EXECUTION = ethers.parseEther("0.001");
 
     // Helper to create a task and record it
     async function createTask(
@@ -116,8 +134,11 @@ async function main() {
     ) {
         try {
             // Each task needs reward + creation fee funded in native
-            const rewardPerExecution = ethers.parseEther("0.0001");
-            const value = rewardPerExecution; // reward funding
+            const rewardPerExecution = ethers.parseEther("0.001");
+            const totalReward = params.maxExecutions === 0
+                ? rewardPerExecution
+                : rewardPerExecution * BigInt(params.maxExecutions);
+            const value = creationFee + totalReward;
 
             const tx = await taskFactory.createTaskWithTokens(
                 params,
@@ -165,7 +186,7 @@ async function main() {
                 expiresAt: now + 86400 * 30,
                 maxExecutions: 1,
                 recurringInterval: 0,
-                rewardPerExecution: ethers.parseEther("0.0001"),
+                rewardPerExecution: REWARD_PER_EXECUTION,
                 seedCommitment: ethers.ZeroHash,
             },
             [{
@@ -197,7 +218,7 @@ async function main() {
                 expiresAt: now + 86400 * 30,
                 maxExecutions: 1,
                 recurringInterval: 0,
-                rewardPerExecution: ethers.parseEther("0.0001"),
+                rewardPerExecution: REWARD_PER_EXECUTION,
                 seedCommitment: ethers.ZeroHash,
             },
             [{
@@ -232,7 +253,7 @@ async function main() {
                 expiresAt: now + 86400 * 30,
                 maxExecutions: 1,
                 recurringInterval: 0,
-                rewardPerExecution: ethers.parseEther("0.0001"),
+                rewardPerExecution: REWARD_PER_EXECUTION,
                 seedCommitment: ethers.ZeroHash,
             },
             [{
@@ -251,7 +272,7 @@ async function main() {
 
     // Set oracle price for testing: USDC at $1.00
     try {
-        const updatePriceTx = await storkOracle.updateAnswer(100000000n); // $1.00
+        const updatePriceTx = await storkOracle.updateAnswer(BigInt("100000000")); // $1.00
         await updatePriceTx.wait();
         console.log("  📊 Set USDC/USD oracle price to $1.00");
     } catch (e: any) {
@@ -263,7 +284,7 @@ async function main() {
         const isBelow = i % 2 === 0;
         // For "isBelow=true" tasks: trigger if price drops below $0.99
         // For "isBelow=false" tasks: trigger if price rises above $0.95 (always true at $1.00)
-        const targetPrice = isBelow ? 99000000n : 95000000n;
+        const targetPrice = isBelow ? BigInt("99000000") : BigInt("95000000");
 
         const encodedParams = abiCoder.encode(
             ["address", "address", "uint256", "int256", "bool", "address"],
@@ -281,7 +302,7 @@ async function main() {
                 expiresAt: now + 86400 * 30,
                 maxExecutions: 1,
                 recurringInterval: 0,
-                rewardPerExecution: ethers.parseEther("0.0001"),
+                rewardPerExecution: REWARD_PER_EXECUTION,
                 seedCommitment: ethers.ZeroHash,
             },
             [{
@@ -300,7 +321,7 @@ async function main() {
     const storkEuroOracleContract = await ethers.getContractAt("MockStorkOracle", storkEuroAddress, deployer);
 
     try {
-        const updateEuroTx = await storkEuroOracleContract.updateAnswer(108000000n); // $1.08
+        const updateEuroTx = await storkEuroOracleContract.updateAnswer(BigInt("108000000")); // $1.08
         await updateEuroTx.wait();
         console.log("  📊 Set EURO/USD oracle price to $1.08");
     } catch (e: any) {
@@ -310,7 +331,7 @@ async function main() {
     for (let i = 0; i < 5; i++) {
         const amount = ethers.parseUnits((3 + i).toString(), 6);
         // Trigger if EURO price >= $1.05 (always true at $1.08)
-        const targetPrice = 105000000n;
+        const targetPrice = BigInt("105000000");
         const isBelow = false;
 
         const encodedParams = abiCoder.encode(
@@ -325,7 +346,7 @@ async function main() {
                 expiresAt: now + 86400 * 30,
                 maxExecutions: 1,
                 recurringInterval: 0,
-                rewardPerExecution: ethers.parseEther("0.0001"),
+                rewardPerExecution: REWARD_PER_EXECUTION,
                 seedCommitment: ethers.ZeroHash,
             },
             [{

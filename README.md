@@ -67,15 +67,22 @@ User / AI Agent
 
 | Contract | Address | Description |
 |---|---|---|
-| **TaskFactory** | `0xcAc0367AD75D3E46E1a3Ef7004797953DdE9D05A` | Creates task clones |
-| **TaskLogicV2** | `0x9e1aaf2bC4489e31765C5fA07A8Baec3F944D1A0` | Execution orchestration |
-| **ExecutorHub** | `0x552A7A853EFce8f75f69d4FAd726f740b5855869` | Executor management |
-| **GlobalRegistry** | `0xA3480e027cAC6F8aEcf04679a31726344507f69e` | Task index |
-| **RewardManager** | `0x8317082f251f71b07a080f6088158F58D2f7D037` | Reward distribution |
-| **ActionRegistry** | `0xC2d08F92e445163d5DCF3bc17499EC0BCe0AD06d` | Adapter registry |
-| **TimeBasedTransferAdapter** | `0x8Ae9d987687a06FcE01DF3A3D4FF3A961267b45E` | Time-gated ERC20 transfers |
+| **MockUSDC** | `0xB9333915D23B6D6a1520b446Ec08F1e55238C1ea` | Test USD token |
+| **MockEURO** | `0x6A5e945dD1Ba5fee7B6556e27046D607570144A3` | Test EUR token |
+| **MockTokenMessenger** | `0xF7b0bd6b8F3946433879401f4Ce26c4516c0EfAd` | CCTP bridge simulator |
+| **MockStorkOracleUSDC** | `0xf1f9FBCbEe0eB327458d3b22f62e11C0086046bb` | USDC/USD price oracle |
+| **MockStorkOracleEURO** | `0xaA431964398fa21e4eFe4c739147ae64791Ed385` | EURO/USD price oracle |
+| **ActionRegistry** | `0xD04336F4C67Be09a96d90aD85C18EF9865923837` | Adapter registry |
+| **ExecutorHub** | `0xb7AA0AE9E8D06732e84A6a7cEc1bd557676a8C6F` | Executor management |
+| **GlobalRegistry** | `0x756a9f9464C7694B0Ff5bB75d16F5B8Ce988fc8d` | Task index |
+| **RewardManager** | `0x3490a5A3d98f5D5038FC72C3fC7A6a9D94972633` | Reward distribution |
+| **TaskLogicV2** | `0x3412c3DcC729436CfA3db52b92660aAC98F048cF` | Execution orchestration |
+| **TaskFactory** | `0x76588f06eC7989408ED02AD82487B06222c5a882` | Creates task clones |
+| **TimeBasedTransferAdapter** | `0x1d4198d0167caDCC2bA059a2F8B69A5a69aC3528` | Time-gated ERC20 transfers |
+| **CCTPTransferAdapter** | `0x917ba52e4c5f7A142091A56f84C667bCd3A5642D` | Time-gated cross-chain bridge |
+| **StorkPriceTransferAdapter** | `0xc956d136C7617b91126461fb1de0A1fBca5E0d56` | Price-conditional transfers |
 
-> After running `npm run deploy:arc`, all new addresses (CCTP, Stork, mocks) are saved to
+> After running `npm run deploy:arc`, all new addresses are saved to
 > `deployments/deployment-arc-full-<timestamp>.json` and `agent/manifest.json`.
 
 ---

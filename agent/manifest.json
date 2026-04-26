@@ -1,95 +1,71 @@
 {
-  "protocol": "TaskerOnChain V2",
+  "protocol": "UARC - Universal Automation on Arc",
   "network": "Arc Testnet",
   "chainId": 5042002,
-  "nativeToken": "USDC",
-  "gasFeeEstimation": "0.002",
+  "deployer": "0x535f007D418B4F95f47310c0D26F3b25B6A4DC50",
+  "deployedAt": "2026-04-26T10:41:24.838Z",
+  "nativeToken": "ETH",
   "contracts": {
-    "TaskFactory": "0xcAc0367AD75D3E46E1a3Ef7004797953DdE9D05A"
+    "TaskFactory": "0x76588f06eC7989408ED02AD82487B06222c5a882",
+    "TaskLogicV2": "0x3412c3DcC729436CfA3db52b92660aAC98F048cF",
+    "ExecutorHub": "0xb7AA0AE9E8D06732e84A6a7cEc1bd557676a8C6F",
+    "GlobalRegistry": "0x756a9f9464C7694B0Ff5bB75d16F5B8Ce988fc8d",
+    "RewardManager": "0x3490a5A3d98f5D5038FC72C3fC7A6a9D94972633",
+    "ActionRegistry": "0xD04336F4C67Be09a96d90aD85C18EF9865923837"
   },
-  "conditions": [
-    {
-      "id": "price_below",
-      "address": "0x1111111111111111111111111111111111111111",
-      "description": "Triggers when asset price drops below a specific threshold (USD)",
-      "params": {
-        "priceFeed": "address",
-        "threshold": "uint256"
-      }
-    },
-    {
-      "id": "balance_above",
-      "address": "0x2222222222222222222222222222222222222222",
-      "description": "Triggers when a specific wallet balance goes above a threshold",
-      "params": {
-        "wallet": "address",
-        "token": "address",
-        "threshold": "uint256"
-      }
-    }
-  ],
+  "tokens": {
+    "MockUSDC": "0xB9333915D23B6D6a1520b446Ec08F1e55238C1ea",
+    "MockEURO": "0x6A5e945dD1Ba5fee7B6556e27046D607570144A3"
+  },
+  "oracles": {
+    "MockStorkUSDC": "0xf1f9FBCbEe0eB327458d3b22f62e11C0086046bb",
+    "MockStorkEURO": "0xaA431964398fa21e4eFe4c739147ae64791Ed385"
+  },
+  "cctp": {
+    "MockTokenMessenger": "0xF7b0bd6b8F3946433879401f4Ce26c4516c0EfAd"
+  },
+  "adapters": {
+    "TimeBasedTransferAdapter": "0x1d4198d0167caDCC2bA059a2F8B69A5a69aC3528",
+    "CCTPTransferAdapter": "0x917ba52e4c5f7A142091A56f84C667bCd3A5642D",
+    "StorkPriceTransferAdapter": "0xc956d136C7617b91126461fb1de0A1fBca5E0d56"
+  },
   "actions": [
     {
       "id": "time_based_transfer",
-      "address": "0x8Ae9d987687a06FcE01DF3A3D4FF3A961267b45E",
-      "description": "Transfers tokens to a recipient ONLY AFTER a specific timestamp has passed",
-      "params": {
-        "token": "address",
-        "amount": "uint256",
-        "executeAfter": "uint256",
-        "recipient": "address"
-      }
-    },
-    {
-      "id": "curve_swap",
-      "address": "0xB2Ac489686F17D98ACFf9c51d18fCCeF14B77982",
-      "description": "Swaps tokens using Curve Finance",
-      "params": {
-        "pool": "address",
-        "tokenIn": "address",
-        "tokenOut": "address",
-        "i": "int128",
-        "j": "int128",
-        "amountIn": "uint256",
-        "minAmountOut": "uint256",
-        "recipient": "address"
-      }
+      "adapter": "0x1d4198d0167caDCC2bA059a2F8B69A5a69aC3528",
+      "description": "Transfer USDC/EURO after a specific timestamp",
+      "params": [
+        "token:address",
+        "recipient:address",
+        "amount:uint256",
+        "executeAfter:uint256"
+      ]
     },
     {
       "id": "cctp_bridge",
-      "address": "0x19FE47177201518d03c59CA0283BcB4d4967C2a6",
-      "description": "Bridges tokens to another chain via Circle CCTP TokenMessenger",
-      "params": {
-        "cctpMessenger": "address",
-        "token": "address",
-        "amount": "uint256",
-        "destinationDomain": "uint32",
-        "mintRecipient": "bytes32",
-        "executeAfter": "uint256"
-      }
+      "adapter": "0x917ba52e4c5f7A142091A56f84C667bCd3A5642D",
+      "description": "Cross-chain bridge via Circle CCTP after a timestamp",
+      "params": [
+        "cctpMessenger:address",
+        "token:address",
+        "amount:uint256",
+        "destinationDomain:uint32",
+        "mintRecipient:bytes32",
+        "executeAfter:uint256"
+      ]
     },
     {
       "id": "stork_price_transfer",
-      "address": "0x06Af563BaA785242df0C1D5999E55BD5f8973ADE",
-      "description": "Transfers tokens when Stork Oracle price meets condition",
-      "params": {
-        "storkOracle": "address",
-        "token": "address",
-        "amount": "uint256",
-        "targetPrice": "int256",
-        "isBelow": "bool",
-        "recipient": "address"
-      }
-    },
-    {
-      "id": "aave_lend",
-      "address": "0x5555555555555555555555555555555555555555",
-      "description": "Supplies an asset to the Aave lending pool",
-      "params": {
-        "asset": "address",
-        "amount": "uint256",
-        "onBehalfOf": "address"
-      }
+      "adapter": "0xc956d136C7617b91126461fb1de0A1fBca5E0d56",
+      "description": "Transfer tokens when Stork Oracle price condition is met",
+      "params": [
+        "storkOracle:address",
+        "token:address",
+        "amount:uint256",
+        "targetPrice:int256",
+        "isBelow:bool",
+        "recipient:address"
+      ]
     }
   ]
 }
