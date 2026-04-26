@@ -12,6 +12,7 @@
     "txs:arc": "hardhat run scripts/run-59-txs.ts --network arcTestnet",
     "deploy:and:run": "npm run deploy:arc && npm run txs:arc",
     "agent": "ts-node agent/server.ts",
+    "test:local": "ts-node agent/test-local.ts",
     "clean": "hardhat clean"
   },
   "keywords": ["automation", "arc", "blockchain", "x402", "ai"],

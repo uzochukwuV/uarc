@@ -643,7 +643,6 @@
   font-size: 12px;
 }
 .ua-terminal .ua-agent-mark::before { content: "["; }
-.ua-terminal .ua-agent-mark { content: ""; }
 .ua-terminal .ua-agent-mark::after { content: "]"; }
 .ua-agent-name {
   font-family: var(--ua-mono);

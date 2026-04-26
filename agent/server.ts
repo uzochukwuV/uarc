@@ -433,6 +433,18 @@ async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<
     const taskFactory = new ethers.Contract(manifest.contracts.TaskFactory, TASK_FACTORY_ABI, wallet);
     const payload = await buildTaskPayload(taskIntent, userAddress);
 
+    // Mint tokens if wallet balance is insufficient (testnet MockERC20)
+    for (const deposit of payload.deposits) {
+        const token = new ethers.Contract(deposit.token, ERC20_ABI, wallet);
+        const needed = BigInt(deposit.amount);
+        const balance = await token.balanceOf(wallet.address);
+        if (balance < needed) {
+            const mintTx = await token.mint(wallet.address, needed * 2n);
+            await mintTx.wait();
+            console.log(`[Task] Minted tokens for ${deposit.token}`);
+        }
+    }
+
     // Approve tokens if needed
     for (const deposit of payload.deposits) {
         const token = new ethers.Contract(deposit.token, ERC20_ABI, wallet);
@@ -489,6 +501,7 @@ app.listen(PORT, () => {
     console.log("Endpoints:");
     console.log(`  GET  /health                          — health check`);
     console.log(`  GET  /manifest                        — protocol info`);
+    console.log(`  POST /task/preview                    — parse intent (no on-chain tx)`);
     console.log(`  POST /task/create-from-prompt         — AI prompt → task`);
     console.log(`  POST /task/create                     — x402-gated task creation`);
     console.log(`  POST /task/create-from-prompt-x402   — x402-gated AI prompt`);

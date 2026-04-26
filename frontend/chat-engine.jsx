@@ -25,6 +25,48 @@ const INITIAL_MESSAGES = [
     ] },
 ];
 
+const ADAPTER_LABELS = {
+  time_based_transfer: 'Scheduled Transfer',
+  cctp_bridge: 'Cross-chain Bridge',
+  stork_price_transfer: 'Price-triggered Transfer',
+};
+
+const DOMAIN_NAMES = { 0: 'Ethereum', 1: 'Avalanche', 2: 'OP Mainnet', 3: 'Arbitrum', 6: 'Base' };
+
+function buildReceiptLines(data) {
+  const { adapterType, params } = data;
+  const fmt6 = (v) => (Number(v) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 });
+  const fmtAddr = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
+  const fmtTs = (ts) => ts ? new Date(Number(ts) * 1000).toLocaleString() : '—';
+
+  switch (adapterType) {
+    case 'time_based_transfer':
+      return [
+        { k: 'Type', v: 'Scheduled transfer', emphasis: true },
+        { k: 'Amount', v: `${fmt6(params.amount)} tokens` },
+        { k: 'Recipient', v: fmtAddr(params.recipient) },
+        { k: 'Execute after', v: fmtTs(params.executeAfter) },
+      ];
+    case 'cctp_bridge':
+      return [
+        { k: 'Type', v: 'Cross-chain bridge', emphasis: true },
+        { k: 'Amount', v: `${fmt6(params.amount)} USDC` },
+        { k: 'Destination', v: DOMAIN_NAMES[params.destinationDomain] || `Domain ${params.destinationDomain}` },
+        { k: 'Recipient', v: fmtAddr(params.mintRecipient) },
+        { k: 'Execute after', v: fmtTs(params.executeAfter) },
+      ];
+    case 'stork_price_transfer':
+      return [
+        { k: 'Type', v: 'Price-triggered transfer', emphasis: true },
+        { k: 'Amount', v: `${fmt6(params.amount)} tokens` },
+        { k: 'Trigger', v: `Price ${params.isBelow ? '≤' : '≥'} $${(Number(params.targetPrice) / 1e8).toLocaleString()}` },
+        { k: 'Recipient', v: fmtAddr(params.recipient) },
+      ];
+    default:
+      return [{ k: 'Type', v: adapterType, emphasis: true }];
+  }
+}
+
 function buildAgentFlow(text) {
   const l = (text || '').toLowerCase();
   const isStop = l.includes('stop') || l.includes('2000') || l.includes('below') || l.includes('usdt') || l.includes('sell') || l.includes('eth');
@@ -75,6 +117,8 @@ function useChatEngine() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  // Stores the parsed preview from /task/preview so confirm() can submit it
+  const [pendingIntent, setPendingIntent] = useState(null);
   const idRef = useRef(1);
   const nextId = () => `m${idRef.current++}`;
 
@@ -96,7 +140,40 @@ function useChatEngine() {
     setInput('');
     setBusy(true);
     setMessages(cur => [...cur, { id: nextId(), role: 'user', kind: 'text', content: trimmed }]);
-    await runFlow(buildAgentFlow(trimmed));
+
+    try {
+      setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Reading wallet · Parsing intent · Building task' }]);
+
+      const res = await fetch('/task/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intent: trimmed }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+
+      const lines = buildReceiptLines(data);
+      const label = ADAPTER_LABELS[data.adapterType] || data.adapterType;
+
+      // Store intent string so confirm() can submit it
+      setPendingIntent(trimmed);
+
+      setMessages(cur => [
+        ...cur.slice(0, -1), // remove thinking
+        { id: nextId(), role: 'assistant', kind: 'text', content: `Got it — ${data.summary}. Here's the task to review before deploying.` },
+        { id: nextId(), role: 'assistant', kind: 'receipt', title: `New automation · ${label}`,
+          lines,
+          footnote: `Adapter: ${data.adapterType} · Arc Testnet` },
+        { id: nextId(), role: 'assistant', kind: 'confirm-cta' },
+      ]);
+    } catch (_err) {
+      // API unavailable — fall back to local demo flow
+      setMessages(cur => cur.filter(m => m.kind !== 'thinking'));
+      await runFlow(buildAgentFlow(trimmed));
+    }
+
     setBusy(false);
   }, [input, busy, runFlow]);
 
@@ -104,9 +181,52 @@ function useChatEngine() {
     if (busy) return;
     setBusy(true);
     setMessages(cur => [...cur, { id: nextId(), role: 'user', kind: 'text', content: 'Confirm' }]);
-    await runFlow(buildSignFlow());
+
+    if (pendingIntent) {
+      // Real API: submit the task on-chain
+      try {
+        setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Deploying automation on-chain…' }]);
+
+        const res = await fetch('/task/create-from-prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ intent: pendingIntent }),
+          signal: AbortSignal.timeout(60000),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          const shortHash = data.txHash
+            ? `${data.txHash.slice(0, 10)}…${data.txHash.slice(-4)}`
+            : '—';
+          setPendingIntent(null);
+          setMessages(cur => [
+            ...cur.slice(0, -1), // remove thinking
+            { id: nextId(), role: 'system', kind: 'system-line', content: 'Transaction confirmed on Arc Testnet' },
+            { id: nextId(), role: 'assistant', kind: 'tx-status', title: 'Automation deployed',
+              lines: [
+                { k: 'Task ID', v: `#${data.taskId}` },
+                { k: 'Tx Hash', v: shortHash },
+                { k: 'Status', v: 'Armed · monitoring' },
+              ],
+              next: data.summary || 'Your automation is live and monitoring conditions on Arc Testnet.' },
+          ]);
+        } else {
+          throw new Error(data.error || 'Task creation failed');
+        }
+      } catch (err) {
+        setMessages(cur => [
+          ...cur.slice(0, -1),
+          { id: nextId(), role: 'assistant', kind: 'text', content: `Failed to deploy: ${err.message}` },
+        ]);
+      }
+    } else {
+      // Demo flow
+      await runFlow(buildSignFlow());
+    }
+
     setBusy(false);
-  }, [busy, runFlow]);
+  }, [busy, runFlow, pendingIntent]);
 
   const sign = useCallback(async () => {
     if (busy) return;
@@ -120,6 +240,7 @@ function useChatEngine() {
     setMessages(INITIAL_MESSAGES);
     setInput('');
     setBusy(false);
+    setPendingIntent(null);
   }, []);
 
   return { messages, input, setInput, send, confirm, sign, reset, busy };
