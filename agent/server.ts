@@ -113,6 +113,33 @@ app.get("/manifest", (_req: Request, res: Response) => {
 });
 
 /**
+ * POST /task/preview — parse natural language intent and build a task payload for wallet signing
+ */
+app.post("/task/preview", async (req: Request, res: Response) => {
+    const { intent, userAddress } = req.body;
+    if (!intent || typeof intent !== "string") {
+        res.status(400).json({ error: "Missing 'intent' string in body" });
+        return;
+    }
+
+    try {
+        const taskIntent = await parseIntent(intent, manifest, MISTRAL_API_KEY);
+        const payload = await buildTaskPayload(taskIntent, userAddress || wallet.address);
+
+        res.json({
+            success: true,
+            summary: taskIntent.summary,
+            adapterType: taskIntent.adapterType,
+            params: taskIntent.params,
+            payload,
+        });
+    } catch (err: any) {
+        console.error("[Preview Error]", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * GET /health — health check
  */
 app.get("/health", async (_req: Request, res: Response) => {
@@ -314,25 +341,17 @@ app.post("/task/create-from-prompt-x402", async (req: Request, res: Response) =>
 // Core task submission logic
 // ============================================================
 
-async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<{
-    taskId: string;
-    txHash: string;
-    taskCore: string;
-    taskVault: string;
-}> {
+async function buildTaskPayload(taskIntent: TaskIntent, userAddress: string) {
     if (!manifest.contracts?.TaskFactory) {
         throw new Error("TaskFactory not deployed. Run deploy-arc-full.ts first.");
     }
 
-    const taskFactory = new ethers.Contract(manifest.contracts.TaskFactory, TASK_FACTORY_ABI, wallet);
     const now = Math.floor(Date.now() / 1000);
-
-    // Build encoded action params based on adapter type
     const abiCoder = new ethers.AbiCoder();
     const executeSelector = ethers.id("execute(address,bytes)").slice(0, 10);
 
     let encodedParams: string;
-    let tokenDeposits: { token: string; amount: bigint }[] = [];
+    let tokenDeposits: { token: string; amount: string }[] = [];
     let adapterAddress: string;
 
     switch (taskIntent.adapterType) {
@@ -343,7 +362,7 @@ async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<
                 [token, recipient || userAddress, BigInt(amount), BigInt(executeAfter || now + 300)]
             );
             adapterAddress = manifest.adapters.TimeBasedTransferAdapter;
-            tokenDeposits = [{ token, amount: BigInt(amount) }];
+            tokenDeposits = [{ token, amount: amount.toString() }];
             break;
         }
 
@@ -356,7 +375,7 @@ async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<
                 [messenger, token, BigInt(amount), Number(destinationDomain || 0), recipientBytes32, BigInt(executeAfter || now + 600)]
             );
             adapterAddress = manifest.adapters.CCTPTransferAdapter;
-            tokenDeposits = [{ token, amount: BigInt(amount) }];
+            tokenDeposits = [{ token, amount: amount.toString() }];
             break;
         }
 
@@ -368,7 +387,7 @@ async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<
                 [oracle, token, BigInt(amount), BigInt(targetPrice), Boolean(isBelow), recipient || userAddress]
             );
             adapterAddress = manifest.adapters.StorkPriceTransferAdapter;
-            tokenDeposits = [{ token, amount: BigInt(amount) }];
+            tokenDeposits = [{ token, amount: amount.toString() }];
             break;
         }
 
@@ -376,35 +395,57 @@ async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<
             throw new Error(`Unknown adapter type: ${taskIntent.adapterType}`);
     }
 
-    // Approve tokens if needed
-    for (const deposit of tokenDeposits) {
-        const token = new ethers.Contract(deposit.token, ERC20_ABI, wallet);
-        const allowance = await token.allowance(wallet.address, manifest.contracts.TaskFactory);
-        if (allowance < deposit.amount) {
-            const approveTx = await token.approve(manifest.contracts.TaskFactory, ethers.MaxUint256);
-            await approveTx.wait();
-            console.log(`[Task] Approved ${deposit.token}`);
-        }
+    if (!adapterAddress) {
+        throw new Error(`Missing adapter address for ${taskIntent.adapterType}`);
     }
 
     const taskParams = {
         expiresAt: now + 86400 * 30,
         maxExecutions: 1,
         recurringInterval: 0,
-        rewardPerExecution: ethers.parseEther("0.0001"),
+        rewardPerExecution: ethers.parseEther("0.0001").toString(),
         seedCommitment: ethers.ZeroHash,
     };
 
-    const actions = [{
-        selector: executeSelector,
-        protocol: adapterAddress,
-        params: encodedParams,
-    }];
+    return {
+        taskFactoryAddress: manifest.contracts.TaskFactory,
+        taskParams,
+        actions: [{
+            selector: executeSelector,
+            protocol: adapterAddress,
+            params: encodedParams,
+        }],
+        deposits: tokenDeposits,
+        value: ethers.formatEther(ethers.parseEther("0.0001")),
+    };
+}
 
-    const value = ethers.parseEther("0.0001"); // reward funding
+async function submitTask(taskIntent: TaskIntent, userAddress: string): Promise<{
+    taskId: string;
+    txHash: string;
+    taskCore: string;
+    taskVault: string;
+}> {
+    if (!manifest.contracts?.TaskFactory) {
+        throw new Error("TaskFactory not deployed. Run deploy-arc-full.ts first.");
+    }
 
-    const tx = await taskFactory.createTaskWithTokens(taskParams, actions, tokenDeposits, {
-        value,
+    const taskFactory = new ethers.Contract(manifest.contracts.TaskFactory, TASK_FACTORY_ABI, wallet);
+    const payload = await buildTaskPayload(taskIntent, userAddress);
+
+    // Approve tokens if needed
+    for (const deposit of payload.deposits) {
+        const token = new ethers.Contract(deposit.token, ERC20_ABI, wallet);
+        const allowance = await token.allowance(wallet.address, manifest.contracts.TaskFactory);
+        if (allowance < BigInt(deposit.amount)) {
+            const approveTx = await token.approve(manifest.contracts.TaskFactory, ethers.MaxUint256);
+            await approveTx.wait();
+            console.log(`[Task] Approved ${deposit.token}`);
+        }
+    }
+
+    const tx = await taskFactory.createTaskWithTokens(payload.taskParams, payload.actions, payload.deposits, {
+        value: ethers.parseEther(payload.value),
         gasLimit: 3000000,
     });
 
