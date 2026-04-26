@@ -72,6 +72,17 @@ function MsgText({ m }) {
 }
 
 function MsgReceipt({ m }) {
+  // Derive header from lines so any intent is represented correctly
+  const sellLine = m.lines?.find(l => ['Sell', 'Amount', 'Send'].includes(l.k));
+  const triggerLine = m.lines?.find(l => ['Trigger', 'Execute after', 'Destination'].includes(l.k));
+  const typeLine = m.lines?.find(l => l.k === 'Type');
+  const typeStr = typeLine?.v || '';
+  const verb = typeStr.split(' ')[0] || 'Transfer';
+  const noun = sellLine?.v || '';
+  const condition = triggerLine
+    ? `${triggerLine.k === 'Trigger' ? 'when' : triggerLine.k.toLowerCase()} ${triggerLine.v}`
+    : '';
+
   return (
     <div>
       <AgentLabel />
@@ -80,8 +91,8 @@ function MsgReceipt({ m }) {
           <div>
             <div className="ua-receipt-eyebrow">{m.title}</div>
             <div className="ua-receipt-title">
-              <em>Sell</em> 4.2 ETH
-              <div className="ua-receipt-sub">when ETH ≤ $2,000</div>
+              <em>{verb}</em> {noun}
+              {condition && <div className="ua-receipt-sub">{condition}</div>}
             </div>
           </div>
           <span className="ua-status ua-status-warn">
