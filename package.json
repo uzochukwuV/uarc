@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat test test/ArcAdapters.test.ts",
+    "test:x402": "hardhat test test/x402.test.ts",
     "test:all": "hardhat test",
     "compile": "hardhat compile",
     "deploy:arc": "hardhat run scripts/deploy-arc-full.ts --network arcTestnet",

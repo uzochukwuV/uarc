@@ -24,6 +24,7 @@ import * as path from "path";
 import { Mistral } from "@mistralai/mistralai";
 import { parseIntent, TaskIntent } from "./ai-task-creator";
 import { verifyPayment, X402PaymentRequired } from "./x402";
+import cors from "cors";
 
 // ============================================================
 // Config
@@ -32,7 +33,7 @@ import { verifyPayment, X402PaymentRequired } from "./x402";
 const PORT = parseInt(process.env.PORT || "3000");
 const ARC_RPC = process.env.ARC_RPC || "https://rpc.drpc.testnet.arc.network";
 const PRIVATE_KEY = "0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f";
-const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || "MZQObVTrMQoqmADbPDgLpTxNwAg07FT7";
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || "ZivuaamB98Ph9AajVZ2DW4ZrpL97a8OJ";
 
 // x402 fee: 0.0001 ETH per task creation
 const X402_FEE = ethers.parseEther("0.0001");
@@ -75,22 +76,29 @@ const ERC20_ABI = [
 
 const app = express();
 app.use(express.json());
+app.use(cors({ origin: "*", allowedHeaders: ["Content-Type", "X-Payment-Tx", "Authorization"] }));
 
-// CORS
-app.use((req: Request, res: Response, next: NextFunction) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Content-Type, X-Payment-Tx, Authorization");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    if (req.method === "OPTIONS") {
-        res.sendStatus(200);
-        return;
-    }
-    next();
-});
+// Serve the ChatGPT-style web UI from frontend/
+const frontendPath = path.join(__dirname, "..", "frontend");
+if (fs.existsSync(frontendPath)) {
+    app.use(express.static(frontendPath));
+}
 
 // ============================================================
 // Routes
 // ============================================================
+
+/**
+ * GET / — serve the web UI
+ */
+app.get("/", (_req: Request, res: Response) => {
+    const indexPath = path.join(__dirname, "..", "frontend", "index.html");
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.json({ status: "UARC Agent running", ui: "frontend/index.html not found" });
+    }
+});
 
 /**
  * GET /manifest — protocol information
