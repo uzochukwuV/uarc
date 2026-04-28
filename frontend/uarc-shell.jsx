@@ -2,7 +2,8 @@
 // Both variations consume the same chat-engine and render messages
 // using CSS custom properties scoped to each artboard.
 
-const { useEffect: useEffectM, useRef: useRefM } = React;
+const { useEffect: useEffectM, useRef: useRefM, useState } = React;
+
 
 function MsgUser({ m }) {
   return (
@@ -116,6 +117,162 @@ function MsgReceipt({ m }) {
   );
 }
 
+// Mini calendar component for recurring payments
+function MiniCalendar({ calendarData }) {
+  if (!calendarData || calendarData.length === 0) return null;
+
+  const now = new Date();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Show up to 14 scheduled payment dates as a compact grid
+  const displayDates = calendarData.slice(0, 14);
+  const completedCount = displayDates.filter(d => {
+    const ts = d.timestamp || (d.date?.getTime() / 1000);
+    return new Date(ts * 1000) < now;
+  }).length;
+  const pendingCount = displayDates.length - completedCount;
+
+  return (
+    <div className="ua-calendar">
+      <div className="ua-calendar-head">
+        <span className="ua-calendar-title">Payment Schedule</span>
+        <span className="ua-calendar-count">{calendarData.length} total</span>
+      </div>
+      <div className="ua-calendar-grid">
+        {displayDates.map((item, i) => {
+          const ts = item.timestamp || (item.date?.getTime() / 1000);
+          const d = new Date(ts * 1000);
+          const isPast = d < now;
+          return (
+            <div
+              key={i}
+              className={`ua-calendar-day ${isPast ? 'past' : 'scheduled'}`}
+              title={d.toLocaleDateString()}
+            >
+              <span className="ua-calendar-day-num">{d.getDate()}</span>
+              <span className="ua-calendar-day-month">{months[d.getMonth()]}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="ua-calendar-legend">
+        <span className="ua-calendar-legend-item">
+          <span className="ua-calendar-legend-dot scheduled" /> Scheduled ({pendingCount})
+        </span>
+        {completedCount > 0 && (
+          <span className="ua-calendar-legend-item">
+            <span className="ua-calendar-legend-dot pending" /> Completed ({completedCount})
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Enhanced receipt for recurring payments with calendar
+function MsgRecurringPreview({ m, onFundingSelect }) {
+  const [selectedFunding, setSelectedFunding] = React.useState('vault');
+  const amountLine = m.lines?.find(l => l.k === 'Amount');
+  const scheduleLine = m.lines?.find(l => l.k === 'Schedule');
+  const totalLine = m.lines?.find(l => l.k === 'Total');
+  const executionsLine = m.lines?.find(l => l.k === 'Executions');
+
+  const handleFundingSelect = (mode) => {
+    setSelectedFunding(mode);
+    if (onFundingSelect) onFundingSelect(mode);
+  };
+
+  return (
+    <div className="p-6">
+      <AgentLabel />
+      <div className="ua-receipt ua-receipt-recurring">
+        <div className="ua-receipt-head">
+          <div>
+            <span className="ua-recurring-icon">RECURRING PAYMENT</span>
+            <div className="ua-receipt-title">
+              <em>Send</em> {amountLine?.v || '—'}
+              <div className="ua-receipt-sub">{scheduleLine?.v || 'recurring'}</div>
+            </div>
+          </div>
+          <span className="ua-status ua-status-accent">
+            <span className="ua-dot" /> CONFIGURE
+          </span>
+        </div>
+
+        {/* Schedule Summary */}
+        <div className="ua-schedule-summary">
+          <div className="ua-schedule-item">
+            <div className="ua-schedule-value">{amountLine?.v || '—'}</div>
+            <div className="ua-schedule-label">Per Payment</div>
+          </div>
+          <div className="ua-schedule-item">
+            <div className="ua-schedule-value">{executionsLine?.v || m.calendarData?.length || '—'}</div>
+            <div className="ua-schedule-label">Payments</div>
+          </div>
+          <div className="ua-schedule-item">
+            <div className="ua-schedule-value">{totalLine?.v || '—'}</div>
+            <div className="ua-schedule-label">Total</div>
+          </div>
+        </div>
+
+        {/* Calendar visualization */}
+        {m.calendarData && <MiniCalendar calendarData={m.calendarData} />}
+
+        {/* Payment details */}
+        <div className="ua-receipt-body">
+          {m.lines.filter(l => !['Type', 'Amount', 'Total', 'Executions'].includes(l.k)).map((line, i) => (
+            <div key={i} className="ua-receipt-line">
+              <span className="ua-receipt-k">{line.k}</span>
+              <span className={`ua-receipt-v ${line.emphasis ? 'is-emph' : ''}`}>
+                {line.v}
+                {line.editable && <span className="ua-receipt-edit">EDIT</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Funding mode toggle */}
+        <div className="ua-funding-toggle">
+          <div className="ua-funding-label">How would you like to fund this?</div>
+          <div className="ua-funding-options">
+            <button
+              className={`ua-funding-btn ${selectedFunding === 'vault' ? 'selected' : ''}`}
+              onClick={() => handleFundingSelect('vault')}
+            >
+              <div className="ua-funding-btn-icon">💰</div>
+              <div className="ua-funding-btn-title">Deposit {totalLine?.v || 'total'} now</div>
+              <div className="ua-funding-btn-desc">Lock funds upfront in vault. Guaranteed execution.</div>
+            </button>
+            <button
+              className={`ua-funding-btn ${selectedFunding === 'pull' ? 'selected' : ''}`}
+              onClick={() => handleFundingSelect('pull')}
+            >
+              <div className="ua-funding-btn-icon">🔄</div>
+              <div className="ua-funding-btn-title">Authorize pulls</div>
+              <div className="ua-funding-btn-desc">Keep funds in wallet. Pulled each execution.</div>
+            </button>
+          </div>
+          <div className="ua-funding-amount">
+            <span className="ua-funding-amount-label">
+              {selectedFunding === 'vault' ? 'Deposit required' : 'Allowance needed'}
+            </span>
+            <span className="ua-funding-amount-value">{totalLine?.v || '—'}</span>
+          </div>
+        </div>
+
+        <div className="ua-cta-row" style={{ marginTop: '16px' }}>
+          <button className="ua-btn-primary">
+            {selectedFunding === 'vault' ? 'Deposit & Create Task' : 'Approve & Create Task'}
+          </button>
+          <span className="ua-cta-hint">Press Enter</span>
+        </div>
+
+        <div className="ua-receipt-foot">{m.footnote}</div>
+      </div>
+    </div>
+  );
+}
+
 function MsgChart({ m }) {
   // Generate a deterministic ETH price line dropping toward trigger
   const points = [];
@@ -181,22 +338,44 @@ function MsgConfirmCTA({ confirm }) {
 }
 
 function MsgSign({ m, sign }) {
+  const wallet = window.useWallet();
+  const walletHint = wallet.isConnected
+    ? `${wallet.walletType === 'metamask' ? 'MetaMask' : 'Wallet'} · ${wallet.isCorrectNetwork ? 'Base Sepolia' : 'Wrong network'}`
+    : 'Wallet required';
+
+  const handleSign = () => {
+    if (!wallet.isConnected) {
+      wallet.connectMetaMask();
+      return;
+    }
+
+    if (!wallet.isCorrectNetwork) {
+      wallet.switchToBaseSepolia();
+      return;
+    }
+
+    sign();
+  };
+
   return (
     <div>
       <AgentLabel />
       <div className="ua-sign">
         <div className="ua-sign-eyebrow">STEP 2 OF 2 · WALLET SIGNATURE</div>
         <div className="ua-sign-title">{m.title}</div>
+        {!wallet.isConnected && <window.WalletPromptCard />}
         <div className="ua-sign-wallet">
           <span className="ua-sign-avatar" />
           <div>
-            <div className="ua-sign-addr">{m.wallet}</div>
-            <div className="ua-sign-hint">Arc wallet · Connected</div>
+            <div className="ua-sign-addr">{wallet.shortAddress || m.wallet}</div>
+            <div className="ua-sign-hint">{walletHint}</div>
           </div>
         </div>
         <div className="ua-sign-msg">{m.message}</div>
         <div className="ua-sign-actions">
-          <button className="ua-btn-primary" onClick={sign}>Sign in wallet</button>
+          <button className="ua-btn-primary" onClick={handleSign}>
+            {!wallet.isConnected ? 'Connect wallet' : wallet.isCorrectNetwork ? 'Sign in wallet' : 'Switch network'}
+          </button>
           <button className="ua-btn-ghost">Reject</button>
         </div>
       </div>
@@ -242,6 +421,7 @@ function Message({ m, engine }) {
     case 'thinking': return <MsgThinking m={m} />;
     case 'text': return <MsgText m={m} />;
     case 'receipt': return <MsgReceipt m={m} />;
+    case 'recurring-preview': return <MsgRecurringPreview m={m} />;
     case 'chart': return <MsgChart m={m} />;
     case 'confirm-cta': return <MsgConfirmCTA confirm={engine.confirm} />;
     case 'sign': return <MsgSign m={m} sign={engine.sign} />;
@@ -251,7 +431,44 @@ function Message({ m, engine }) {
 }
 
 // ---------- Shared layout ----------
+function SidebarWalletStatus() {
+  const wallet = window.useWallet();
+
+  if (!wallet.isConnected) {
+    return (
+      <div className="ua-side-wallet ua-side-wallet-connect">
+        <window.WalletConnectButton variant="compact" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <span className="ua-side-avatar" />
+      <div className="ua-side-wallet">
+        <div className="ua-side-addr">{wallet.shortAddress}</div>
+        <div className="ua-side-net">
+          <span className={`ua-dot ${wallet.isCorrectNetwork ? 'ua-dot-good' : 'ua-dot-warn'}`} />
+          {wallet.isCorrectNetwork ? 'Base Sepolia' : 'Wrong network'}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function HistoryPane({ mode, onToggleMode, variant }) {
+  // Note: User tasks loading is disabled until contract ABIs are available
+  // const wallet = window.useWallet();
+  // const [userTasks, setUserTasks] = useState([]);
+  // const [loadingTasks, setLoadingTasks] = useState(false);
+
+  // useEffectM(() => {
+  //   if (wallet?.address) {
+  //     setLoadingTasks(true);
+  //     loadUserTasks(wallet).then(setUserTasks).finally(() => setLoadingTasks(false));
+  //   }
+  // }, [wallet?.address]);
+
   return (
     <aside className="ua-side ua-side-left">
       <div className="ua-brand">
@@ -286,85 +503,248 @@ function HistoryPane({ mode, onToggleMode, variant }) {
       </div>
 
       <div className="ua-side-foot">
-        <span className="ua-side-avatar" />
-        <div className="ua-side-wallet">
-          <div className="ua-side-addr">0x9F2…c4A1</div>
-          <div className="ua-side-net"><span className="ua-dot ua-dot-good" /> Connected · Arc</div>
-        </div>
+        <SidebarWalletStatus />
       </div>
     </aside>
   );
 }
 
+// Fetch user's active automations from the agent API
+const UARC_API = window.UARC_API_BASE || (window.location.port === '5173' ? 'http://127.0.0.1:3000' : '');
+
+async function fetchUserTasks(address) {
+  if (!address) return [];
+  try {
+    const res = await fetch(`${UARC_API}/tasks?address=${address}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.tasks || [];
+  } catch (err) {
+    console.log('Failed to fetch tasks:', err.message);
+    return [];
+  }
+}
+
+async function fetchWalletBalances(address, provider) {
+  if (!address || !provider) return { eth: '0', usdc: '0', usdt: '0' };
+  try {
+    const ethers = window.ethers;
+    const browserProvider = new ethers.BrowserProvider(provider);
+
+    // ETH balance
+    const ethBalance = await browserProvider.getBalance(address);
+    const ethFormatted = ethers.formatEther(ethBalance);
+
+    // Token balances (using manifest addresses)
+    const manifest = window.UARC_MANIFEST || {};
+    const usdcAddr = manifest.tokens?.MockUSDC?.address || manifest.tokens?.MockUSDC;
+    const usdtAddr = manifest.tokens?.MockUSDT?.address || manifest.tokens?.MockUSDT;
+
+    const erc20Abi = ['function balanceOf(address) view returns (uint256)'];
+    let usdcBalance = '0', usdtBalance = '0';
+
+    if (usdcAddr) {
+      const usdc = new ethers.Contract(usdcAddr, erc20Abi, browserProvider);
+      const bal = await usdc.balanceOf(address);
+      usdcBalance = ethers.formatUnits(bal, 6);
+    }
+    if (usdtAddr) {
+      const usdt = new ethers.Contract(usdtAddr, erc20Abi, browserProvider);
+      const bal = await usdt.balanceOf(address);
+      usdtBalance = ethers.formatUnits(bal, 6);
+    }
+
+    return { eth: ethFormatted, usdc: usdcBalance, usdt: usdtBalance };
+  } catch (err) {
+    console.log('Failed to fetch balances:', err.message);
+    return { eth: '0', usdc: '0', usdt: '0' };
+  }
+}
+
 function ActivePane() {
+  const wallet = window.useWallet();
+  const [tasks, setTasks] = useState([]);
+  const [balances, setBalances] = useState({ eth: '0', usdc: '0', usdt: '0' });
+  const [loading, setLoading] = useState(false);
+
+  // Load tasks when wallet connects
+  useEffectM(() => {
+    if (wallet.address && wallet.isCorrectNetwork) {
+      setLoading(true);
+      fetchUserTasks(wallet.address)
+        .then(setTasks)
+        .finally(() => setLoading(false));
+    } else {
+      setTasks([]);
+    }
+  }, [wallet.address, wallet.isCorrectNetwork]);
+
+  // Load balances when wallet connects
+  useEffectM(() => {
+    if (wallet.address && wallet.provider) {
+      fetchWalletBalances(wallet.address, wallet.provider).then(setBalances);
+    }
+  }, [wallet.address, wallet.provider]);
+
+  const formatBalance = (val, decimals = 2) => {
+    const num = parseFloat(val);
+    if (isNaN(num)) return '0';
+    return num.toLocaleString(undefined, { maximumFractionDigits: decimals });
+  };
+
+  // Map task status to display status
+  const getTaskStatus = (task) => {
+    if (task.executed >= task.maxExecutions) return 'completed';
+    if (task.paused) return 'paused';
+    return 'armed';
+  };
+
+  const getTaskProgress = (task) => {
+    if (!task.maxExecutions) return 0;
+    return task.executed / task.maxExecutions;
+  };
+
+  const formatInterval = (seconds) => {
+    if (seconds >= 2592000) return 'Monthly';
+    if (seconds >= 604800) return 'Weekly';
+    if (seconds >= 86400) return 'Daily';
+    return `Every ${Math.round(seconds / 3600)}h`;
+  };
+
   return (
     <aside className="ua-side ua-side-right">
       <div className="ua-active-head">
         <div>
           <div className="ua-side-label">ACTIVE</div>
-          <div className="ua-active-count">3 automations</div>
+          <div className="ua-active-count">
+            {loading ? 'Loading...' : `${tasks.length} automation${tasks.length !== 1 ? 's' : ''}`}
+          </div>
         </div>
-        <button className="ua-active-all">All</button>
+        <button className="ua-active-all" onClick={() => wallet.address && fetchUserTasks(wallet.address).then(setTasks)}>
+          Refresh
+        </button>
       </div>
 
       <div className="ua-wallet-card">
-        <div className="ua-wallet-eyebrow">WALLET BALANCE</div>
-        <div className="ua-wallet-amount">
-          $14,902<span className="ua-wallet-cents">.18</span>
+        <div className="ua-wallet-eyebrow">
+          {wallet.isConnected ? 'WALLET BALANCE' : 'CONNECT WALLET'}
         </div>
-        <div className="ua-wallet-row">
-          <span>4.21 ETH</span>
-          <span>1,240 USDT</span>
-          <span className="ua-wallet-delta">+2.1%</span>
-        </div>
+        {wallet.isConnected ? (
+          <>
+            <div className="ua-wallet-amount">
+              {formatBalance(balances.usdc, 2)}<span className="ua-wallet-cents"> USDC</span>
+            </div>
+            <div className="ua-wallet-row">
+              <span>{formatBalance(balances.eth, 4)} ETH</span>
+              <span>{formatBalance(balances.usdt, 2)} USDT</span>
+            </div>
+          </>
+        ) : (
+          <div className="ua-wallet-connect-hint">
+            <window.WalletConnectButton variant="compact" />
+          </div>
+        )}
       </div>
 
       <div className="ua-auto-list">
-        {window.ACTIVE_AUTOMATIONS.map(a => (
-          <div key={a.id} className="ua-auto-card">
-            <div className="ua-auto-head">
-              <span className="ua-auto-name">{a.name}</span>
-              <span className={`ua-status ua-status-${a.status === 'running' ? 'good' : a.status === 'armed' ? 'accent' : 'mute'}`}>
-                <span className="ua-dot" /> {a.status.toUpperCase()}
-              </span>
-            </div>
-            <div className="ua-auto-detail">{a.detail}</div>
-            <div className="ua-auto-meta">
-              <span>{a.trigger}</span>
-              <span>{a.last}</span>
-            </div>
-            {a.progress > 0 && (
-              <div className="ua-auto-bar">
-                <div style={{ width: `${a.progress * 100}%` }} className={`ua-auto-bar-fill ua-bar-${a.status}`} />
-              </div>
-            )}
+        {!wallet.isConnected && (
+          <div className="ua-auto-empty">
+            Connect wallet to view your automations
           </div>
-        ))}
+        )}
+        {wallet.isConnected && tasks.length === 0 && !loading && (
+          <div className="ua-auto-empty">
+            No active automations yet. Create one using the chat!
+          </div>
+        )}
+        {tasks.map(task => {
+          const status = getTaskStatus(task);
+          const progress = getTaskProgress(task);
+          return (
+            <div key={task.taskId} className="ua-auto-card">
+              <div className="ua-auto-head">
+                <span className="ua-auto-name">Task #{task.taskId}</span>
+                <span className={`ua-status ua-status-${status === 'completed' ? 'good' : status === 'armed' ? 'accent' : 'mute'}`}>
+                  <span className="ua-dot" /> {status.toUpperCase()}
+                </span>
+              </div>
+              <div className="ua-auto-detail">
+                {task.adapterType === 'recurring_transfer'
+                  ? `Send ${formatBalance(task.amountPerExecution / 1e6)} tokens ${formatInterval(task.interval).toLowerCase()}`
+                  : task.summary || 'Automation task'}
+              </div>
+              <div className="ua-auto-meta">
+                <span>{task.executed}/{task.maxExecutions} executed</span>
+                <span>
+                  {task.nextExecution
+                    ? `Next: ${new Date(task.nextExecution * 1000).toLocaleDateString()}`
+                    : 'Waiting...'}
+                </span>
+              </div>
+              {progress > 0 && (
+                <div className="ua-auto-bar">
+                  <div style={{ width: `${progress * 100}%` }} className={`ua-auto-bar-fill ua-bar-${status}`} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </aside>
   );
 }
 
 function ChatPane({ engine, variant }) {
+  const wallet = window.useWallet();
   const scrollRef = useRefM(null);
+  const [balances, setBalances] = useState({ eth: '0', usdc: '0', usdt: '0' });
+
   useEffectM(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [engine.messages.length]);
 
+  // Load wallet balances
+  useEffectM(() => {
+    if (wallet.address && wallet.provider) {
+      fetchWalletBalances(wallet.address, wallet.provider).then(setBalances);
+    }
+  }, [wallet.address, wallet.provider]);
+
   const showHero = engine.messages.length <= 1;
+
+  // Generate session title from first user message
+  const getSessionTitle = () => {
+    const firstUser = engine.messages.find(m => m.kind === 'user');
+    if (firstUser) {
+      const text = firstUser.text || '';
+      return text.length > 35 ? text.slice(0, 35) + '...' : text;
+    }
+    return 'New Automation';
+  };
+
+  const formatBal = (val, decimals = 2) => {
+    const num = parseFloat(val);
+    if (isNaN(num) || num === 0) return '0';
+    return num.toLocaleString(undefined, { maximumFractionDigits: decimals });
+  };
 
   return (
     <main className="ua-chat">
       <div className="ua-topbar">
         <div className="ua-topbar-title">
-          <span className="ua-topbar-name">Stop-loss for ETH at $2000</span>
-          <span className="ua-topbar-meta">DRAFT · session #4821</span>
+          <span className="ua-topbar-name">{getSessionTitle()}</span>
+          <span className="ua-topbar-meta">{engine.messages.length <= 1 ? 'NEW' : 'DRAFT'} · Base Sepolia</span>
         </div>
         <div className="ua-topbar-bal">
-          <span className="ua-bal-pill"><b>ETH</b> 4.2104 <i>$9,953</i></span>
-          <span className="ua-bal-pill"><b>USDT</b> 1,240 <i>$1,240</i></span>
-          <span className="ua-bal-pill is-accent"><b>ARC</b> 8,491 <i>$3,571</i></span>
+          {wallet.isConnected ? (
+            <>
+              <span className="ua-bal-pill"><b>ETH</b> {formatBal(balances.eth, 4)}</span>
+              <span className="ua-bal-pill"><b>USDC</b> {formatBal(balances.usdc, 2)}</span>
+              <span className="ua-bal-pill"><b>USDT</b> {formatBal(balances.usdt, 2)}</span>
+            </>
+          ) : null}
+          <window.WalletConnectButton variant="compact" />
         </div>
       </div>
 

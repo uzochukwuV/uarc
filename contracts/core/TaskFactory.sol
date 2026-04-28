@@ -11,6 +11,7 @@ import "../interfaces/ITaskCore.sol";
 import "../interfaces/ITaskVault.sol";
 import "../interfaces/IActionAdapter.sol";
 import "../interfaces/IActionRegistry.sol";
+import "../interfaces/IRewardManager.sol";
 
 /**
  * @title TaskFactory
@@ -114,9 +115,12 @@ contract TaskFactory is ITaskFactory, Ownable, ReentrancyGuard {
         taskVault = taskVaultImplementation.clone();
 
         // Calculate funding requirements
+        uint256 maxCostPerExecution = IRewardManager(rewardManager).getMaxRewardCost(
+            params.rewardPerExecution
+        );
         uint256 totalReward = params.maxExecutions == 0
-            ? params.rewardPerExecution
-            : params.rewardPerExecution * params.maxExecutions;
+            ? maxCostPerExecution
+            : maxCostPerExecution * params.maxExecutions;
 
         uint256 providedValue = msg.value - creationFee;
         require(providedValue >= totalReward, "Insufficient reward funding");

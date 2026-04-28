@@ -206,12 +206,44 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "baseReward",
+        type: "uint256",
+      },
+    ],
+    name: "getMaxRewardCost",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "executor",
         type: "address",
       },
     ],
     name: "getReputationMultiplier",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "maxGasReimbursement",
     outputs: [
       {
         internalType: "uint256",

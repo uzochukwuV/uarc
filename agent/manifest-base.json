@@ -1,0 +1,94 @@
+{
+  "protocol": "UARC - Universal Automation",
+  "network": "Base Sepolia Testnet",
+  "chainId": 84532,
+  "deployer": "0x10c4712dB66B56782ACD2739673889A37c5DB604",
+  "deployedAt": "2026-04-28T02:19:55.029Z",
+  "explorer": "https://sepolia.basescan.org",
+  "nativeToken": "ETH",
+  "rpc": "https://sepolia.base.org",
+  "contracts": {
+    "TaskFactory": "0xd633745b7427Cf13b540c6D88FF2cAd33F75340d",
+    "TaskLogicV2": "0x3bfAfE085977a630298A88288f6c95801d3fd5E2",
+    "ExecutorHub": "0x8CbfB3eadD0BF43945a8a8a4Fe6C06A9fA69F191",
+    "GlobalRegistry": "0x69D457Da9539a21E8D344448427079F2e3c24be4",
+    "RewardManager": "0xbC97c345e5B497d816dE12Fc9f8912bf3E67Fa2C",
+    "ActionRegistry": "0xB8476A9D97950DF7c664E63735FD5b3cd88f3147"
+  },
+  "tokens": {
+    "MockUSDC": {
+      "address": "0x02224E1B9d23fcDC8b9E7B97B4857C31FAB56d25",
+      "symbol": "USDC",
+      "decimals": 6,
+      "faucetAmount": "1000"
+    },
+    "MockUSDT": {
+      "address": "0x3aE209C971a96E25D18E20196BFcb54dB530d7fA",
+      "symbol": "USDT",
+      "decimals": 6,
+      "faucetAmount": "1000"
+    }
+  },
+  "adapters": {
+    "RecurringTransferAdapter": {
+      "address": "0x17e7bA6d4939f7e826ca9aE06C76177E25691A61",
+      "description": "Recurring token transfers (weekly, monthly, etc.)",
+      "fundingModes": [
+        "VAULT",
+        "PULL"
+      ]
+    },
+    "TimeBasedTransferAdapter": {
+      "address": "0x055c10a0371AA486e0e5E1fe6A18407b14e2d192",
+      "description": "One-time transfer at specified timestamp",
+      "fundingModes": [
+        "VAULT"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "id": "recurring_transfer",
+      "adapter": "0x17e7bA6d4939f7e826ca9aE06C76177E25691A61",
+      "description": "Send tokens on a recurring schedule (weekly, monthly)",
+      "params": [
+        "token:address",
+        "recipient:address",
+        "amountPerExecution:uint256",
+        "startTime:uint256",
+        "interval:uint256",
+        "maxExecutions:uint256",
+        "fundingMode:uint8 (0=VAULT, 1=PULL)",
+        "fundingSource:address (for PULL mode)"
+      ],
+      "examples": [
+        "Send $50 USDC to alice.eth weekly",
+        "Pay 100 USDT monthly to 0x123...",
+        "Transfer $25 every day for 30 days"
+      ]
+    },
+    {
+      "id": "time_based_transfer",
+      "adapter": "0x055c10a0371AA486e0e5E1fe6A18407b14e2d192",
+      "description": "One-time transfer at a specific time",
+      "params": [
+        "token:address",
+        "recipient:address",
+        "amount:uint256",
+        "executeAfter:uint256"
+      ],
+      "examples": [
+        "Send $100 USDC to bob.eth tomorrow at noon",
+        "Transfer 500 USDT on January 1st"
+      ]
+    }
+  ],
+  "testFaucet": {
+    "description": "Request test tokens for trying the protocol",
+    "supportedTokens": [
+      "USDC",
+      "USDT"
+    ],
+    "maxPerRequest": "1000"
+  }
+}

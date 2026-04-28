@@ -7,4 +7,5 @@ import type * as curveSwapAdapterSol from "./CurveSwapAdapter.sol";
 export type { curveSwapAdapterSol };
 import type * as storkPriceTransferAdapterSol from "./StorkPriceTransferAdapter.sol";
 export type { storkPriceTransferAdapterSol };
+export type { RecurringTransferAdapter } from "./RecurringTransferAdapter";
 export type { TimeBasedTransferAdapter } from "./TimeBasedTransferAdapter";

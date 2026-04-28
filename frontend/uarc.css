@@ -443,6 +443,7 @@
 .ua-status-mute .ua-dot { background: var(--ua-fg-faint); }
 
 .ua-dot-good { width: 7px; height: 7px; border-radius: 999px; background: var(--ua-good); display: inline-block; }
+.ua-dot-warn { width: 7px; height: 7px; border-radius: 999px; background: var(--ua-warn); display: inline-block; }
 
 /* ------------------------------------------------ */
 /* CHAT (center) */
@@ -486,6 +487,10 @@
   text-transform: uppercase;
 }
 .ua-topbar-bal { display: flex; gap: 8px; }
+.ua-topbar-bal .ua-wallet-options,
+.ua-topbar-bal .ua-wallet-connected {
+  flex-shrink: 0;
+}
 .ua-bal-pill {
   display: inline-flex;
   align-items: center;
@@ -1143,3 +1148,613 @@
 .ua-scroll::-webkit-scrollbar-track,
 .ua-side-body::-webkit-scrollbar-track,
 .ua-auto-list::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Recurring Transfer Card ---------- */
+.ua-receipt-recurring {
+  border-left: 3px solid var(--ua-accent);
+  padding: 12px 22px 12px 18px;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--ua-accent) 6%, var(--ua-panel)), var(--ua-panel));
+}
+.ua-recurring-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: color-mix(in oklch, var(--ua-accent) 15%, transparent);
+  border-radius: 999px;
+  font-family: var(--ua-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ua-accent);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.ua-terminal .ua-recurring-icon { border-radius: 4px; }
+
+/* ---------- Mini Calendar ---------- */
+.ua-calendar {
+  background: var(--ua-bg-inset);
+  border: 1px solid var(--ua-line);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 12px 0;
+}
+.ua-terminal .ua-calendar { border-radius: 6px; }
+.ua-calendar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--ua-line-soft);
+}
+.ua-calendar-title {
+  font-family: var(--ua-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ua-fg-mute);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.ua-calendar-count {
+  font-family: var(--ua-mono);
+  font-size: 10px;
+  color: var(--ua-accent);
+  background: color-mix(in oklch, var(--ua-accent) 12%, transparent);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.ua-terminal .ua-calendar-count { border-radius: 3px; }
+.ua-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.ua-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-family: var(--ua-mono);
+  font-size: 11px;
+  color: var(--ua-fg-faint);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.ua-terminal .ua-calendar-day { border-radius: 4px; }
+.ua-calendar-day.scheduled {
+  background: color-mix(in oklch, var(--ua-good) 15%, transparent);
+  border-color: var(--ua-good);
+  color: var(--ua-good);
+  font-weight: 600;
+}
+.ua-calendar-day.scheduled::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ua-good);
+}
+.ua-calendar-day.past {
+  background: color-mix(in oklch, var(--ua-fg-faint) 10%, transparent);
+  color: var(--ua-fg-mute);
+  border-color: var(--ua-line-soft);
+}
+.ua-calendar-day.past::after {
+  content: '✓';
+  position: absolute;
+  bottom: 2px;
+  font-size: 8px;
+  color: var(--ua-good);
+}
+.ua-calendar-day-num {
+  font-size: 12px;
+  font-weight: 500;
+}
+.ua-calendar-day-month {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+.ua-calendar-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--ua-line-soft);
+}
+.ua-calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ua-mono);
+  font-size: 9px;
+  color: var(--ua-fg-mute);
+  letter-spacing: 0.04em;
+}
+.ua-calendar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.ua-calendar-legend-dot.scheduled { background: var(--ua-good); }
+.ua-calendar-legend-dot.pending { background: var(--ua-fg-faint); border: 1px dashed var(--ua-line); }
+
+/* ---------- Funding Mode Toggle ---------- */
+.ua-funding-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--ua-line-soft);
+}
+.ua-funding-label {
+  font-family: var(--ua-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ua-fg-mute);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.ua-funding-options {
+  display: flex;
+  gap: 8px;
+}
+.ua-funding-btn {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--ua-bg-inset);
+  border: 1px solid var(--ua-line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+.ua-terminal .ua-funding-btn { border-radius: 6px; }
+.ua-funding-btn:hover {
+  border-color: var(--ua-accent);
+  background: color-mix(in oklch, var(--ua-accent) 5%, var(--ua-bg-inset));
+}
+.ua-funding-btn.selected {
+  border-color: var(--ua-accent);
+  background: color-mix(in oklch, var(--ua-accent) 12%, var(--ua-bg-inset));
+  box-shadow: 0 0 0 1px var(--ua-accent);
+}
+.ua-funding-btn-icon {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.ua-funding-btn-title {
+  font-family: var(--ua-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ua-fg);
+  margin-bottom: 3px;
+}
+.ua-terminal .ua-funding-btn-title { font-family: var(--ua-mono); font-size: 12px; }
+.ua-funding-btn-desc {
+  font-family: var(--ua-sans);
+  font-size: 11px;
+  color: var(--ua-fg-mute);
+  line-height: 1.4;
+}
+.ua-terminal .ua-funding-btn-desc { font-family: var(--ua-mono); font-size: 10px; }
+.ua-funding-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--ua-bg-inset);
+  border: 1px solid var(--ua-line);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.ua-terminal .ua-funding-amount { border-radius: 4px; }
+.ua-funding-amount-label {
+  font-family: var(--ua-mono);
+  font-size: 10px;
+  color: var(--ua-fg-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ua-funding-amount-value {
+  font-family: var(--ua-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ua-fg);
+}
+
+/* ---------- Schedule Summary ---------- */
+.ua-schedule-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--ua-bg-inset);
+  border-radius: 10px;
+  border: 1px solid var(--ua-line);
+}
+.ua-terminal .ua-schedule-summary { border-radius: 6px; }
+.ua-schedule-item {
+  text-align: center;
+}
+.ua-schedule-value {
+  font-family: var(--ua-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ua-fg);
+  margin-bottom: 3px;
+}
+.ua-schedule-label {
+  font-family: var(--ua-mono);
+  font-size: 9px;
+  color: var(--ua-fg-mute);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Wallet Connector ---------- */
+.ua-wallet-connected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+.ua-wallet-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--ua-panel);
+  border: 1px solid var(--ua-line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--ua-sans);
+  font-size: 13px;
+  color: var(--ua-fg);
+  transition: all 0.15s ease;
+}
+.ua-terminal .ua-wallet-btn { border-radius: 6px; font-family: var(--ua-mono); font-size: 12px; }
+.ua-wallet-btn:hover {
+  border-color: var(--ua-accent);
+  background: color-mix(in oklch, var(--ua-accent) 8%, var(--ua-panel));
+}
+.ua-wallet-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ua-wallet-compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.ua-wallet-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ua-line);
+  border-top-color: var(--ua-accent);
+  border-radius: 50%;
+  animation: ua-spin 0.8s linear infinite;
+}
+@keyframes ua-spin {
+  to { transform: rotate(360deg); }
+}
+.ua-wallet-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ua-accent), oklch(0.65 0.18 280));
+  flex-shrink: 0;
+}
+.ua-terminal .ua-wallet-avatar { border-radius: 4px; }
+.ua-wallet-addr {
+  font-family: var(--ua-mono);
+  font-weight: 500;
+}
+.ua-wallet-type {
+  font-family: var(--ua-mono);
+  font-size: 9px;
+  padding: 2px 5px;
+  background: var(--ua-bg-inset);
+  border-radius: 4px;
+  color: var(--ua-fg-mute);
+  letter-spacing: 0.05em;
+}
+.ua-wallet-network-btn {
+  padding: 6px 10px;
+  background: color-mix(in oklch, var(--ua-warn) 15%, transparent);
+  border: 1px solid var(--ua-warn);
+  border-radius: 6px;
+  font-family: var(--ua-mono);
+  font-size: 10px;
+  color: var(--ua-warn);
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.ua-wallet-wrong-network { animation: ua-pulse 2s ease-in-out infinite; }
+@keyframes ua-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.ua-wallet-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: var(--ua-panel);
+  border: 1px solid var(--ua-line);
+  border-radius: 10px;
+  box-shadow: var(--ua-shadow);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 160px;
+}
+.ua-terminal .ua-wallet-dropdown { border-radius: 6px; }
+.ua-wallet-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  font-family: var(--ua-sans);
+  font-size: 13px;
+  color: var(--ua-fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.ua-terminal .ua-wallet-dropdown-item { font-family: var(--ua-mono); font-size: 12px; }
+.ua-wallet-dropdown-item:hover { background: var(--ua-bg-inset); }
+.ua-wallet-disconnect { color: var(--ua-danger); }
+.ua-wallet-error {
+  padding: 8px 12px;
+  background: color-mix(in oklch, var(--ua-danger) 10%, transparent);
+  border: 1px solid var(--ua-danger);
+  border-radius: 8px;
+  font-family: var(--ua-mono);
+  font-size: 11px;
+  color: var(--ua-danger);
+  margin-bottom: 10px;
+}
+.ua-wallet-icon { font-size: 16px; }
+.ua-wallet-metamask .ua-wallet-icon { filter: grayscale(0); }
+
+/* Wallet Modal */
+.ua-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+.ua-modal {
+  background: var(--ua-panel);
+  border: 1px solid var(--ua-line);
+  border-radius: 20px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.ua-terminal .ua-modal { border-radius: 10px; }
+.ua-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--ua-line-soft);
+}
+.ua-modal-title {
+  font-family: var(--ua-display);
+  font-size: 20px;
+  color: var(--ua-fg);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.ua-terminal .ua-modal-title { font-family: var(--ua-mono); font-size: 16px; font-weight: 600; }
+.ua-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--ua-fg-mute);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.ua-modal-close:hover { color: var(--ua-fg); }
+.ua-modal-body { padding: 20px 22px 24px; }
+.ua-modal-desc {
+  font-family: var(--ua-sans);
+  font-size: 14px;
+  color: var(--ua-fg-mute);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.ua-terminal .ua-modal-desc { font-family: var(--ua-mono); font-size: 12px; }
+.ua-wallet-options-modal { display: flex; flex-direction: column; gap: 10px; }
+.ua-wallet-option-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--ua-bg-inset);
+  border: 1px solid var(--ua-line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+.ua-terminal .ua-wallet-option-card { border-radius: 6px; }
+.ua-wallet-option-card:hover:not(:disabled) {
+  border-color: var(--ua-accent);
+  background: color-mix(in oklch, var(--ua-accent) 8%, var(--ua-bg-inset));
+}
+.ua-wallet-option-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ua-wallet-option-icon {
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ua-panel);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.ua-wallet-option-info { flex: 1; }
+.ua-wallet-option-title {
+  font-family: var(--ua-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ua-fg);
+  margin-bottom: 3px;
+}
+.ua-terminal .ua-wallet-option-title { font-family: var(--ua-mono); font-size: 13px; }
+.ua-wallet-option-desc {
+  font-family: var(--ua-sans);
+  font-size: 12px;
+  color: var(--ua-fg-mute);
+  line-height: 1.4;
+}
+.ua-terminal .ua-wallet-option-desc { font-family: var(--ua-mono); font-size: 11px; }
+.ua-wallet-option-arrow {
+  font-size: 18px;
+  color: var(--ua-fg-mute);
+}
+.ua-wallet-option-badge {
+  font-family: var(--ua-mono);
+  font-size: 9px;
+  padding: 3px 8px;
+  background: var(--ua-accent);
+  color: var(--ua-accent-ink);
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.ua-wallet-network-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--ua-line-soft);
+  font-family: var(--ua-mono);
+  font-size: 11px;
+  color: var(--ua-fg-mute);
+}
+.ua-wallet-network-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ua-good);
+  animation: ua-pulse 2s ease-in-out infinite;
+}
+
+/* Wallet Prompt Card (inline in chat) */
+.ua-wallet-prompt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--ua-accent) 8%, var(--ua-panel)), var(--ua-panel));
+  border: 1px solid var(--ua-accent);
+  border-radius: 14px;
+  margin: 12px 0;
+}
+.ua-terminal .ua-wallet-prompt { border-radius: 8px; }
+.ua-wallet-prompt-icon {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ua-bg-inset);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.ua-wallet-prompt-content { flex: 1; }
+.ua-wallet-prompt-title {
+  font-family: var(--ua-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ua-fg);
+  margin-bottom: 3px;
+}
+.ua-terminal .ua-wallet-prompt-title { font-family: var(--ua-mono); font-size: 13px; }
+.ua-wallet-prompt-desc {
+  font-family: var(--ua-sans);
+  font-size: 12px;
+  color: var(--ua-fg-mute);
+}
+.ua-terminal .ua-wallet-prompt-desc { font-family: var(--ua-mono); font-size: 11px; }
+.ua-wallet-prompt-btn {
+  flex-shrink: 0;
+}
+
+.ua-side-wallet-connect {
+  display: flex;
+  min-width: 0;
+}
+.ua-side-wallet-connect .ua-wallet-options,
+.ua-side-wallet-connect .ua-wallet-connected,
+.ua-side-wallet-connect .ua-wallet-btn {
+  width: 100%;
+}
+.ua-side-wallet-connect .ua-wallet-btn {
+  justify-content: center;
+}
+
+/* ------------------------------------------------ */
+/* ACTIVE PANE — Empty States                       */
+/* ------------------------------------------------ */
+.ua-wallet-connect-hint {
+  padding: 8px 0;
+}
+.ua-wallet-connect-hint .ua-wallet-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ua-auto-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--ua-fg-faint);
+  font-family: var(--ua-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 120px;
+}
+.ua-terminal .ua-auto-empty {
+  font-family: var(--ua-mono);
+  font-size: 12px;
+}
+
+/* Loading state */
+.ua-active-count {
+  font-family: var(--ua-mono);
+  font-size: 11px;
+  color: var(--ua-fg-mute);
+  padding: 2px 6px;
+  background: var(--ua-bg-inset);
+  border-radius: 4px;
+}

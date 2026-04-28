@@ -47,19 +47,24 @@ export declare namespace IRewardManager {
 export interface RewardManagerInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "BASE_REPUTATION_SCORE"
       | "BASIS_POINTS"
       | "MAX_PLATFORM_FEE"
+      | "MAX_REPUTATION_MULTIPLIER"
       | "calculateReward"
       | "collectFees"
       | "distributeReward"
       | "executorHub"
       | "gasReimbursementMultiplier"
+      | "getMaxRewardCost"
       | "getReputationMultiplier"
+      | "maxGasReimbursement"
       | "owner"
       | "platformFeePercentage"
       | "renounceOwnership"
       | "setExecutorHub"
       | "setGasReimbursementMultiplier"
+      | "setMaxGasReimbursement"
       | "setPlatformFee"
       | "setTaskLogic"
       | "taskLogic"
@@ -77,11 +82,19 @@ export interface RewardManagerInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "BASE_REPUTATION_SCORE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "BASIS_POINTS",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "MAX_PLATFORM_FEE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "MAX_REPUTATION_MULTIPLIER",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -105,8 +118,16 @@ export interface RewardManagerInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getMaxRewardCost",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getReputationMultiplier",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "maxGasReimbursement",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -123,6 +144,10 @@ export interface RewardManagerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setGasReimbursementMultiplier",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMaxGasReimbursement",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -144,11 +169,19 @@ export interface RewardManagerInterface extends Interface {
   ): string;
 
   decodeFunctionResult(
+    functionFragment: "BASE_REPUTATION_SCORE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "BASIS_POINTS",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "MAX_PLATFORM_FEE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "MAX_REPUTATION_MULTIPLIER",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -172,7 +205,15 @@ export interface RewardManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getMaxRewardCost",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getReputationMultiplier",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "maxGasReimbursement",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -190,6 +231,10 @@ export interface RewardManagerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setGasReimbursementMultiplier",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMaxGasReimbursement",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -333,9 +378,13 @@ export interface RewardManager extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  BASE_REPUTATION_SCORE: TypedContractMethod<[], [bigint], "view">;
+
   BASIS_POINTS: TypedContractMethod<[], [bigint], "view">;
 
   MAX_PLATFORM_FEE: TypedContractMethod<[], [bigint], "view">;
+
+  MAX_REPUTATION_MULTIPLIER: TypedContractMethod<[], [bigint], "view">;
 
   calculateReward: TypedContractMethod<
     [baseReward: BigNumberish, executor: AddressLike, gasUsed: BigNumberish],
@@ -364,11 +413,19 @@ export interface RewardManager extends BaseContract {
 
   gasReimbursementMultiplier: TypedContractMethod<[], [bigint], "view">;
 
+  getMaxRewardCost: TypedContractMethod<
+    [baseReward: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   getReputationMultiplier: TypedContractMethod<
     [executor: AddressLike],
     [bigint],
     "view"
   >;
+
+  maxGasReimbursement: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
@@ -384,6 +441,12 @@ export interface RewardManager extends BaseContract {
 
   setGasReimbursementMultiplier: TypedContractMethod<
     [_multiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setMaxGasReimbursement: TypedContractMethod<
+    [_maxGasReimbursement: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -415,10 +478,16 @@ export interface RewardManager extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "BASE_REPUTATION_SCORE"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "BASIS_POINTS"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "MAX_PLATFORM_FEE"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "MAX_REPUTATION_MULTIPLIER"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "calculateReward"
@@ -449,8 +518,14 @@ export interface RewardManager extends BaseContract {
     nameOrSignature: "gasReimbursementMultiplier"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "getMaxRewardCost"
+  ): TypedContractMethod<[baseReward: BigNumberish], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getReputationMultiplier"
   ): TypedContractMethod<[executor: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "maxGasReimbursement"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
@@ -466,6 +541,13 @@ export interface RewardManager extends BaseContract {
   getFunction(
     nameOrSignature: "setGasReimbursementMultiplier"
   ): TypedContractMethod<[_multiplier: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMaxGasReimbursement"
+  ): TypedContractMethod<
+    [_maxGasReimbursement: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "setPlatformFee"
   ): TypedContractMethod<[feePercentage: BigNumberish], [void], "nonpayable">;

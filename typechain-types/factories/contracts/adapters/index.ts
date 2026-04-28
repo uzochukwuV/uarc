@@ -4,4 +4,5 @@
 export * as cctpTransferAdapterSol from "./CCTPTransferAdapter.sol";
 export * as curveSwapAdapterSol from "./CurveSwapAdapter.sol";
 export * as storkPriceTransferAdapterSol from "./StorkPriceTransferAdapter.sol";
+export { RecurringTransferAdapter__factory } from "./RecurringTransferAdapter__factory";
 export { TimeBasedTransferAdapter__factory } from "./TimeBasedTransferAdapter__factory";

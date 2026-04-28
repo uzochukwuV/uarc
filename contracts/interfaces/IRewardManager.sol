@@ -66,4 +66,11 @@ interface IRewardManager {
 
     /// @notice Get reputation multiplier for executor
     function getReputationMultiplier(address executor) external view returns (uint256);
+
+    /// @notice Get the maximum possible native cost for one execution
+    /// @dev Includes worst-case reputation bonus, platform fee, and capped gas reimbursement
+    function getMaxRewardCost(uint256 baseReward) external view returns (uint256);
+
+    /// @notice Get the global cap for gas reimbursement per execution
+    function maxGasReimbursement() external view returns (uint256);
 }

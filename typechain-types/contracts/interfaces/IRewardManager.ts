@@ -50,7 +50,9 @@ export interface IRewardManagerInterface extends Interface {
       | "calculateReward"
       | "collectFees"
       | "distributeReward"
+      | "getMaxRewardCost"
       | "getReputationMultiplier"
+      | "maxGasReimbursement"
       | "platformFeePercentage"
       | "setPlatformFee"
       | "totalFeesCollected"
@@ -76,8 +78,16 @@ export interface IRewardManagerInterface extends Interface {
     values: [AddressLike, AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getMaxRewardCost",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getReputationMultiplier",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "maxGasReimbursement",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "platformFeePercentage",
@@ -105,7 +115,15 @@ export interface IRewardManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getMaxRewardCost",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getReputationMultiplier",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "maxGasReimbursement",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -242,11 +260,19 @@ export interface IRewardManager extends BaseContract {
     "nonpayable"
   >;
 
+  getMaxRewardCost: TypedContractMethod<
+    [baseReward: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   getReputationMultiplier: TypedContractMethod<
     [executor: AddressLike],
     [bigint],
     "view"
   >;
+
+  maxGasReimbursement: TypedContractMethod<[], [bigint], "view">;
 
   platformFeePercentage: TypedContractMethod<[], [bigint], "view">;
 
@@ -285,8 +311,14 @@ export interface IRewardManager extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "getMaxRewardCost"
+  ): TypedContractMethod<[baseReward: BigNumberish], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getReputationMultiplier"
   ): TypedContractMethod<[executor: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "maxGasReimbursement"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "platformFeePercentage"
   ): TypedContractMethod<[], [bigint], "view">;

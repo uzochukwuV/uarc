@@ -46,6 +46,8 @@ export type { CurveSwapAdapter } from "./contracts/adapters/CurveSwapAdapter.sol
 export { CurveSwapAdapter__factory } from "./factories/contracts/adapters/CurveSwapAdapter.sol/CurveSwapAdapter__factory";
 export type { ICurvePool } from "./contracts/adapters/CurveSwapAdapter.sol/ICurvePool";
 export { ICurvePool__factory } from "./factories/contracts/adapters/CurveSwapAdapter.sol/ICurvePool__factory";
+export type { RecurringTransferAdapter } from "./contracts/adapters/RecurringTransferAdapter";
+export { RecurringTransferAdapter__factory } from "./factories/contracts/adapters/RecurringTransferAdapter__factory";
 export type { IStorkOracle } from "./contracts/adapters/StorkPriceTransferAdapter.sol/IStorkOracle";
 export { IStorkOracle__factory } from "./factories/contracts/adapters/StorkPriceTransferAdapter.sol/IStorkOracle__factory";
 export type { StorkPriceTransferAdapter } from "./contracts/adapters/StorkPriceTransferAdapter.sol/StorkPriceTransferAdapter";

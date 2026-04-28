@@ -66,6 +66,11 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
             }
         }
 
+        // Step 2.5: Preflight adapter-level conditions before locking the task
+        if (!_canExecuteActions(taskCore, metadata.actionsHash)) {
+            revert TaskNotExecutable();
+        }
+
         // Step 3: Mark task as executing
         bool canExecute = ITaskCore(taskCore).executeTask(params.executor);
         if (!canExecute) revert TaskNotExecutable();
@@ -180,6 +185,32 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
+     * @notice Check whether all stored actions are currently executable
+     * @dev Used as a preflight check so executors do not pay to run adapters that are not ready yet
+     */
+    function _canExecuteActions(address taskCore, bytes32 actionsHash) internal view returns (bool) {
+        require(actionRegistry != address(0), "Registry not set");
+
+        ITaskCore.Action[] memory actions = ITaskCore(taskCore).getActions();
+        if (actions.length == 0) {
+            return false;
+        }
+
+        bytes32 computedHash = keccak256(abi.encode(actions));
+        if (computedHash != actionsHash) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < actions.length; i++) {
+            if (!_canExecuteAction(actions[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @notice Execute a single action
      * @param taskVault Address of task vault
      * @param action Action to execute
@@ -235,6 +266,28 @@ contract TaskLogicV2 is ITaskLogic, Ownable, ReentrancyGuard, Pausable {
 
         // Call failed, no data, or unsupported token configuration
         return false;
+    }
+
+    function _canExecuteAction(ITaskCore.Action memory action) internal view returns (bool) {
+        IActionRegistry.AdapterInfo memory adapterInfo;
+        try IActionRegistry(actionRegistry).getAdapterByAddress(action.protocol) returns (IActionRegistry.AdapterInfo memory info) {
+            adapterInfo = info;
+        } catch {
+            adapterInfo = IActionRegistry(actionRegistry).getAdapter(action.selector);
+        }
+
+        if (!adapterInfo.isActive) {
+            return false;
+        }
+
+        try IActionAdapter(adapterInfo.adapter).canExecute(action.params) returns (
+            bool canExec,
+            string memory
+        ) {
+            return canExec;
+        } catch {
+            return false;
+        }
     }
 
     /**

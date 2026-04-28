@@ -94,6 +94,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ICurvePool__factory>;
     getContractFactory(
+      name: "RecurringTransferAdapter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.RecurringTransferAdapter__factory>;
+    getContractFactory(
       name: "IStorkOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IStorkOracle__factory>;
@@ -291,6 +295,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ICurvePool>;
     getContractAt(
+      name: "RecurringTransferAdapter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.RecurringTransferAdapter>;
+    getContractAt(
       name: "IStorkOracle",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -492,6 +501,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ICurvePool>;
     deployContract(
+      name: "RecurringTransferAdapter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.RecurringTransferAdapter>;
+    deployContract(
       name: "IStorkOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IStorkOracle>;
@@ -688,6 +701,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ICurvePool>;
+    deployContract(
+      name: "RecurringTransferAdapter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.RecurringTransferAdapter>;
     deployContract(
       name: "IStorkOracle",
       args: any[],

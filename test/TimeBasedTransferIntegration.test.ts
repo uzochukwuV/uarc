@@ -36,6 +36,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
   const TRANSFER_AMOUNT = ethers.parseUnits("100", 6); // 100 USDC
   const REWARD_PER_EXECUTION = ethers.parseEther("0.01"); // 0.01 ETH reward (matching working test)
   const EXECUTOR_STAKE = ethers.parseEther("1"); // 1 ETH stake
+  let requiredNativeFunding: bigint;
 
   beforeEach(async function () {
     [deployer, taskCreator, executor, recipient] = await ethers.getSigners();
@@ -108,6 +109,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
     await rewardManager.setExecutorHub(await executorHub.getAddress());
     await rewardManager.setGasReimbursementMultiplier(100);
     console.log("✅ RewardManager configured");
+    requiredNativeFunding = await rewardManager.getMaxRewardCost(REWARD_PER_EXECUTION);
 
     await globalRegistry.authorizeFactory(await taskFactory.getAddress());
     await taskFactory.setGlobalRegistry(await globalRegistry.getAddress());
@@ -234,7 +236,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
       // Step 6: Create task with tokens (mimicking frontend exactly)
       console.log("\n--- Step 6: Creating Task ---");
       // Send extra ETH to cover gas reimbursement (multiplier is 100)
-      const totalETHValue = ethers.parseEther("0.1"); // 0.1 ETH buffer for reward + gas
+      const totalETHValue = requiredNativeFunding;
       console.log("   Total ETH to send:", ethers.formatEther(totalETHValue), "ETH (reward + gas buffer)");
 
       const tx = await taskFactory.connect(taskCreator).createTaskWithTokens(
@@ -299,6 +301,10 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
       const [canExecuteEarly] = await adapter.canExecute(adapterParams);
       expect(canExecuteEarly).to.be.false;
       console.log("✅ Adapter correctly reports conditions not met (too early)");
+
+      await expect(
+        executorHub.connect(executor).executeTask(taskId)
+      ).to.be.reverted;
 
       // Step 10: Fast forward time
       console.log("\n--- Step 10: Fast Forwarding Time ---");
@@ -405,7 +411,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
           taskParams,
           actions,
           tokenDeposits,
-          { value: REWARD_PER_EXECUTION }
+          { value: requiredNativeFunding }
         )
       ).to.be.reverted;
 
@@ -455,7 +461,7 @@ describe("TimeBasedTransfer Integration Test - Full Flow", function () {
           taskParams,
           actions,
           tokenDeposits,
-          { value: REWARD_PER_EXECUTION / 2n }
+          { value: requiredNativeFunding - 1n }
         )
       ).to.be.revertedWith("Insufficient reward funding");
 

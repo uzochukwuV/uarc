@@ -22,9 +22,12 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
     uint256 public platformFeePercentage = 100; // 1% (basis points)
     uint256 public constant MAX_PLATFORM_FEE = 500; // 5% maximum
     uint256 public constant BASIS_POINTS = 10000;
+    uint256 public constant BASE_REPUTATION_SCORE = 5000;
+    uint256 public constant MAX_REPUTATION_MULTIPLIER = 12500; // 125%
 
     uint256 public totalFeesCollected;
     uint256 public gasReimbursementMultiplier = 120; // 120% of gas used
+    uint256 public maxGasReimbursement = 0.002 ether;
 
     // ============ Constructor ============
 
@@ -54,8 +57,11 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         // Calculate platform fee (on base reward, not multiplied)
         uint256 platformFee = (baseReward * platformFeePercentage) / BASIS_POINTS;
 
-        // Calculate gas reimbursement (120% of actual gas)
+        // Calculate gas reimbursement and cap it to a configured ceiling.
         uint256 gasReimbursement = (gasUsed * tx.gasprice * gasReimbursementMultiplier) / 100;
+        if (gasReimbursement > maxGasReimbursement) {
+            gasReimbursement = maxGasReimbursement;
+        }
 
         // Total amount needed from vault
         uint256 totalFromVault = executorReward + platformFee + gasReimbursement;
@@ -147,6 +153,10 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         gasReimbursementMultiplier = _multiplier;
     }
 
+    function setMaxGasReimbursement(uint256 _maxGasReimbursement) external onlyOwner {
+        maxGasReimbursement = _maxGasReimbursement;
+    }
+
     // ============ View Functions ============
 
     
@@ -161,11 +171,22 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
 
         IExecutorHub.Executor memory exec = IExecutorHub(executorHub).getExecutor(executor);
 
-        // Reputation score is 0-10000
-        // Convert to multiplier: 5000 score = 100%, 10000 score = 125%
-        // Multiplier = 10000 + (score * 25 / 10000)
-        uint256 bonus = (exec.reputationScore * 2500) / BASIS_POINTS;
-        return BASIS_POINTS + bonus; // Range: 100% to 125%
+        // Reputation score is 0-10000.
+        // 5000 is the neutral baseline (100%), 10000 maps to 125%.
+        if (exec.reputationScore <= BASE_REPUTATION_SCORE) {
+            return BASIS_POINTS;
+        }
+
+        uint256 bonus = ((exec.reputationScore - BASE_REPUTATION_SCORE) * 2500) / BASE_REPUTATION_SCORE;
+        return BASIS_POINTS + bonus;
+    }
+
+    /// @inheritdoc IRewardManager
+    function getMaxRewardCost(uint256 baseReward) external view returns (uint256) {
+        uint256 maxExecutorReward = (baseReward * MAX_REPUTATION_MULTIPLIER) / BASIS_POINTS;
+        uint256 platformFee = (baseReward * platformFeePercentage) / BASIS_POINTS;
+        uint256 gasReserve = gasReimbursementMultiplier == 0 ? 0 : maxGasReimbursement;
+        return maxExecutorReward + platformFee + gasReserve;
     }
 
     // ============ Receive Function ============
