@@ -21,7 +21,6 @@ import express, { Request, Response, NextFunction } from "express";
 import { ethers } from "ethers";
 import * as fs from "fs";
 import * as path from "path";
-import { Mistral } from "@mistralai/mistralai";
 import { parseIntent, TaskIntent } from "./ai-task-creator";
 import { verifyPayment, X402PaymentRequired } from "./x402";
 import cors from "cors";

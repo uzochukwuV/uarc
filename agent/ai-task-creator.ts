@@ -8,7 +8,6 @@
  * - stork_price_transfer: Transfer tokens when price condition is met
  */
 
-import { Mistral } from "@mistralai/mistralai";
 import { ethers } from "ethers";
 
 export interface TaskIntent {
@@ -80,6 +79,12 @@ OUTPUT FORMAT (JSON):
 }
 `;
 
+async function createMistralClient(apiKey: string) {
+    const importer = new Function("specifier", "return import(specifier)");
+    const { Mistral } = await importer("@mistralai/mistralai");
+    return new Mistral({ apiKey });
+}
+
 /**
  * Parse natural language intent into structured task parameters using Mistral AI
  */
@@ -88,7 +93,7 @@ export async function parseIntent(
     manifest: any,
     apiKey: string
 ): Promise<TaskIntent> {
-    const client = new Mistral({ apiKey });
+    const client = await createMistralClient(apiKey);
 
     const currentTime = Math.floor(Date.now() / 1000);
 
