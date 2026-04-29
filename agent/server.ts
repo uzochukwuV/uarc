@@ -1000,7 +1000,7 @@ async function submitTask(
 // ============================================================
 
 if (!process.env.VERCEL) {
-app.listen(PORT, () => {
+  app.listen(PORT, () => {
   console.log(`\n🤖 UARC Agent Server running on http://localhost:${PORT}`);
   console.log(`   Wallet: ${wallet.address}`);
   console.log(`   Network: ${activeNetwork.name} (${activeNetwork.chainId})`);
@@ -1022,7 +1022,7 @@ app.listen(PORT, () => {
     `  POST /task/create                     — x402-gated task creation`,
   );
   console.log(`  POST /task/create-from-prompt-x402   — x402-gated AI prompt`);
-});
+  });
 }
 
 export default app;
