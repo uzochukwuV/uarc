@@ -999,6 +999,7 @@ async function submitTask(
 // Start Server
 // ============================================================
 
+if (!process.env.VERCEL) {
 app.listen(PORT, () => {
   console.log(`\n🤖 UARC Agent Server running on http://localhost:${PORT}`);
   console.log(`   Wallet: ${wallet.address}`);
@@ -1022,5 +1023,6 @@ app.listen(PORT, () => {
   );
   console.log(`  POST /task/create-from-prompt-x402   — x402-gated AI prompt`);
 });
+}
 
 export default app;
