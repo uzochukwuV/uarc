@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "scripts/dashboard.ts",
+      "src": "agent/server.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "scripts/dashboard.ts"
+      "dest": "agent/server.ts"
     }
   ]
 }
