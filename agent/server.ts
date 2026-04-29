@@ -25,7 +25,6 @@ import { Mistral } from "@mistralai/mistralai";
 import { parseIntent, TaskIntent } from "./ai-task-creator";
 import { verifyPayment, X402PaymentRequired } from "./x402";
 import cors from "cors";
-import { TaskStatus } from "../reference/TaskerFrontend/shared/schema";
 
 // ============================================================
 // Config
