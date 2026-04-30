@@ -1154,6 +1154,9 @@ if (!process.env.VERCEL) {
   console.log("Endpoints:");
   console.log(`  GET  /health                          — health check`);
   console.log(`  GET  /manifest                        — protocol info`);
+  console.log(`  POST /chat                            — conversational AI chat`);
+  console.log(`  GET  /chat/history?sessionId=...      — get chat history`);
+  console.log(`  GET  /chat/sessions?userAddress=...   — get user sessions`);
   console.log(`  GET  /tasks?address=0x...             — fetch user's tasks`);
   console.log(`  POST /faucet                          — request test tokens`);
   console.log(

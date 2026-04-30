@@ -456,46 +456,70 @@ function useChatEngine() {
       return;
     }
 
-    // Normal flow: get preview from API
+    // Use conversational /chat endpoint
     try {
-      setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Reading wallet · Parsing intent · Building task' }]);
+      setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Thinking...' }]);
 
-      const res = await fetch(`${UARC_API_BASE}/task/preview`, {
+      const res = await fetch(`${UARC_API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intent: trimmed, userAddress: wallet.address }),
-        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify({
+          message: trimmed,
+          sessionId,
+          userAddress: wallet.address
+        }),
+        signal: AbortSignal.timeout(30000),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
 
-      // Check for missing required parameters
-      const missingParams = getMissingParams(data.adapterType, data.params);
-
-      if (missingParams.length > 0) {
-        // Store the preview and start asking for missing params
-        setAwaitingParam({
-          preview: data,
-          missingParams,
-          currentIndex: 0,
-          originalIntent: trimmed,
-        });
-
-        // Ask for the first missing parameter
-        const firstMissing = missingParams[0];
-        setMessages(cur => [
-          ...cur.slice(0, -1), // remove thinking
-          { id: nextId(), role: 'assistant', kind: 'text', content: `I'll set up that automation. ${firstMissing.question}` },
-        ]);
-        setBusy(false);
-        return;
+      // Update session ID if server assigned one
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
       }
 
-      // All params present - show preview
-      showPreview(data, trimmed);
+      // Handle based on response type
+      if (data.type === 'automation' && data.taskPreview) {
+        // It's an automation intent - check for missing params
+        const missingParams = getMissingParams(data.taskPreview.adapterType, data.taskPreview.params);
+
+        if (missingParams.length > 0) {
+          // Store the preview and start asking for missing params
+          setAwaitingParam({
+            preview: data.taskPreview,
+            missingParams,
+            currentIndex: 0,
+            originalIntent: trimmed,
+          });
+
+          // Show AI message then ask for first missing param
+          setMessages(cur => [
+            ...cur.slice(0, -1), // remove thinking
+            { id: nextId(), role: 'assistant', kind: 'text', content: `${data.message} ${missingParams[0].question}` },
+          ]);
+          setBusy(false);
+          return;
+        }
+
+        // All params present - show preview
+        showPreview(data.taskPreview, trimmed);
+      } else {
+        // It's a conversational response - just show the message
+        setMessages(cur => [
+          ...cur.slice(0, -1), // remove thinking
+          {
+            id: nextId(),
+            role: 'assistant',
+            kind: 'text',
+            content: data.message,
+            suggestions: data.suggestions,
+          },
+        ]);
+      }
     } catch (_err) {
-      // API unavailable — fall back to local parsing, but still collect required params.
+      // API unavailable — fall back to local parsing
+      console.error('[Chat] API error:', _err);
       const localPreview = parseLocalIntent(trimmed);
       if (localPreview) {
         const missingParams = getMissingParams(localPreview.adapterType, localPreview.params);
@@ -508,20 +532,23 @@ function useChatEngine() {
           });
           setMessages(cur => [
             ...cur.filter(m => m.kind !== 'thinking'),
-            { id: nextId(), role: 'assistant', kind: 'text', content: `I can build that automation. ${missingParams[0].question}` },
+            { id: nextId(), role: 'assistant', kind: 'text', content: `I can help with that! ${missingParams[0].question}` },
           ]);
           setBusy(false);
           return;
         }
         showPreview(localPreview, trimmed);
       } else {
-        setMessages(cur => cur.filter(m => m.kind !== 'thinking'));
-        await runFlow(buildAgentFlow(trimmed));
+        // For non-automation messages when API is down, show a fallback response
+        setMessages(cur => [
+          ...cur.filter(m => m.kind !== 'thinking'),
+          { id: nextId(), role: 'assistant', kind: 'text', content: "I'm here to help you automate blockchain tasks! You can ask me to set up recurring payments, price alerts, or scheduled transfers. What would you like to do?" },
+        ]);
       }
     }
 
     setBusy(false);
-  }, [input, busy, runFlow, wallet.address, awaitingParam, showPreview]);
+  }, [input, busy, runFlow, wallet.address, awaitingParam, showPreview, sessionId]);
 
   const confirmServer = useCallback(async () => {
     if (busy) return;
@@ -636,9 +663,42 @@ function useChatEngine() {
     setPendingIntent(null);
     setPendingPreview(null);
     setAwaitingParam(null);
+    // Create new session
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    setSessionId(newSessionId);
+    localStorage.setItem('uarc_session_id', newSessionId);
   }, []);
 
-  return { messages, input, setInput, send, confirm, sign, reset, busy };
+  // Load chat history on mount (if session exists)
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const res = await fetch(`${UARC_API_BASE}/chat/history?sessionId=${sessionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.messages && data.messages.length > 0) {
+            const loadedMessages = data.messages.map((m, i) => ({
+              id: `loaded_${i}`,
+              role: m.role,
+              kind: m.kind || 'text',
+              content: m.content,
+            }));
+            // Prepend greeting if history doesn't start with one
+            if (loadedMessages[0]?.role !== 'assistant') {
+              loadedMessages.unshift(INITIAL_MESSAGES[0]);
+            }
+            setMessages(loadedMessages);
+            idRef.current = loadedMessages.length + 1;
+          }
+        }
+      } catch (err) {
+        console.log('[Chat] Could not load history:', err.message);
+      }
+    };
+    loadHistory();
+  }, []);
+
+  return { messages, input, setInput, send, confirm, sign, reset, busy, sessionId };
 }
 
 Object.assign(window, { useChatEngine, SAMPLE_HISTORY, ACTIVE_AUTOMATIONS });

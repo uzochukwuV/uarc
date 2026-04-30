@@ -16,7 +16,13 @@
     "test:local": "ts-node agent/test-local.ts",
     "clean": "hardhat clean"
   },
-  "keywords": ["automation", "arc", "blockchain", "x402", "ai"],
+  "keywords": [
+    "automation",
+    "arc",
+    "blockchain",
+    "x402",
+    "ai"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -40,6 +46,6 @@
     "@mistralai/mistralai": "^2.2.1",
     "@nomicfoundation/hardhat-toolbox": "^6.0.0",
     "dotenv": "^17.4.2",
-    "mongoose": "^8.5.0"
+    "mongoose": "^8.23.1"
   }
 }
