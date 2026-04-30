@@ -24,6 +24,15 @@ import * as path from "path";
 import { parseIntent, TaskIntent } from "./ai-task-creator";
 import { verifyPayment, X402PaymentRequired } from "./x402";
 import cors from "cors";
+import {
+  connectDB,
+  processChat,
+  getChatHistory,
+  getUserSessions,
+  createSession,
+  updateSessionTitle,
+  deleteSession,
+} from "./chat-handler";
 
 // ============================================================
 // Config
@@ -60,6 +69,8 @@ const PRIVATE_KEY =
   "0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f";
 const MISTRAL_API_KEY =
   process.env.MISTRAL_API_KEY || "ZivuaamB98Ph9AajVZ2DW4ZrpL97a8OJ";
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/uarc";
 
 // x402 fee: 0.0001 ETH per task creation
 const X402_FEE = ethers.parseEther("0.0001");
@@ -331,6 +342,137 @@ app.get("/faucet/status", async (req: Request, res: Response) => {
     amountPerRequest: "1000",
     supportedTokens: ["USDC", "USDT"],
   });
+});
+
+// ============================================================
+// Chat Endpoints (Conversational AI with history)
+// ============================================================
+
+/**
+ * POST /chat — Send a message and get AI response
+ * Body: { message: string, sessionId?: string, userAddress?: string }
+ * Returns conversational response or automation intent
+ */
+app.post("/chat", async (req: Request, res: Response) => {
+  const { message, sessionId, userAddress } = req.body;
+
+  if (!message || typeof message !== "string") {
+    res.status(400).json({ error: "Missing 'message' string in body" });
+    return;
+  }
+
+  try {
+    // Create session if not provided
+    const activeSessionId = sessionId || (await createSession(userAddress));
+
+    const response = await processChat(
+      message,
+      activeSessionId,
+      manifest,
+      MISTRAL_API_KEY,
+      userAddress
+    );
+
+    // If it's an automation intent, also parse it for task preview
+    let taskPreview = null;
+    if (response.type === "automation" && response.automationIntent) {
+      try {
+        const taskIntent = await parseIntent(message, manifest, MISTRAL_API_KEY);
+        const payload = await buildTaskPayload(taskIntent, userAddress || wallet.address);
+        taskPreview = {
+          summary: taskIntent.summary,
+          adapterType: taskIntent.adapterType,
+          params: taskIntent.params,
+          payload,
+        };
+      } catch (err) {
+        // If parsing fails, still return the chat response
+        console.log("[Chat] Automation parsing failed, continuing with chat response");
+      }
+    }
+
+    res.json({
+      success: true,
+      sessionId: activeSessionId,
+      type: response.type,
+      message: response.message,
+      suggestions: response.suggestions,
+      automationIntent: response.automationIntent,
+      taskPreview,
+    });
+  } catch (err: any) {
+    console.error("[Chat Error]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /chat/history — Get chat history for a session
+ * Query: ?sessionId=xxx&limit=50
+ */
+app.get("/chat/history", async (req: Request, res: Response) => {
+  const { sessionId, limit } = req.query;
+
+  if (!sessionId || typeof sessionId !== "string") {
+    res.status(400).json({ error: "Missing sessionId query parameter" });
+    return;
+  }
+
+  try {
+    const history = await getChatHistory(sessionId, Number(limit) || 50);
+    res.json({ sessionId, messages: history });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /chat/sessions — Get all sessions for a user
+ * Query: ?userAddress=0x...&limit=20
+ */
+app.get("/chat/sessions", async (req: Request, res: Response) => {
+  const { userAddress, limit } = req.query;
+
+  if (!userAddress || typeof userAddress !== "string") {
+    res.status(400).json({ error: "Missing userAddress query parameter" });
+    return;
+  }
+
+  try {
+    const sessions = await getUserSessions(userAddress, Number(limit) || 20);
+    res.json({ userAddress, sessions });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /chat/session — Create a new chat session
+ * Body: { userAddress?: string, title?: string }
+ */
+app.post("/chat/session", async (req: Request, res: Response) => {
+  const { userAddress, title } = req.body;
+
+  try {
+    const sessionId = await createSession(userAddress, title);
+    res.json({ success: true, sessionId });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /chat/session/:sessionId — Delete a session
+ */
+app.delete("/chat/session/:sessionId", async (req: Request, res: Response) => {
+  const sessionId = req.params.sessionId as string;
+
+  try {
+    await deleteSession(sessionId);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -998,6 +1140,11 @@ async function submitTask(
 // ============================================================
 
 if (!process.env.VERCEL) {
+  // Connect to MongoDB before starting server
+  connectDB(MONGODB_URI)
+    .then(() => console.log("[MongoDB] Connected"))
+    .catch((err) => console.warn("[MongoDB] Connection failed, chat history disabled:", err.message));
+
   app.listen(PORT, () => {
   console.log(`\n🤖 UARC Agent Server running on http://localhost:${PORT}`);
   console.log(`   Wallet: ${wallet.address}`);

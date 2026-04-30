@@ -20,3 +20,4 @@ ignition/deployments
 .DS_Store
 .vercel
 .env*.local
+.opencode

@@ -18,11 +18,11 @@ const ACTIVE_AUTOMATIONS = [
 ];
 
 const INITIAL_MESSAGES = [
-  { id: 'm0', role: 'assistant', kind: 'greeting', content: 'What should I automate today?',
+  { id: 'm0', role: 'assistant', kind: 'greeting', content: "Hey! I'm UARC, your blockchain automation assistant. I can help you set up automated transfers, recurring payments, price alerts, and more. What would you like to do?",
     suggestions: [
       'Send 50 USDC to 0x123... weekly for 4 weeks',
       'Pay 100 USDT monthly to my friend',
-      'Transfer $25 daily for 10 days',
+      'What can you help me with?',
     ] },
 ];
 
@@ -38,8 +38,10 @@ const INTERVAL_LABELS = { 86400: 'Daily', 604800: 'Weekly', 2592000: 'Monthly' }
 const FUNDING_MODES = { 0: 'Vault (Deposit)', 1: 'Pull (Subscription)' };
 const UARC_API_BASE = window.UARC_API_BASE || (window.location.port === '5173' ? 'http://127.0.0.1:3000' : '');
 
+const ADDRESS_RE = /0x[a-fA-F0-9]{40}/;
+
 // Check if a parameter is missing/invalid
-const isMissingAddress = (addr) => !addr || addr === '0x0000000000000000000000000000000000000000' || addr === '0x123...' || !addr.startsWith('0x') || addr.length < 10;
+const isMissingAddress = (addr) => !addr || addr === '0x0000000000000000000000000000000000000000' || addr === '0x123...' || !ADDRESS_RE.test(addr);
 
 // Identify which required parameters are missing for each adapter type
 function getMissingParams(adapterType, params) {
@@ -59,6 +61,38 @@ function getMissingParams(adapterType, params) {
       break;
   }
   return missing;
+}
+
+function parseLocalIntent(text) {
+  const l = (text || '').toLowerCase();
+  const isRecurring = l.includes('weekly') || l.includes('monthly') || l.includes('daily') || l.includes('every ') || l.includes('subscription');
+
+  if (!isRecurring) return null;
+
+  const amountMatch = l.match(/(?:send|pay|transfer)?\s*\$?\s*(\d+(?:\.\d+)?)\s*(usdc|usdt|euro)?/i);
+  const recipientMatch = text.match(ADDRESS_RE);
+  const weeksMatch = l.match(/(?:for\s+)?(\d+)\s+weeks?/);
+  const daysMatch = l.match(/(?:for\s+)?(\d+)\s+days?/);
+  const monthsMatch = l.match(/(?:for\s+)?(\d+)\s+months?/);
+  const maxExecutions = Number(weeksMatch?.[1] || daysMatch?.[1] || monthsMatch?.[1] || 4);
+  const interval = l.includes('daily') ? 86400 : l.includes('monthly') ? 2592000 : 604800;
+  const amountDisplay = Number(amountMatch?.[1] || 50);
+  const amount = Math.round(amountDisplay * 1e6);
+  const token = (amountMatch?.[2] || 'USDC').toUpperCase();
+
+  return {
+    summary: `send ${amountDisplay} ${token} ${INTERVAL_LABELS[interval].toLowerCase()} for ${maxExecutions} payments`,
+    adapterType: 'recurring_transfer',
+    params: {
+      token,
+      recipient: recipientMatch?.[0],
+      amountPerExecution: amount,
+      startTime: Math.floor(Date.now() / 1000) + 86400,
+      interval,
+      maxExecutions,
+      fundingMode: 0,
+    },
+  };
 }
 
 const TASK_FACTORY_ABI = [
@@ -144,8 +178,8 @@ function buildAgentFlow(text) {
   const l = (text || '').toLowerCase();
   const isRecurring = l.includes('weekly') || l.includes('monthly') || l.includes('daily') || l.includes('every ') || l.includes('subscription');
   if (isRecurring) {
-    const amountMatch = l.match(/(?:send|pay|transfer)?\s*(\d+(?:\.\d+)?)\s*(usdc|usdt|euro)?/i);
-    const recipientMatch = text.match(/0x[a-fA-F0-9.]+/);
+    const amountMatch = l.match(/(?:send|pay|transfer)?\s*\$?\s*(\d+(?:\.\d+)?)\s*(usdc|usdt|euro)?/i);
+    const recipientMatch = text.match(ADDRESS_RE);
     const weeksMatch = l.match(/(?:for\s+)?(\d+)\s+weeks?/);
     const daysMatch = l.match(/(?:for\s+)?(\d+)\s+days?/);
     const monthsMatch = l.match(/(?:for\s+)?(\d+)\s+months?/);
@@ -153,7 +187,7 @@ function buildAgentFlow(text) {
     const interval = l.includes('daily') ? 86400 : l.includes('monthly') ? 2592000 : 604800;
     const amount = Math.round(Number(amountMatch?.[1] || 50) * 1e6);
     const token = (amountMatch?.[2] || 'USDC').toUpperCase();
-    const recipient = recipientMatch?.[0] || '0x123...';
+    const recipient = recipientMatch?.[0];
     const summary = `send ${Number(amountMatch?.[1] || 50)} ${token} ${INTERVAL_LABELS[interval].toLowerCase()} for ${maxExecutions} payments`;
     const params = {
       token,
@@ -290,8 +324,19 @@ function useChatEngine() {
   const [pendingPreview, setPendingPreview] = useState(null);
   // Tracks when we're waiting for user to provide missing parameters
   const [awaitingParam, setAwaitingParam] = useState(null); // { preview, missingParams, currentIndex }
+  // Session ID for chat history persistence
+  const [sessionId, setSessionId] = useState(() => {
+    // Try to restore session from localStorage
+    const stored = localStorage.getItem('uarc_session_id');
+    return stored || `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  });
   const idRef = useRef(1);
   const nextId = () => `m${idRef.current++}`;
+
+  // Persist session ID
+  useEffect(() => {
+    localStorage.setItem('uarc_session_id', sessionId);
+  }, [sessionId]);
 
   // Load manifest on mount (needed for token addresses)
   useEffect(() => {
@@ -357,7 +402,17 @@ function useChatEngine() {
       let value = trimmed;
       // If looking for an address, try to extract it
       if (currentMissing.key === 'recipient' || currentMissing.key === 'mintRecipient') {
-        const addrMatch = trimmed.match(/0x[a-fA-F0-9]{40}/);
+        const addrMatch = trimmed.match(ADDRESS_RE);
+        if (!addrMatch) {
+          setMessages(cur => [...cur, {
+            id: nextId(),
+            role: 'assistant',
+            kind: 'text',
+            content: 'Please send the full 0x recipient address so I can build the task safely.',
+          }]);
+          setBusy(false);
+          return;
+        }
         if (addrMatch) value = addrMatch[0];
       }
 
@@ -440,9 +495,29 @@ function useChatEngine() {
       // All params present - show preview
       showPreview(data, trimmed);
     } catch (_err) {
-      // API unavailable — fall back to local demo flow
-      setMessages(cur => cur.filter(m => m.kind !== 'thinking'));
-      await runFlow(buildAgentFlow(trimmed));
+      // API unavailable — fall back to local parsing, but still collect required params.
+      const localPreview = parseLocalIntent(trimmed);
+      if (localPreview) {
+        const missingParams = getMissingParams(localPreview.adapterType, localPreview.params);
+        if (missingParams.length > 0) {
+          setAwaitingParam({
+            preview: localPreview,
+            missingParams,
+            currentIndex: 0,
+            originalIntent: trimmed,
+          });
+          setMessages(cur => [
+            ...cur.filter(m => m.kind !== 'thinking'),
+            { id: nextId(), role: 'assistant', kind: 'text', content: `I can build that automation. ${missingParams[0].question}` },
+          ]);
+          setBusy(false);
+          return;
+        }
+        showPreview(localPreview, trimmed);
+      } else {
+        setMessages(cur => cur.filter(m => m.kind !== 'thinking'));
+        await runFlow(buildAgentFlow(trimmed));
+      }
     }
 
     setBusy(false);
