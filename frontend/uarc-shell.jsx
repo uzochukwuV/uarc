@@ -431,6 +431,22 @@ function Message({ m, engine }) {
 }
 
 // ---------- Shared layout ----------
+
+function formatHistoryTime(value) {
+  if (!value) return '';
+  const then = new Date(value).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diff = Date.now() - then;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diff < minute) return 'Just now';
+  if (diff < hour) return `${Math.floor(diff / minute)}m ago`;
+  if (diff < day) return `${Math.floor(diff / hour)}h ago`;
+  if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`;
+  return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function SidebarWalletStatus() {
   const wallet = window.useWallet();
 
@@ -456,18 +472,9 @@ function SidebarWalletStatus() {
   );
 }
 
-function HistoryPane({ mode, onToggleMode, variant }) {
-  // Note: User tasks loading is disabled until contract ABIs are available
-  // const wallet = window.useWallet();
-  // const [userTasks, setUserTasks] = useState([]);
-  // const [loadingTasks, setLoadingTasks] = useState(false);
-
-  // useEffectM(() => {
-  //   if (wallet?.address) {
-  //     setLoadingTasks(true);
-  //     loadUserTasks(wallet).then(setUserTasks).finally(() => setLoadingTasks(false));
-  //   }
-  // }, [wallet?.address]);
+function HistoryPane({ mode, onToggleMode, variant, engine }) {
+  const wallet = window.useWallet();
+  const sessions = engine.chatSessions || [];
 
   return (
     <aside className="ua-side ua-side-left">
@@ -486,17 +493,34 @@ function HistoryPane({ mode, onToggleMode, variant }) {
       </div>
 
       <div className="ua-side-body">
-        <button className="ua-new-btn">
+        <button className="ua-new-btn" onClick={engine.reset}>
           <span>New automation</span>
           <span className="ua-kbd">⌘N</span>
         </button>
 
         <div className="ua-side-label">HISTORY</div>
         <div className="ua-hist">
-          {window.SAMPLE_HISTORY.map(h => (
-            <button key={h.id} className={`ua-hist-item ${h.active ? 'is-active' : ''}`}>
-              <span className="ua-hist-title">{h.title}</span>
-              <span className="ua-hist-time">{h.time}</span>
+          {engine.historyLoading && (
+            <div className="ua-hist-empty">Loading chats…</div>
+          )}
+
+          {!engine.historyLoading && !wallet.isConnected && (
+            <div className="ua-hist-empty">Connect wallet to load chat history.</div>
+          )}
+
+          {!engine.historyLoading && wallet.isConnected && sessions.length === 0 && (
+            <div className="ua-hist-empty">No saved chats yet.</div>
+          )}
+
+          {!engine.historyLoading && sessions.map(h => (
+            <button
+              key={h.sessionId}
+              className={`ua-hist-item ${h.sessionId === engine.sessionId ? 'is-active' : ''}`}
+              onClick={() => engine.loadSession(h.sessionId)}
+              title={h.title || 'New Chat'}
+            >
+              <span className="ua-hist-title">{h.title || 'New Chat'}</span>
+              <span className="ua-hist-time">{formatHistoryTime(h.lastActivity || h.createdAt)}</span>
             </button>
           ))}
         </div>
@@ -1027,7 +1051,7 @@ function UarcShell({ variant, mode, onToggleMode }) {
   const engine = window.useChatEngine();
   return (
     <div className={`ua-shell ua-${variant} ua-${mode}`}>
-      <HistoryPane mode={mode} onToggleMode={onToggleMode} variant={variant} />
+      <HistoryPane mode={mode} onToggleMode={onToggleMode} variant={variant} engine={engine} />
       <ChatPane engine={engine} variant={variant} />
       <ActivePane />
     </div>
