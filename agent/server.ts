@@ -81,6 +81,7 @@ const TASK_REWARD_PER_EXECUTION = ethers.parseEther("0.0002");
 
 // Faucet limits
 const FAUCET_AMOUNT = ethers.parseUnits("1000", 6); // 1000 tokens per request
+const FAUCET_GAS_TARGET = ethers.parseEther("0.0002"); // enough Base Sepolia ETH for roughly 10 txs
 const FAUCET_COOLDOWN = 3600 * 1000; // 1 hour cooldown
 const faucetCooldowns: Map<string, number> = new Map();
 
@@ -532,23 +533,24 @@ app.post("/faucet", async (req: Request, res: Response) => {
       console.log(`[Faucet] Transferred 1000 ${token} to ${address} - tx: ${tx.hash}`);
     }
 
-    // Also send a small amount of ETH for gas if user has low balance
+    // Top up Base Sepolia ETH only when the user cannot cover a small batch of txs.
     let ethTxHash = null;
+    let ethAmount = "0";
     try {
       const userEthBalance = await provider.getBalance(address);
-      const minEthForGas = ethers.parseEther("0.001"); // 0.001 ETH minimum
-      const ethDrip = ethers.parseEther("0.005"); // Send 0.005 ETH
 
-      if (userEthBalance < minEthForGas) {
+      if (userEthBalance < FAUCET_GAS_TARGET) {
+        const ethTopUp = FAUCET_GAS_TARGET - userEthBalance;
         const serverBalance = await provider.getBalance(wallet.address);
-        if (serverBalance > ethDrip * 2n) {
+        if (serverBalance > ethTopUp * 2n) {
           const ethTx = await wallet.sendTransaction({
             to: address,
-            value: ethDrip,
+            value: ethTopUp,
           });
           await ethTx.wait();
           ethTxHash = ethTx.hash;
-          console.log(`[Faucet] Sent 0.005 ETH to ${address} for gas - tx: ${ethTx.hash}`);
+          ethAmount = ethers.formatEther(ethTopUp);
+          console.log(`[Faucet] Topped up ${ethAmount} ETH to ${address} for gas - tx: ${ethTx.hash}`);
         }
       }
     } catch (ethErr: any) {
@@ -565,7 +567,8 @@ app.post("/faucet", async (req: Request, res: Response) => {
       recipient: address,
       txHash: tx.hash,
       ethTxHash,
-      ethAmount: ethTxHash ? "0.005" : null,
+      ethAmount: ethTxHash ? ethAmount : null,
+      gasTarget: ethers.formatEther(FAUCET_GAS_TARGET),
       explorerUrl: `${activeNetwork.explorer}/tx/${tx.hash}`,
       nextAvailable: new Date(Date.now() + FAUCET_COOLDOWN).toISOString(),
     });
@@ -598,6 +601,7 @@ app.get("/faucet/status", async (req: Request, res: Response) => {
       ? new Date(lastRequest + FAUCET_COOLDOWN).toISOString()
       : "now",
     amountPerRequest: "1000",
+    gasTarget: ethers.formatEther(FAUCET_GAS_TARGET),
     supportedTokens: ["USDC", "USDT"],
   });
 });

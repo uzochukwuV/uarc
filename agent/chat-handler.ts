@@ -133,6 +133,12 @@ For AUTOMATION type: message confirms what you understood, automationIntent cont
 Always be helpful, concise, and friendly. If you're not sure if it's an automation request, ask for clarification.
 `;
 
+function sessionTitleFromMessage(message: string): string {
+  const normalized = message.replace(/\s+/g, " ").trim();
+  if (!normalized) return "New Chat";
+  return normalized.length > 54 ? `${normalized.slice(0, 51)}...` : normalized;
+}
+
 async function createMistralClient(apiKey: string) {
   const importer = new Function("specifier", "return import(specifier)");
   const { Mistral } = await importer("@mistralai/mistralai");
@@ -199,6 +205,8 @@ export async function processChat(
   }
 
   if (isConnected) {
+    const isFirstUserMessage = !history.some((m) => m.role === "user");
+
     // Save messages to history
     await ChatMessage.create({
       sessionId,
@@ -217,15 +225,20 @@ export async function processChat(
       metadata: parsed.automationIntent ? { intent: parsed.automationIntent } : undefined,
     });
 
-    // Update session last activity
+    // Update session last activity and promote the first user turn into the sidebar title.
+    const sessionUpdate: Record<string, any> = {
+      sessionId,
+      userAddress,
+      lastActivity: new Date(),
+      $setOnInsert: { createdAt: new Date() },
+    };
+    if (isFirstUserMessage) {
+      sessionUpdate.title = sessionTitleFromMessage(message);
+    }
+
     await ChatSession.findOneAndUpdate(
       { sessionId },
-      {
-        sessionId,
-        userAddress,
-        lastActivity: new Date(),
-        $setOnInsert: { createdAt: new Date() },
-      },
+      sessionUpdate,
       { upsert: true }
     );
   }
