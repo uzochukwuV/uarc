@@ -84,6 +84,227 @@ const FAUCET_AMOUNT = ethers.parseUnits("1000", 6); // 1000 tokens per request
 const FAUCET_COOLDOWN = 3600 * 1000; // 1 hour cooldown
 const faucetCooldowns: Map<string, number> = new Map();
 
+
+type ChatUiMessage = {
+  role: "assistant" | "system";
+  kind: string;
+  content?: string;
+  title?: string;
+  lines?: Array<{ k: string; v: string; emphasis?: boolean; editable?: boolean }>;
+  calendarData?: Array<{
+    index: number;
+    timestamp: number;
+    isoDate: string;
+    isPast: boolean;
+    isNext: boolean;
+  }> | null;
+  footnote?: string;
+  suggestions?: string[];
+};
+
+type MissingParam = {
+  key: string;
+  label: string;
+  question: string;
+};
+
+type PendingChatPreview = {
+  taskPreview: {
+    success?: boolean;
+    summary: string;
+    adapterType: string;
+    params: Record<string, any>;
+    payload?: any;
+  };
+  missingParams: MissingParam[];
+  currentIndex: number;
+  originalIntent: string;
+  userAddress?: string;
+};
+
+const pendingChatPreviews = new Map<string, PendingChatPreview>();
+
+const ADAPTER_LABELS: Record<string, string> = {
+  time_based_transfer: "Scheduled Transfer",
+  cctp_bridge: "Cross-chain Bridge",
+  stork_price_transfer: "Price-triggered Transfer",
+  recurring_transfer: "Recurring Payment",
+  uniswap_dca: "DCA Swap",
+  uniswap_limit_order: "Limit Order",
+};
+const DOMAIN_NAMES: Record<number, string> = { 0: "Ethereum", 1: "Avalanche", 2: "OP Mainnet", 3: "Arbitrum", 6: "Base" };
+const INTERVAL_LABELS: Record<number, string> = { 86400: "Daily", 604800: "Weekly", 2592000: "Monthly" };
+const FUNDING_MODES: Record<number, string> = { 0: "Vault (Deposit)", 1: "Pull (Subscription)" };
+
+function isMissingAddress(value: any): boolean {
+  return !value || value === ethers.ZeroAddress || !ethers.isAddress(String(value));
+}
+
+function getMissingTaskParams(adapterType: string, params: Record<string, any>): MissingParam[] {
+  const missing: MissingParam[] = [];
+  switch (adapterType) {
+    case "recurring_transfer":
+    case "time_based_transfer":
+      if (isMissingAddress(params.recipient)) missing.push({ key: "recipient", label: "recipient address", question: "What full 0x recipient address should receive the transfer?" });
+      if (!params.amountPerExecution && !params.amount) missing.push({ key: "amount", label: "amount", question: "How much should I send per transfer?" });
+      break;
+    case "cctp_bridge":
+      if (isMissingAddress(params.mintRecipient)) missing.push({ key: "mintRecipient", label: "destination address", question: "What full 0x address should receive the tokens on the destination chain?" });
+      break;
+    case "stork_price_transfer":
+      if (isMissingAddress(params.recipient)) missing.push({ key: "recipient", label: "recipient address", question: "What full 0x address should receive the tokens?" });
+      if (!params.targetPrice) missing.push({ key: "targetPrice", label: "target price", question: "At what price should this trigger?" });
+      break;
+    case "uniswap_dca":
+    case "uniswap_limit_order":
+      if (isMissingAddress(params.recipient)) {
+        // Swap adapters can safely default to the connected user wallet in buildTaskPayload.
+        delete params.recipient;
+      }
+      break;
+  }
+  return missing;
+}
+
+function extractParamAnswer(key: string, answer: string): any {
+  const trimmed = String(answer || "").trim();
+  if (key === "recipient" || key === "mintRecipient" || key === "fundingSource") {
+    if (!ethers.isAddress(trimmed)) {
+      throw new Error("Please send the full 0x address so I can build the task safely.");
+    }
+    return ethers.getAddress(trimmed);
+  }
+  if (key === "amount" || key === "amountPerExecution") {
+    const cleaned = trimmed.replace(/[$,]/g, "").split(/\s+/)[0];
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      throw new Error("Please send a positive token amount, for example: 50 USDC.");
+    }
+    return Math.round(parsed * 1e6).toString();
+  }
+  if (key === "targetPrice") {
+    const cleaned = trimmed.replace(/[$,]/g, "").split(/\s+/)[0];
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      throw new Error("Please send a positive price, for example: 0.99.");
+    }
+    return Math.round(parsed * 1e8).toString();
+  }
+  return trimmed;
+}
+
+function fmt6(v: any): string {
+  const n = Number(v || 0) / 1e6;
+  return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+function fmtAddr(a: any): string {
+  const s = String(a || "");
+  return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s || "—";
+}
+
+function buildReceiptLines(data: { adapterType: string; params: Record<string, any> }) {
+  const { adapterType, params } = data;
+  switch (adapterType) {
+    case "recurring_transfer": {
+      const total = BigInt(params.amountPerExecution || 0) * BigInt(params.maxExecutions || 1);
+      return [
+        { k: "Type", v: "Recurring transfer", emphasis: true },
+        { k: "Token", v: String(params.token || "USDC") },
+        { k: "Per payment", v: `${fmt6(params.amountPerExecution)} tokens` },
+        { k: "Recipient", v: fmtAddr(params.recipient) },
+        { k: "Schedule", v: INTERVAL_LABELS[Number(params.interval)] || `Every ${params.interval}s` },
+        { k: "Executions", v: String(params.maxExecutions || 1) },
+        { k: "Total deposit", v: `${fmt6(total.toString())} tokens` },
+        { k: "Funding", v: FUNDING_MODES[Number(params.fundingMode || 0)] || "Vault" },
+      ];
+    }
+    case "time_based_transfer":
+      return [
+        { k: "Type", v: "Scheduled transfer", emphasis: true },
+        { k: "Amount", v: `${fmt6(params.amount)} tokens` },
+        { k: "Recipient", v: fmtAddr(params.recipient) },
+        { k: "Execute after", v: new Date(Number(params.executeAfter || 0) * 1000).toLocaleString() },
+      ];
+    case "cctp_bridge":
+      return [
+        { k: "Type", v: "CCTP bridge", emphasis: true },
+        { k: "Amount", v: `${fmt6(params.amount)} USDC` },
+        { k: "Destination", v: DOMAIN_NAMES[Number(params.destinationDomain)] || `Domain ${params.destinationDomain}` },
+        { k: "Recipient", v: fmtAddr(params.mintRecipient) },
+      ];
+    case "stork_price_transfer":
+      return [
+        { k: "Type", v: "Price-triggered transfer", emphasis: true },
+        { k: "Amount", v: `${fmt6(params.amount)} tokens` },
+        { k: "Trigger", v: `Price ${params.isBelow ? "≤" : "≥"} $${(Number(params.targetPrice) / 1e8).toLocaleString()}` },
+        { k: "Recipient", v: fmtAddr(params.recipient) },
+      ];
+    case "uniswap_dca":
+      return [
+        { k: "Type", v: "DCA swap", emphasis: true },
+        { k: "Per swap", v: `${fmt6(params.amountPerSwap)} input tokens` },
+        { k: "Schedule", v: INTERVAL_LABELS[Number(params.interval)] || `Every ${params.interval}s` },
+        { k: "Swaps", v: String(params.totalSwaps || 1) },
+        { k: "Recipient", v: params.recipient ? fmtAddr(params.recipient) : "Connected wallet" },
+      ];
+    case "uniswap_limit_order":
+      return [
+        { k: "Type", v: "Limit order", emphasis: true },
+        { k: "Amount in", v: `${fmt6(params.amountIn)} input tokens` },
+        { k: "Order type", v: ["Limit buy", "Limit sell", "Stop loss", "Take profit"][Number(params.orderType || 0)] || "Limit" },
+        { k: "Recipient", v: params.recipient ? fmtAddr(params.recipient) : "Connected wallet" },
+      ];
+    default:
+      return [{ k: "Type", v: adapterType, emphasis: true }];
+  }
+}
+
+function buildCalendarData(params: Record<string, any>) {
+  const startTime = Number(params.startTime || Math.floor(Date.now() / 1000));
+  const interval = Number(params.interval || 604800);
+  const maxExecutions = Number(params.maxExecutions || params.totalSwaps || 4);
+  return Array.from({ length: maxExecutions }, (_, index) => {
+    const timestamp = startTime + index * interval;
+    return {
+      index,
+      timestamp,
+      isoDate: new Date(timestamp * 1000).toISOString(),
+      isPast: timestamp * 1000 < Date.now(),
+      isNext: index === 0,
+    };
+  });
+}
+
+function buildPreviewMessages(taskPreview: { summary: string; adapterType: string; params: Record<string, any> }): ChatUiMessage[] {
+  const label = ADAPTER_LABELS[taskPreview.adapterType] || taskPreview.adapterType;
+  const isRecurring = taskPreview.adapterType === "recurring_transfer" || taskPreview.adapterType === "uniswap_dca";
+  return [
+    { role: "assistant", kind: "text", content: `Got it — ${taskPreview.summary}. Here's the task to review before deploying.` },
+    {
+      role: "assistant",
+      kind: taskPreview.adapterType === "recurring_transfer" ? "recurring-preview" : "receipt",
+      title: `New automation · ${label}`,
+      lines: buildReceiptLines(taskPreview),
+      calendarData: isRecurring ? buildCalendarData(taskPreview.params) : null,
+      footnote: `Adapter: ${taskPreview.adapterType} · ${activeNetwork.name}`,
+    },
+    { role: "assistant", kind: "confirm-cta" },
+  ];
+}
+
+async function buildPreviewFromIntent(intent: string, userAddress?: string) {
+  const taskIntent = await parseIntent(intent, manifest, MISTRAL_API_KEY);
+  const payload = await buildTaskPayload(taskIntent, userAddress || wallet.address);
+  return {
+    success: true,
+    summary: taskIntent.summary,
+    adapterType: taskIntent.adapterType,
+    params: taskIntent.params,
+    payload,
+  };
+}
+
 // ============================================================
 // Setup provider + wallet
 // ============================================================
@@ -399,33 +620,139 @@ app.post("/chat", async (req: Request, res: Response) => {
   }
 
   try {
-    // Create session if not provided
     const activeSessionId = sessionId || (await createSession(userAddress));
+    const pending = pendingChatPreviews.get(activeSessionId);
+
+    if (pending) {
+      const missing = pending.missingParams[pending.currentIndex];
+      let updatedPreview = pending.taskPreview;
+
+      try {
+        const value = extractParamAnswer(missing.key, message);
+        const params = { ...updatedPreview.params };
+        if (missing.key === "amount") {
+          if (updatedPreview.adapterType === "recurring_transfer") params.amountPerExecution = value;
+          else params.amount = value;
+        } else {
+          params[missing.key] = value;
+        }
+        updatedPreview = { ...updatedPreview, params };
+      } catch (err: any) {
+        res.json({
+          success: true,
+          sessionId: activeSessionId,
+          type: "chat",
+          message: err.message,
+          messages: [{ role: "assistant", kind: "text", content: err.message }],
+          toolTrace: [
+            { thought: `Need ${missing.label} before task preview can be finalized.`, action: "validate_missing_parameter", observation: err.message },
+          ],
+        });
+        return;
+      }
+
+      if (pending.currentIndex + 1 < pending.missingParams.length) {
+        const nextPending = {
+          ...pending,
+          taskPreview: updatedPreview,
+          currentIndex: pending.currentIndex + 1,
+        };
+        pendingChatPreviews.set(activeSessionId, nextPending);
+        const nextMissing = nextPending.missingParams[nextPending.currentIndex];
+        res.json({
+          success: true,
+          sessionId: activeSessionId,
+          type: "chat",
+          message: nextMissing.question,
+          messages: [{ role: "assistant", kind: "text", content: nextMissing.question }],
+          toolTrace: [
+            { thought: `Captured ${missing.label}; more required fields remain.`, action: "ask_missing_parameter", observation: nextMissing.label },
+          ],
+        });
+        return;
+      }
+
+      const completedIntent: TaskIntent = {
+        summary: updatedPreview.summary,
+        adapterType: updatedPreview.adapterType as TaskIntent["adapterType"],
+        params: updatedPreview.params,
+      };
+      const payload = await buildTaskPayload(completedIntent, userAddress || pending.userAddress || wallet.address);
+      const taskPreview = { ...updatedPreview, payload };
+      pendingChatPreviews.delete(activeSessionId);
+
+      res.json({
+        success: true,
+        sessionId: activeSessionId,
+        type: "automation",
+        message: `Got it — ${taskPreview.summary}. Here's the task to review before deploying.`,
+        taskPreview,
+        pendingPreview: taskPreview,
+        messages: buildPreviewMessages(taskPreview),
+        toolTrace: [
+          { thought: `Captured ${missing.label}; all required fields are available.`, action: "build_task_payload", observation: taskPreview.adapterType },
+          { thought: "Frontend should render backend-provided components instead of parsing intent locally.", action: "render_components", observation: "preview + confirm CTA" },
+        ],
+      });
+      return;
+    }
 
     const response = await processChat(
       message,
       activeSessionId,
       manifest,
       MISTRAL_API_KEY,
-      userAddress
+      userAddress,
     );
 
-    // If it's an automation intent, also parse it for task preview
     let taskPreview = null;
-    if (response.type === "automation" && response.automationIntent) {
+    let messages: ChatUiMessage[] = [];
+    const toolTrace: Array<Record<string, string>> = [
+      { thought: "Classify the user turn and decide whether an automation tool is needed.", action: "classify_chat_intent", observation: response.type },
+    ];
+
+    if (response.type === "automation") {
       try {
-        const taskIntent = await parseIntent(message, manifest, MISTRAL_API_KEY);
-        const payload = await buildTaskPayload(taskIntent, userAddress || wallet.address);
-        taskPreview = {
-          summary: taskIntent.summary,
-          adapterType: taskIntent.adapterType,
-          params: taskIntent.params,
-          payload,
-        };
-      } catch (err) {
-        // If parsing fails, still return the chat response
-        console.log("[Chat] Automation parsing failed, continuing with chat response");
+        taskPreview = await buildPreviewFromIntent(message, userAddress);
+        const missingParams = getMissingTaskParams(taskPreview.adapterType, taskPreview.params);
+        toolTrace.push({ thought: "Automation detected; parse structured task intent and validate required fields.", action: "build_task_preview", observation: taskPreview.adapterType });
+
+        if (missingParams.length > 0) {
+          pendingChatPreviews.set(activeSessionId, {
+            taskPreview,
+            missingParams,
+            currentIndex: 0,
+            originalIntent: message,
+            userAddress,
+          });
+          const question = `${response.message} ${missingParams[0].question}`;
+          messages = [{ role: "assistant", kind: "text", content: question }];
+          toolTrace.push({ thought: "Preview needs more user input before wallet signing.", action: "ask_missing_parameter", observation: missingParams[0].label });
+
+          res.json({
+            success: true,
+            sessionId: activeSessionId,
+            type: "chat",
+            message: question,
+            suggestions: response.suggestions,
+            automationIntent: response.automationIntent,
+            taskPreview,
+            missingParams,
+            messages,
+            toolTrace,
+          });
+          return;
+        }
+
+        messages = buildPreviewMessages(taskPreview);
+        toolTrace.push({ thought: "Task payload is ready; return UI components for direct rendering.", action: "render_components", observation: "preview + confirm CTA" });
+      } catch (err: any) {
+        console.log("[Chat] Automation tool failed:", err.message);
+        messages = [{ role: "assistant", kind: "text", content: response.message }];
+        toolTrace.push({ thought: "Automation tool failed; fall back to conversational response.", action: "tool_error", observation: err.message });
       }
+    } else {
+      messages = [{ role: "assistant", kind: "text", content: response.message, suggestions: response.suggestions }];
     }
 
     res.json({
@@ -436,6 +763,9 @@ app.post("/chat", async (req: Request, res: Response) => {
       suggestions: response.suggestions,
       automationIntent: response.automationIntent,
       taskPreview,
+      pendingPreview: taskPreview,
+      messages,
+      toolTrace,
     });
   } catch (err: any) {
     console.error("[Chat Error]", err.message);
