@@ -29,6 +29,7 @@ import {
   processChat,
   getChatHistory,
   getUserSessions,
+  saveChatTurn,
   createSession,
   updateSessionTitle,
   deleteSession,
@@ -170,10 +171,12 @@ function getMissingTaskParams(adapterType: string, params: Record<string, any>):
 function extractParamAnswer(key: string, answer: string): any {
   const trimmed = String(answer || "").trim();
   if (key === "recipient" || key === "mintRecipient" || key === "fundingSource") {
-    if (!ethers.isAddress(trimmed)) {
+    const addressMatch = trimmed.match(/0x[a-fA-F0-9]{40}/);
+    const candidate = addressMatch?.[0] || trimmed;
+    if (!ethers.isAddress(candidate)) {
       throw new Error("Please send the full 0x address so I can build the task safely.");
     }
-    return ethers.getAddress(trimmed);
+    return ethers.getAddress(candidate);
   }
   if (key === "amount" || key === "amountPerExecution") {
     const cleaned = trimmed.replace(/[$,]/g, "").split(/\s+/)[0];
@@ -294,15 +297,22 @@ function buildPreviewMessages(taskPreview: { summary: string; adapterType: strin
   ];
 }
 
-async function buildPreviewFromIntent(intent: string, userAddress?: string) {
-  const taskIntent = await parseIntent(intent, manifest, MISTRAL_API_KEY);
-  const payload = await buildTaskPayload(taskIntent, userAddress || wallet.address);
+async function buildPreviewFromIntent(intent: string, userAddress?: string, sessionId?: string) {
+  const history = sessionId ? await getChatHistory(sessionId, 12) : [];
+  const contextLines = history
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => `${m.role}: ${m.content}`)
+    .join("\n");
+  const contextualIntent = contextLines
+    ? `Conversation so far:\n${contextLines}\n\nLatest user message: ${intent}\n\nUse the previous turns as memory. If the latest message answers a follow-up, merge it with the earlier automation request and return the complete task intent.`
+    : intent;
+
+  const taskIntent = await parseIntent(contextualIntent, manifest, MISTRAL_API_KEY);
   return {
     success: true,
     summary: taskIntent.summary,
     adapterType: taskIntent.adapterType,
     params: taskIntent.params,
-    payload,
   };
 }
 
@@ -642,6 +652,7 @@ app.post("/chat", async (req: Request, res: Response) => {
         }
         updatedPreview = { ...updatedPreview, params };
       } catch (err: any) {
+        await saveChatTurn(activeSessionId, message, err.message, userAddress || pending.userAddress, "text");
         res.json({
           success: true,
           sessionId: activeSessionId,
@@ -663,6 +674,7 @@ app.post("/chat", async (req: Request, res: Response) => {
         };
         pendingChatPreviews.set(activeSessionId, nextPending);
         const nextMissing = nextPending.missingParams[nextPending.currentIndex];
+        await saveChatTurn(activeSessionId, message, nextMissing.question, userAddress || pending.userAddress, "text");
         res.json({
           success: true,
           sessionId: activeSessionId,
@@ -684,12 +696,21 @@ app.post("/chat", async (req: Request, res: Response) => {
       const payload = await buildTaskPayload(completedIntent, userAddress || pending.userAddress || wallet.address);
       const taskPreview = { ...updatedPreview, payload };
       pendingChatPreviews.delete(activeSessionId);
+      const completionMessage = `Got it — ${taskPreview.summary}. Here's the task to review before deploying.`;
+      await saveChatTurn(
+        activeSessionId,
+        message,
+        completionMessage,
+        userAddress || pending.userAddress,
+        "automation-intent",
+        { intent: completedIntent }
+      );
 
       res.json({
         success: true,
         sessionId: activeSessionId,
         type: "automation",
-        message: `Got it — ${taskPreview.summary}. Here's the task to review before deploying.`,
+        message: completionMessage,
         taskPreview,
         pendingPreview: taskPreview,
         messages: buildPreviewMessages(taskPreview),
@@ -717,7 +738,7 @@ app.post("/chat", async (req: Request, res: Response) => {
 
     if (response.type === "automation") {
       try {
-        taskPreview = await buildPreviewFromIntent(message, userAddress);
+        taskPreview = await buildPreviewFromIntent(message, userAddress, activeSessionId);
         const missingParams = getMissingTaskParams(taskPreview.adapterType, taskPreview.params);
         toolTrace.push({ thought: "Automation detected; parse structured task intent and validate required fields.", action: "build_task_preview", observation: taskPreview.adapterType });
 
@@ -747,6 +768,16 @@ app.post("/chat", async (req: Request, res: Response) => {
           });
           return;
         }
+
+        const completeIntent: TaskIntent = {
+          summary: taskPreview.summary,
+          adapterType: taskPreview.adapterType as TaskIntent["adapterType"],
+          params: taskPreview.params,
+        };
+        taskPreview = {
+          ...taskPreview,
+          payload: await buildTaskPayload(completeIntent, userAddress || wallet.address),
+        };
 
         messages = buildPreviewMessages(taskPreview);
         toolTrace.push({ thought: "Task payload is ready; return UI components for direct rendering.", action: "render_components", observation: "preview + confirm CTA" });

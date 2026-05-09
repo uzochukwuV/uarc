@@ -10,6 +10,25 @@ import mongoose, { Schema, Document } from "mongoose";
 // ============================================================
 
 let isConnected = false;
+const memoryMessages = new Map<string, any[]>();
+const memorySessions = new Map<string, any>();
+
+function rememberMessage(message: any) {
+  const list = memoryMessages.get(message.sessionId) || [];
+  list.push({ ...message, createdAt: message.createdAt || new Date() });
+  memoryMessages.set(message.sessionId, list);
+}
+
+function rememberSession(sessionId: string, userAddress?: string, title?: string) {
+  const existing = memorySessions.get(sessionId) || {};
+  memorySessions.set(sessionId, {
+    sessionId,
+    userAddress: userAddress || existing.userAddress,
+    title: title || existing.title || "New Chat",
+    createdAt: existing.createdAt || new Date(),
+    lastActivity: new Date(),
+  });
+}
 
 export async function connectDB(mongoUri: string) {
   if (isConnected) return;
@@ -95,7 +114,7 @@ You have two modes:
 IMPORTANT RULES:
 - If the user is greeting you (hi, hello, hey, etc.) or making small talk, respond naturally and friendly
 - If the user is asking questions about UARC, crypto, or how the system works, explain helpfully
-- ONLY switch to automation mode when the user clearly expresses intent to:
+- Switch to automation mode when the user clearly expresses intent to:
   - Send/transfer tokens (weekly, monthly, scheduled)
   - Create stop-loss or price alerts
   - Create limit orders or DCA swaps
@@ -128,7 +147,9 @@ RESPONSE FORMAT (JSON):
 }
 
 For CHAT type: message is your conversational response, automationIntent is null
-For AUTOMATION type: message confirms what you understood, automationIntent contains parsed task details
+For AUTOMATION type: message confirms what you understood, automationIntent contains parsed task details.
+If an automation request is missing information (for example a named person without an address), still return type="automation" with the fields you know and let the backend tool ask the missing follow-up. Do not downgrade incomplete automation requests to chat.
+When a user answers a follow-up (for example by giving an address or saying "yes"), use prior conversation context to continue the same automation instead of starting over.
 
 Always be helpful, concise, and friendly. If you're not sure if it's an automation request, ask for clarification.
 `;
@@ -163,7 +184,7 @@ export async function processChat(
       .sort({ createdAt: -1 })
       .limit(10)
       .lean()
-    : [];
+    : (memoryMessages.get(sessionId) || []).slice(-10).reverse();
 
   const historyMessages = history.reverse().map((m) => ({
     role: m.role as "user" | "assistant",
@@ -241,9 +262,69 @@ export async function processChat(
       sessionUpdate,
       { upsert: true }
     );
+  } else {
+    const isFirstUserMessage = !(memoryMessages.get(sessionId) || []).some((m) => m.role === "user");
+    rememberMessage({ sessionId, userAddress, role: "user", content: message, kind: "text" });
+    rememberMessage({
+      sessionId,
+      userAddress,
+      role: "assistant",
+      content: parsed.message,
+      kind: parsed.type === "automation" ? "automation-intent" : "text",
+      metadata: parsed.automationIntent ? { intent: parsed.automationIntent } : undefined,
+    });
+    rememberSession(sessionId, userAddress, isFirstUserMessage ? sessionTitleFromMessage(message) : undefined);
   }
 
   return parsed;
+}
+
+export async function saveChatTurn(
+  sessionId: string,
+  userMessage: string,
+  assistantMessage: string,
+  userAddress?: string,
+  assistantKind: string = "text",
+  metadata?: Record<string, any>
+): Promise<void> {
+  if (!isConnected) {
+    const existingUserMessage = (memoryMessages.get(sessionId) || []).some((m) => m.role === "user");
+    rememberMessage({ sessionId, userAddress, role: "user", content: userMessage, kind: "text" });
+    rememberMessage({ sessionId, userAddress, role: "assistant", content: assistantMessage, kind: assistantKind, metadata });
+    rememberSession(sessionId, userAddress, !existingUserMessage ? sessionTitleFromMessage(userMessage) : undefined);
+    return;
+  }
+
+  const existingUserMessage = await ChatMessage.exists({ sessionId, role: "user" });
+
+  await ChatMessage.create({
+    sessionId,
+    userAddress,
+    role: "user",
+    content: userMessage,
+    kind: "text",
+  });
+
+  await ChatMessage.create({
+    sessionId,
+    userAddress,
+    role: "assistant",
+    content: assistantMessage,
+    kind: assistantKind,
+    metadata,
+  });
+
+  const sessionUpdate: Record<string, any> = {
+    sessionId,
+    userAddress,
+    lastActivity: new Date(),
+    $setOnInsert: { createdAt: new Date() },
+  };
+  if (!existingUserMessage) {
+    sessionUpdate.title = sessionTitleFromMessage(userMessage);
+  }
+
+  await ChatSession.findOneAndUpdate({ sessionId }, sessionUpdate, { upsert: true });
 }
 
 /**
@@ -253,7 +334,7 @@ export async function getChatHistory(
   sessionId: string,
   limit: number = 50
 ): Promise<any[]> {
-  if (!isConnected) return [];
+  if (!isConnected) return (memoryMessages.get(sessionId) || []).slice(-limit);
 
   const messages = await ChatMessage.find({ sessionId })
     .sort({ createdAt: 1 })
@@ -269,7 +350,12 @@ export async function getUserSessions(
   userAddress: string,
   limit: number = 20
 ): Promise<any[]> {
-  if (!isConnected) return [];
+  if (!isConnected) {
+    return Array.from(memorySessions.values())
+      .filter((session) => !userAddress || session.userAddress === userAddress)
+      .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+      .slice(0, limit);
+  }
 
   const sessions = await ChatSession.find({ userAddress })
     .sort({ lastActivity: -1 })
@@ -287,7 +373,10 @@ export async function createSession(
 ): Promise<string> {
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
-  if (!isConnected) return sessionId;
+  if (!isConnected) {
+    rememberSession(sessionId, userAddress, title || "New Chat");
+    return sessionId;
+  }
 
   await ChatSession.create({
     sessionId,
@@ -307,7 +396,11 @@ export async function updateSessionTitle(
   sessionId: string,
   title: string
 ): Promise<void> {
-  if (!isConnected) return;
+  if (!isConnected) {
+    const existing = memorySessions.get(sessionId);
+    if (existing) memorySessions.set(sessionId, { ...existing, title, lastActivity: new Date() });
+    return;
+  }
 
   await ChatSession.findOneAndUpdate({ sessionId }, { title });
 }
@@ -316,7 +409,11 @@ export async function updateSessionTitle(
  * Delete a session and its messages
  */
 export async function deleteSession(sessionId: string): Promise<void> {
-  if (!isConnected) return;
+  if (!isConnected) {
+    memoryMessages.delete(sessionId);
+    memorySessions.delete(sessionId);
+    return;
+  }
 
   await ChatMessage.deleteMany({ sessionId });
   await ChatSession.deleteOne({ sessionId });
