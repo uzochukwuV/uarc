@@ -2,13 +2,16 @@ import { ethers } from 'ethers';
 import manifest from './manifest.json';
 import * as readline from 'readline';
 import { Mistral } from '@mistralai/mistralai';
+import { configDotenv } from 'dotenv';
+
+configDotenv();
 
 // Initialize Mistral Client
 const apiKey = process.env.MISTRAL_API_KEY || "MZQObVTrMQoqmADbPDgLpTxNwAg07FT7";
 const client = new Mistral({ apiKey: apiKey });
 
 // Using the generated wallet
-const PRIVATE_KEY = process.env.PRIVATE_KEY || '0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f';
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '';
 const RPC_URL = 'https://rpc.testnet.arc.network';
 const CHAIN_ID = 5042002;
 
@@ -18,7 +21,8 @@ const agentWallet = new ethers.Wallet(PRIVATE_KEY, provider);
 console.log(`Agent started. Connected to ${manifest.network} (Chain ID: ${manifest.chainId})`);
 console.log(`Wallet address: ${agentWallet.address}`);
 async function mistralLLMParsing(intent: string, manifestContent: any): Promise<any> {
-    
+    console.log("Mistral LLM Parsing");
+    console.log(intent);
 
     const systemPrompt = `
 You are the TaskerOnChain V2 AI Agent. Your job is to translate natural language intents into on-chain automation parameters.

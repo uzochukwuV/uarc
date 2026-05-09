@@ -512,6 +512,179 @@ function HistoryPane({ mode, onToggleMode, variant }) {
 // Fetch user's active automations from the agent API
 const UARC_API = window.UARC_API_BASE || (window.location.port === '5173' ? 'http://127.0.0.1:3000' : '');
 
+// Faucet Modal Component
+function FaucetModal({ isOpen, onClose, wallet, onSuccess }) {
+  const [selectedToken, setSelectedToken] = useState('USDC');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [cooldown, setCooldown] = useState(null);
+
+  // Check faucet status on open
+  useEffectM(() => {
+    if (isOpen && wallet.address) {
+      fetch(`${UARC_API}/faucet/status?address=${wallet.address}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.canRequest && data.nextAvailable) {
+            setCooldown(new Date(data.nextAvailable));
+          } else {
+            setCooldown(null);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, wallet.address]);
+
+  const handleRequest = async () => {
+    if (!wallet.address) return;
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const res = await fetch(`${UARC_API}/faucet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: wallet.address,
+          token: selectedToken
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to request tokens');
+      }
+
+      setResult(data);
+      if (data.nextAvailable) {
+        setCooldown(new Date(data.nextAvailable));
+      }
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const getCooldownText = () => {
+    if (!cooldown) return null;
+    const now = new Date();
+    const diff = cooldown - now;
+    if (diff <= 0) return null;
+    const mins = Math.ceil(diff / 60000);
+    return `Available in ${mins} minute${mins !== 1 ? 's' : ''}`;
+  };
+
+  const cooldownText = getCooldownText();
+
+  return (
+    <div className="ua-modal-overlay" onClick={onClose}>
+      <div className="ua-modal" onClick={e => e.stopPropagation()}>
+        <div className="ua-modal-header">
+          <h3 className="ua-modal-title">Get Test Tokens</h3>
+          <button className="ua-modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="ua-modal-body">
+          <p className="ua-modal-desc">
+            Request free test tokens for Base Sepolia testnet. You can request 1,000 tokens every hour.
+          </p>
+
+          {!wallet.isConnected ? (
+            <div className="ua-modal-connect">
+              <p>Connect your wallet to request tokens</p>
+              <window.WalletConnectButton variant="primary" />
+            </div>
+          ) : (
+            <>
+              <div className="ua-faucet-form">
+                <label className="ua-faucet-label">Select Token</label>
+                <div className="ua-faucet-tokens">
+                  <button
+                    className={`ua-faucet-token ${selectedToken === 'USDC' ? 'selected' : ''}`}
+                    onClick={() => setSelectedToken('USDC')}
+                  >
+                    <span className="ua-faucet-token-icon">💵</span>
+                    <span className="ua-faucet-token-name">USDC</span>
+                    <span className="ua-faucet-token-amount">1,000</span>
+                  </button>
+                  <button
+                    className={`ua-faucet-token ${selectedToken === 'USDT' ? 'selected' : ''}`}
+                    onClick={() => setSelectedToken('USDT')}
+                  >
+                    <span className="ua-faucet-token-icon">💰</span>
+                    <span className="ua-faucet-token-name">USDT</span>
+                    <span className="ua-faucet-token-amount">1,000</span>
+                  </button>
+                </div>
+
+                <div className="ua-faucet-recipient">
+                  <label className="ua-faucet-label">Recipient</label>
+                  <div className="ua-faucet-address">{wallet.shortAddress}</div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="ua-faucet-error">
+                  {error}
+                </div>
+              )}
+
+              {result && (
+                <div className="ua-faucet-success">
+                  <span className="ua-faucet-success-icon">✓</span>
+                  <div>
+                    <strong>1,000 {result.token} sent!</strong>
+                    {result.ethAmount && (
+                      <div className="ua-faucet-eth-bonus">+ {result.ethAmount} ETH for gas</div>
+                    )}
+                    <a
+                      href={result.explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ua-faucet-tx-link"
+                    >
+                      View transaction →
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {cooldownText && !result && (
+                <div className="ua-faucet-cooldown">
+                  ⏱️ {cooldownText}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="ua-modal-footer">
+          {wallet.isConnected && (
+            <button
+              className="ua-btn-primary ua-faucet-btn"
+              onClick={handleRequest}
+              disabled={loading || !!cooldownText}
+            >
+              {loading ? 'Requesting...' : cooldownText ? cooldownText : `Get 1,000 ${selectedToken}`}
+            </button>
+          )}
+          <button className="ua-btn-ghost" onClick={onClose}>
+            {result ? 'Done' : 'Cancel'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 async function fetchUserTasks(address) {
   if (!address) return [];
   try {
@@ -566,6 +739,7 @@ function ActivePane() {
   const [tasks, setTasks] = useState([]);
   const [balances, setBalances] = useState({ eth: '0', usdc: '0', usdt: '0' });
   const [loading, setLoading] = useState(false);
+  const [showFaucet, setShowFaucet] = useState(false);
 
   // Load tasks when wallet connects
   useEffectM(() => {
@@ -585,6 +759,15 @@ function ActivePane() {
       fetchWalletBalances(wallet.address, wallet.provider).then(setBalances);
     }
   }, [wallet.address, wallet.provider]);
+
+  // Refresh balances after faucet request
+  const handleFaucetSuccess = () => {
+    setTimeout(() => {
+      if (wallet.address && wallet.provider) {
+        fetchWalletBalances(wallet.address, wallet.provider).then(setBalances);
+      }
+    }, 2000);
+  };
 
   const formatBalance = (val, decimals = 2) => {
     const num = parseFloat(val);
@@ -638,6 +821,12 @@ function ActivePane() {
               <span>{formatBalance(balances.eth, 4)} ETH</span>
               <span>{formatBalance(balances.usdt, 2)} USDT</span>
             </div>
+            <button
+              className="ua-faucet-trigger"
+              onClick={() => setShowFaucet(true)}
+            >
+              🚰 Get Test Tokens
+            </button>
           </>
         ) : (
           <div className="ua-wallet-connect-hint">
@@ -645,6 +834,13 @@ function ActivePane() {
           </div>
         )}
       </div>
+
+      <FaucetModal
+        isOpen={showFaucet}
+        onClose={() => setShowFaucet(false)}
+        wallet={wallet}
+        onSuccess={handleFaucetSuccess}
+      />
 
       <div className="ua-auto-list">
         {!wallet.isConnected && (

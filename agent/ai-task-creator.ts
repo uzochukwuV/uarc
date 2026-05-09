@@ -6,13 +6,21 @@
  * - time_based_transfer: Transfer USDC/EURO at a specific time
  * - cctp_bridge: Bridge tokens cross-chain via Circle CCTP
  * - stork_price_transfer: Transfer tokens when price condition is met
+ * - uniswap_dca: Recurring swaps through Uniswap V3
+ * - uniswap_limit_order: Price-triggered swaps through Uniswap V3
  */
 
 import { ethers } from "ethers";
 
 export interface TaskIntent {
     summary: string;
-    adapterType: "time_based_transfer" | "cctp_bridge" | "stork_price_transfer" | "recurring_transfer";
+    adapterType:
+        | "time_based_transfer"
+        | "cctp_bridge"
+        | "stork_price_transfer"
+        | "recurring_transfer"
+        | "uniswap_dca"
+        | "uniswap_limit_order";
     params: Record<string, any>;
 }
 
@@ -54,10 +62,28 @@ ADAPTER TYPES AND PARAMETERS:
    Params: { storkOracle?: address, token: address, amount: uint256 (raw, 6 decimals), targetPrice: int256 (8 decimals), isBelow: bool, recipient: address }
    Example: "transfer 100 USDC when price drops below $0.99"
 
-IMPORTANT: Use recurring_transfer for ANY intent involving regular/scheduled payments like "weekly", "monthly", "every X days", "subscription", etc.
+5. uniswap_dca - Dollar-cost averaging swaps on Uniswap V3
+   Params: { taskId?: bytes32, tokenIn: address or symbol, tokenOut: address or symbol ("ETH" means WETH), fee: uint24, amountPerSwap: uint256, interval: seconds, totalSwaps: number, minAmountOut: uint256, recipient: address }
+   Examples:
+   - "DCA 5 USDC into ETH daily for 7 days" -> uniswap_dca
+   - "Buy 2 USDC worth of WETH every week for 4 weeks" -> uniswap_dca
+
+6. uniswap_limit_order - Limit order or stop-loss swap on Uniswap V3
+   Params: { orderId?: bytes32, tokenIn: address or symbol, tokenOut: address or symbol ("ETH" means WETH), fee: uint24, amountIn: uint256, targetPrice?: uint256, orderType: uint8, minAmountOut: uint256, recipient: address, expiry: unix_timestamp }
+   Order types: 0=LIMIT_BUY, 1=LIMIT_SELL, 2=STOP_LOSS, 3=TAKE_PROFIT.
+   If the user asks to test or try a limit order without a precise target, omit targetPrice and the backend will use an immediately executable test target.
+   Examples:
+   - "Try a 3 USDC limit order into ETH" -> uniswap_limit_order
+   - "Swap 3 USDC to ETH as a limit order" -> uniswap_limit_order
+
+IMPORTANT:
+- Use recurring_transfer for regular/scheduled payments like "weekly", "monthly", "every X days", "subscription", etc.
+- Use uniswap_dca for recurring swaps, DCA, or buying ETH/WETH on a schedule.
+- Use uniswap_limit_order for limit orders, stop-loss, take-profit, or price-triggered swaps.
 
 TOKEN ADDRESSES (from manifest):
-- USDC: ${manifest.tokens?.MockUSDC || "<USDC_ADDRESS>"}
+- USDC: ${manifest.tokens?.USDC?.address || manifest.tokens?.MockUSDC?.address || manifest.tokens?.MockUSDC || "<USDC_ADDRESS>"}
+- WETH/ETH: ${manifest.tokens?.WETH?.address || "<WETH_ADDRESS>"}
 - EURO: ${manifest.tokens?.MockEURO || "<EURO_ADDRESS>"}
 
 ORACLE ADDRESSES (from manifest):
@@ -74,7 +100,7 @@ RULES:
 OUTPUT FORMAT (JSON):
 {
   "summary": "Human-readable summary",
-  "adapterType": "time_based_transfer" | "cctp_bridge" | "stork_price_transfer",
+  "adapterType": "time_based_transfer" | "cctp_bridge" | "stork_price_transfer" | "recurring_transfer" | "uniswap_dca" | "uniswap_limit_order",
   "params": { ...adapter-specific params... }
 }
 `;
@@ -149,8 +175,10 @@ function applyDefaults(intent: TaskIntent, manifest: any, now: number): TaskInte
 
     // Default token addresses from manifest
     const usdcAddress = manifest.tokens?.MockUSDC?.address || manifest.tokens?.MockUSDC;
+    const officialUsdcAddress = manifest.tokens?.USDC?.address || usdcAddress;
     const usdtAddress = manifest.tokens?.MockUSDT?.address || manifest.tokens?.MockUSDT;
     const euroAddress = manifest.tokens?.MockEURO?.address || manifest.tokens?.MockEURO;
+    const wethAddress = manifest.tokens?.WETH?.address || "0x4200000000000000000000000000000000000006";
 
     switch (intent.adapterType) {
         case "recurring_transfer":
@@ -183,6 +211,28 @@ function applyDefaults(intent: TaskIntent, manifest: any, now: number): TaskInte
             if (!params.amount) params.amount = "1000000";
             if (params.targetPrice === undefined) params.targetPrice = "95000000"; // $0.95
             if (params.isBelow === undefined) params.isBelow = false; // above by default
+            break;
+
+        case "uniswap_dca":
+            if (!params.tokenIn && officialUsdcAddress) params.tokenIn = officialUsdcAddress;
+            if (!params.tokenOut) params.tokenOut = wethAddress;
+            if (!params.fee) params.fee = 3000;
+            if (!params.amountPerSwap) params.amountPerSwap = "1000000";
+            if (!params.interval) params.interval = 86400;
+            if (!params.totalSwaps) params.totalSwaps = 1;
+            if (!params.minAmountOut) params.minAmountOut = "0";
+            if (!params.recipient) params.recipient = ethers.ZeroAddress;
+            break;
+
+        case "uniswap_limit_order":
+            if (!params.tokenIn && officialUsdcAddress) params.tokenIn = officialUsdcAddress;
+            if (!params.tokenOut) params.tokenOut = wethAddress;
+            if (!params.fee) params.fee = 3000;
+            if (!params.amountIn) params.amountIn = "1000000";
+            if (params.orderType === undefined) params.orderType = 0;
+            if (!params.minAmountOut) params.minAmountOut = "0";
+            if (!params.recipient) params.recipient = ethers.ZeroAddress;
+            if (params.expiry === undefined) params.expiry = 0;
             break;
     }
 
@@ -222,6 +272,12 @@ export function formatTaskSummary(intent: TaskIntent): string {
             break;
         case "stork_price_transfer":
             details = `Transfer ${Number(params.amount) / 1e6} tokens when price ${params.isBelow ? "<" : ">="} $${Number(params.targetPrice) / 1e8}`;
+            break;
+        case "uniswap_dca":
+            details = `DCA swap ${Number(params.amountPerSwap) / 1e6} tokenIn every ${params.interval}s for ${params.totalSwaps} swaps`;
+            break;
+        case "uniswap_limit_order":
+            details = `Limit swap ${Number(params.amountIn) / 1e6} tokenIn with order type ${params.orderType}`;
             break;
     }
 

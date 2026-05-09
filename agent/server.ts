@@ -33,6 +33,8 @@ import {
   updateSessionTitle,
   deleteSession,
 } from "./chat-handler";
+import { configDotenv } from "dotenv";
+configDotenv();
 
 // ============================================================
 // Config
@@ -66,9 +68,9 @@ const activeNetwork = NETWORK_CONFIG[NETWORK] || NETWORK_CONFIG.base;
 const PRIVATE_KEY =
   process.env.BASE_DEPLOYER_KEY ||
   process.env.DEPLOYER_KEY ||
-  "0x5ad3af615c05ba41f877e6fe251039b5c66c3a858c7bf2c8d235fe1b9eabfd7f";
+  "";
 const MISTRAL_API_KEY =
-  process.env.MISTRAL_API_KEY || "ZivuaamB98Ph9AajVZ2DW4ZrpL97a8OJ";
+  process.env.MISTRAL_API_KEY || "";
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/uarc";
 
@@ -122,6 +124,10 @@ const ERC20_ABI = [
 
 const REWARD_MANAGER_ABI = [
   "function getMaxRewardCost(uint256 baseReward) external view returns (uint256)",
+];
+
+const UNISWAP_LIMIT_ORDER_ADAPTER_ABI = [
+  "function getCurrentPrice(address tokenIn,address tokenOut,uint24 fee) external view returns (uint256)",
 ];
 
 const GLOBAL_REGISTRY_ABI = [
@@ -286,21 +292,50 @@ app.post("/faucet", async (req: Request, res: Response) => {
   try {
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
 
-    // Check deployer balance
-    const deployerBalance = await tokenContract.balanceOf(wallet.address);
-    if (deployerBalance < FAUCET_AMOUNT) {
-      res.status(503).json({ error: "Faucet empty. Contact admin." });
-      return;
+    // Mint tokens directly to user (testnet mock tokens have public mint)
+    let tx;
+    try {
+      tx = await tokenContract.mint(address, FAUCET_AMOUNT);
+      await tx.wait();
+      console.log(`[Faucet] Minted 1000 ${token} to ${address} - tx: ${tx.hash}`);
+    } catch (mintErr: any) {
+      // Fallback to transfer if mint fails (maybe mint is restricted)
+      console.log(`[Faucet] Mint failed, trying transfer: ${mintErr.message}`);
+      const deployerBalance = await tokenContract.balanceOf(wallet.address);
+      if (deployerBalance < FAUCET_AMOUNT) {
+        res.status(503).json({ error: "Faucet empty. Contact admin." });
+        return;
+      }
+      tx = await tokenContract.transfer(address, FAUCET_AMOUNT);
+      await tx.wait();
+      console.log(`[Faucet] Transferred 1000 ${token} to ${address} - tx: ${tx.hash}`);
     }
 
-    // Transfer tokens
-    const tx = await tokenContract.transfer(address, FAUCET_AMOUNT);
-    await tx.wait();
+    // Also send a small amount of ETH for gas if user has low balance
+    let ethTxHash = null;
+    try {
+      const userEthBalance = await provider.getBalance(address);
+      const minEthForGas = ethers.parseEther("0.001"); // 0.001 ETH minimum
+      const ethDrip = ethers.parseEther("0.005"); // Send 0.005 ETH
+
+      if (userEthBalance < minEthForGas) {
+        const serverBalance = await provider.getBalance(wallet.address);
+        if (serverBalance > ethDrip * 2n) {
+          const ethTx = await wallet.sendTransaction({
+            to: address,
+            value: ethDrip,
+          });
+          await ethTx.wait();
+          ethTxHash = ethTx.hash;
+          console.log(`[Faucet] Sent 0.005 ETH to ${address} for gas - tx: ${ethTx.hash}`);
+        }
+      }
+    } catch (ethErr: any) {
+      console.log(`[Faucet] ETH drip skipped: ${ethErr.message}`);
+    }
 
     // Set cooldown
     faucetCooldowns.set(address.toLowerCase(), Date.now());
-
-    console.log(`[Faucet] Sent 1000 ${token} to ${address} - tx: ${tx.hash}`);
 
     res.json({
       success: true,
@@ -308,6 +343,8 @@ app.post("/faucet", async (req: Request, res: Response) => {
       amount: "1000",
       recipient: address,
       txHash: tx.hash,
+      ethTxHash,
+      ethAmount: ethTxHash ? "0.005" : null,
       explorerUrl: `${activeNetwork.explorer}/tx/${tx.hash}`,
       nextAvailable: new Date(Date.now() + FAUCET_COOLDOWN).toISOString(),
     });
@@ -609,6 +646,10 @@ app.get("/tasks", async (req: Request, res: Response) => {
               ? "recurring_transfer"
               : protocol === manifest.adapters?.TimeBasedTransferAdapter.address
               ? "time_based_transfer"
+              : protocol === manifest.adapters?.UniswapV3DCAAdapter?.address
+              ? "uniswap_dca"
+              : protocol === manifest.adapters?.UniswapV3LimitOrderAdapter?.address
+              ? "uniswap_limit_order"
               : "unknown";
 
         console.log(adapterType);
@@ -882,10 +923,16 @@ async function buildTaskPayload(taskIntent: TaskIntent, userAddress: string) {
 
   // Get token address helper
   const getTokenAddress = (tokenOrSymbol: string) => {
-    if (ethers.isAddress(tokenOrSymbol)) return tokenOrSymbol;
+    const symbol = String(tokenOrSymbol);
+    if (/^0x[0-9a-fA-F]{40}$/.test(symbol)) return symbol;
+    const normalized = symbol.toUpperCase();
+    if (normalized === "ETH") {
+      return manifest.tokens?.WETH?.address || manifest.tokens?.WETH;
+    }
     const tokenConfig =
-      manifest.tokens?.[tokenOrSymbol] ||
-      manifest.tokens?.[`Mock${tokenOrSymbol}`];
+      manifest.tokens?.[symbol] ||
+      manifest.tokens?.[normalized] ||
+      manifest.tokens?.[`Mock${symbol}`];
     return typeof tokenConfig === "string" ? tokenConfig : tokenConfig?.address;
   };
 
@@ -998,6 +1045,125 @@ async function buildTaskPayload(taskIntent: TaskIntent, userAddress: string) {
       );
       adapterAddress = getAdapterAddress("StorkPriceTransferAdapter");
       tokenDeposits = [{ token: tokenAddr, amount: amount.toString() }];
+      break;
+    }
+
+    case "uniswap_dca": {
+      const {
+        taskId,
+        tokenIn,
+        tokenOut,
+        fee,
+        amountPerSwap,
+        interval,
+        totalSwaps,
+        minAmountOut,
+        recipient,
+      } = taskIntent.params;
+
+      const tokenInAddr = getTokenAddress(tokenIn || "USDC");
+      const tokenOutAddr = getTokenAddress(tokenOut || "WETH");
+      const swaps = Number(totalSwaps || 1);
+      const perSwap = BigInt(amountPerSwap || "1000000");
+      const dcaTaskId =
+        taskId ||
+        ethers.keccak256(
+          ethers.solidityPacked(
+            ["string", "address", "uint256", "uint256"],
+            ["uarc-ai-dca", userAddress, BigInt(activeNetwork.chainId), BigInt(Date.now())],
+          ),
+        );
+
+      encodedParams = abiCoder.encode(
+        ["bytes32", "address", "address", "uint24", "uint256", "uint256", "uint256", "uint256", "address"],
+        [
+          dcaTaskId,
+          tokenInAddr,
+          tokenOutAddr,
+          Number(fee || 3000),
+          perSwap,
+          BigInt(interval || 86400),
+          BigInt(swaps),
+          BigInt(minAmountOut || 0),
+          recipient && recipient !== ethers.ZeroAddress ? recipient : userAddress,
+        ],
+      );
+
+      adapterAddress = getAdapterAddress("UniswapV3DCAAdapter");
+      maxExecutions = swaps;
+      recurringInterval = Number(interval || 86400);
+      tokenDeposits = [
+        {
+          token: tokenInAddr,
+          amount: (perSwap * BigInt(swaps || 1)).toString(),
+        },
+      ];
+      break;
+    }
+
+    case "uniswap_limit_order": {
+      const {
+        orderId,
+        tokenIn,
+        tokenOut,
+        fee,
+        amountIn,
+        targetPrice,
+        orderType,
+        minAmountOut,
+        recipient,
+        expiry,
+      } = taskIntent.params;
+
+      const tokenInAddr = getTokenAddress(tokenIn || "USDC");
+      const tokenOutAddr = getTokenAddress(tokenOut || "WETH");
+      const poolFee = Number(fee || 3000);
+      const adapter = getAdapterAddress("UniswapV3LimitOrderAdapter");
+      let resolvedTargetPrice = targetPrice ? BigInt(targetPrice) : 0n;
+
+      if (resolvedTargetPrice === 0n) {
+        const limitAdapter = new ethers.Contract(
+          adapter,
+          UNISWAP_LIMIT_ORDER_ADAPTER_ABI,
+          provider,
+        );
+        const currentPrice: bigint = await limitAdapter.getCurrentPrice(
+          tokenInAddr,
+          tokenOutAddr,
+          poolFee,
+        );
+        // For test / generic buy orders, make the condition immediately executable.
+        resolvedTargetPrice = currentPrice * 2n;
+      }
+
+      const resolvedOrderId =
+        orderId ||
+        ethers.keccak256(
+          ethers.solidityPacked(
+            ["string", "address", "uint256", "uint256"],
+            ["uarc-ai-limit", userAddress, BigInt(activeNetwork.chainId), BigInt(Date.now())],
+          ),
+        );
+      const rawAmountIn = BigInt(amountIn || "1000000");
+
+      encodedParams = abiCoder.encode(
+        ["bytes32", "address", "address", "uint24", "uint256", "uint256", "uint8", "uint256", "address", "uint256"],
+        [
+          resolvedOrderId,
+          tokenInAddr,
+          tokenOutAddr,
+          poolFee,
+          rawAmountIn,
+          resolvedTargetPrice,
+          Number(orderType ?? 0),
+          BigInt(minAmountOut || 0),
+          recipient && recipient !== ethers.ZeroAddress ? recipient : userAddress,
+          BigInt(expiry || 0),
+        ],
+      );
+
+      adapterAddress = adapter;
+      tokenDeposits = [{ token: tokenInAddr, amount: rawAmountIn.toString() }];
       break;
     }
 

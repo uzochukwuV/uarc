@@ -16,6 +16,18 @@
     "ActionRegistry": "0xB8476A9D97950DF7c664E63735FD5b3cd88f3147"
   },
   "tokens": {
+    "USDC": {
+      "address": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "symbol": "USDC",
+      "decimals": 6,
+      "description": "Official Base Sepolia USDC"
+    },
+    "WETH": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "decimals": 18,
+      "description": "Wrapped ETH on Base Sepolia"
+    },
     "MockUSDC": {
       "address": "0x02224E1B9d23fcDC8b9E7B97B4857C31FAB56d25",
       "symbol": "USDC",
@@ -44,6 +56,37 @@
       "fundingModes": [
         "VAULT"
       ]
+    },
+    "UniswapV3SwapAdapter": {
+      "address": "",
+      "description": "Instant token swap on Uniswap V3",
+      "fundingModes": [
+        "VAULT"
+      ],
+      "protocols": {
+        "swapRouter": "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4"
+      }
+    },
+    "UniswapV3DCAAdapter": {
+      "address": "0x6E5E28e08448409c63F8256908F81999B6DA4DBb",
+      "description": "Dollar-cost averaging (DCA) recurring swaps on Uniswap V3",
+      "fundingModes": [
+        "VAULT"
+      ],
+      "protocols": {
+        "swapRouter": "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4"
+      }
+    },
+    "UniswapV3LimitOrderAdapter": {
+      "address": "0x504f73A97E2b7c34e98C3006cB7f237F864a67B0",
+      "description": "Limit orders and stop-loss on Uniswap V3",
+      "fundingModes": [
+        "VAULT"
+      ],
+      "protocols": {
+        "swapRouter": "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4",
+        "factory": "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24"
+      }
     }
   },
   "actions": [
@@ -80,6 +123,69 @@
       "examples": [
         "Send $100 USDC to bob.eth tomorrow at noon",
         "Transfer 500 USDT on January 1st"
+      ]
+    },
+    {
+      "id": "uniswap_swap",
+      "adapter": "",
+      "description": "Instant token swap on Uniswap V3",
+      "params": [
+        "tokenIn:address",
+        "tokenOut:address",
+        "fee:uint24 (500=0.05%, 3000=0.3%, 10000=1%)",
+        "amountIn:uint256",
+        "amountOutMin:uint256",
+        "recipient:address",
+        "deadline:uint256 (0=no deadline)"
+      ],
+      "examples": [
+        "Swap 100 USDC for ETH",
+        "Trade 50 USDT for WETH with 0.3% fee",
+        "Convert 200 USDC to WETH"
+      ]
+    },
+    {
+      "id": "uniswap_dca",
+      "adapter": "0x6E5E28e08448409c63F8256908F81999B6DA4DBb",
+      "description": "Dollar-cost averaging - recurring swaps on Uniswap V3",
+      "params": [
+        "taskId:bytes32",
+        "tokenIn:address",
+        "tokenOut:address",
+        "fee:uint24 (500=0.05%, 3000=0.3%, 10000=1%)",
+        "amountPerSwap:uint256",
+        "interval:uint256 (seconds between swaps)",
+        "totalSwaps:uint256 (0=unlimited)",
+        "minAmountOut:uint256",
+        "recipient:address"
+      ],
+      "examples": [
+        "DCA $100 USDC into ETH every week for 12 weeks",
+        "Buy $50 worth of WETH daily",
+        "Accumulate ETH with $200 USDC monthly"
+      ]
+    },
+    {
+      "id": "uniswap_limit_order",
+      "adapter": "0x504f73A97E2b7c34e98C3006cB7f237F864a67B0",
+      "description": "Limit orders and stop-loss on Uniswap V3",
+      "params": [
+        "orderId:bytes32",
+        "tokenIn:address",
+        "tokenOut:address",
+        "fee:uint24 (500=0.05%, 3000=0.3%, 10000=1%)",
+        "amountIn:uint256",
+        "targetPrice:uint256 (18 decimals)",
+        "orderType:uint8 (0=LIMIT_BUY, 1=LIMIT_SELL, 2=STOP_LOSS, 3=TAKE_PROFIT)",
+        "minAmountOut:uint256",
+        "recipient:address",
+        "expiry:uint256 (0=no expiry)"
+      ],
+      "examples": [
+        "Sell 1 ETH when price reaches $4000",
+        "Buy ETH if price drops to $2500",
+        "Set stop-loss at $2000 for my ETH",
+        "Take profit at $5000"
       ]
     }
   ],

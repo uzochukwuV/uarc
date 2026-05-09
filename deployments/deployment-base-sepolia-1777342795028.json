@@ -190,6 +190,63 @@
       "txHash": "0x2c175b976984d5d229bf64bc414431845deb88af74d7ff091935519fcb70d3b6",
       "blockNumber": 40787254,
       "gasUsed": "47327"
+    },
+    {
+      "step": "Deploy UniswapV3DCAAdapter",
+      "txHash": "0x1dfbce788358cdfb00f74c2c2716cb612176b73d9360ff0b320d3d4dc6ec5b79",
+      "contractAddress": "0x6E5E28e08448409c63F8256908F81999B6DA4DBb",
+      "blockNumber": 41202301,
+      "gasUsed": "1195175"
+    },
+    {
+      "step": "Deploy UniswapV3LimitOrderAdapter",
+      "txHash": "0x4f34a6fa4b4dcaf58afa0339c5a674e4bb5e8b0ebb553df2b05def4e3d460f76",
+      "contractAddress": "0xa4f7E608840AE51F19718909405c7d5A8C36BcCc",
+      "blockNumber": 41202302,
+      "gasUsed": "1720455"
+    },
+    {
+      "step": "Register UniswapV3DCAAdapter",
+      "txHash": "0x0906d9d1ed2a0786f38b860b166690f8721a71dcb86fd78bf828b3e38b1931fd",
+      "blockNumber": 41202304,
+      "gasUsed": "105309"
+    },
+    {
+      "step": "Register UniswapV3LimitOrderAdapter",
+      "txHash": "0xd49dbe174f365f30fd9553aa72b5ff508627cad151122ad7a3cb8976eb629c00",
+      "blockNumber": 41202336,
+      "gasUsed": "105309"
+    },
+    {
+      "step": "Approve UniswapV3DCAAdapter protocol",
+      "txHash": "0x8639028b6a23a64218928e9d665b83dea7f1876484f3c2ef7a37eb5a02641422",
+      "blockNumber": 41202337,
+      "gasUsed": "47327"
+    },
+    {
+      "step": "Approve UniswapV3LimitOrderAdapter protocol",
+      "txHash": "0x0d69d2deb44c03273a55f86b36536acd38e4f5e5fd72f5d8b4ffa262336253a8",
+      "blockNumber": 41202338,
+      "gasUsed": "47327"
+    },
+    {
+      "step": "Deploy UniswapV3LimitOrderAdapter",
+      "txHash": "0xfed301f1dbd8a12253a7db5c3a384c52014fbff396d9112050851f387d1e399d",
+      "contractAddress": "0x504f73A97E2b7c34e98C3006cB7f237F864a67B0",
+      "blockNumber": 41202893,
+      "gasUsed": "1775151"
+    },
+    {
+      "step": "Register UniswapV3LimitOrderAdapter",
+      "txHash": "0xb7d0ed88c67adae2f73de4383559d437cdce970ef9ba8269c108591f1cadf193",
+      "blockNumber": 41202895,
+      "gasUsed": "102509"
+    },
+    {
+      "step": "Approve UniswapV3LimitOrderAdapter protocol",
+      "txHash": "0xa972d94604059309d290162186be9f7e3543bc79496a0a8f5cce39cdbcac798e",
+      "blockNumber": 41202897,
+      "gasUsed": "47327"
     }
   ],
   "contracts": {
@@ -204,6 +261,8 @@
     "TaskLogicV2": "0x3bfAfE085977a630298A88288f6c95801d3fd5E2",
     "TaskFactory": "0xd633745b7427Cf13b540c6D88FF2cAd33F75340d",
     "RecurringTransferAdapter": "0x17e7bA6d4939f7e826ca9aE06C76177E25691A61",
-    "TimeBasedTransferAdapter": "0x055c10a0371AA486e0e5E1fe6A18407b14e2d192"
+    "TimeBasedTransferAdapter": "0x055c10a0371AA486e0e5E1fe6A18407b14e2d192",
+    "UniswapV3DCAAdapter": "0x6E5E28e08448409c63F8256908F81999B6DA4DBb",
+    "UniswapV3LimitOrderAdapter": "0x504f73A97E2b7c34e98C3006cB7f237F864a67B0"
   }
 }
