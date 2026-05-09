@@ -223,6 +223,12 @@
   flex-direction: column;
   gap: 2px;
 }
+.ua-hist-empty {
+  padding: 10px;
+  color: var(--ua-fg-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .ua-hist-item {
   width: 100%;
   text-align: left;
