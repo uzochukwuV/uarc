@@ -38,63 +38,6 @@ const INTERVAL_LABELS = { 86400: 'Daily', 604800: 'Weekly', 2592000: 'Monthly' }
 const FUNDING_MODES = { 0: 'Vault (Deposit)', 1: 'Pull (Subscription)' };
 const UARC_API_BASE = window.UARC_API_BASE || (window.location.port === '5173' ? 'http://127.0.0.1:3000' : '');
 
-const ADDRESS_RE = /0x[a-fA-F0-9]{40}/;
-
-// Check if a parameter is missing/invalid
-const isMissingAddress = (addr) => !addr || addr === '0x0000000000000000000000000000000000000000' || addr === '0x123...' || !ADDRESS_RE.test(addr);
-
-// Identify which required parameters are missing for each adapter type
-function getMissingParams(adapterType, params) {
-  const missing = [];
-  switch (adapterType) {
-    case 'recurring_transfer':
-    case 'time_based_transfer':
-      if (isMissingAddress(params.recipient)) missing.push({ key: 'recipient', label: 'recipient address', question: 'What address should I send to?' });
-      if (!params.amountPerExecution && !params.amount) missing.push({ key: 'amount', label: 'amount', question: 'How much should I send per transfer?' });
-      break;
-    case 'cctp_bridge':
-      if (isMissingAddress(params.mintRecipient)) missing.push({ key: 'mintRecipient', label: 'destination address', question: 'What address should receive the tokens on the destination chain?' });
-      break;
-    case 'stork_price_transfer':
-      if (isMissingAddress(params.recipient)) missing.push({ key: 'recipient', label: 'recipient address', question: 'What address should receive the tokens?' });
-      if (!params.targetPrice) missing.push({ key: 'targetPrice', label: 'target price', question: 'At what price should this trigger?' });
-      break;
-  }
-  return missing;
-}
-
-function parseLocalIntent(text) {
-  const l = (text || '').toLowerCase();
-  const isRecurring = l.includes('weekly') || l.includes('monthly') || l.includes('daily') || l.includes('every ') || l.includes('subscription');
-
-  if (!isRecurring) return null;
-
-  const amountMatch = l.match(/(?:send|pay|transfer)?\s*\$?\s*(\d+(?:\.\d+)?)\s*(usdc|usdt|euro)?/i);
-  const recipientMatch = text.match(ADDRESS_RE);
-  const weeksMatch = l.match(/(?:for\s+)?(\d+)\s+weeks?/);
-  const daysMatch = l.match(/(?:for\s+)?(\d+)\s+days?/);
-  const monthsMatch = l.match(/(?:for\s+)?(\d+)\s+months?/);
-  const maxExecutions = Number(weeksMatch?.[1] || daysMatch?.[1] || monthsMatch?.[1] || 4);
-  const interval = l.includes('daily') ? 86400 : l.includes('monthly') ? 2592000 : 604800;
-  const amountDisplay = Number(amountMatch?.[1] || 50);
-  const amount = Math.round(amountDisplay * 1e6);
-  const token = (amountMatch?.[2] || 'USDC').toUpperCase();
-
-  return {
-    summary: `send ${amountDisplay} ${token} ${INTERVAL_LABELS[interval].toLowerCase()} for ${maxExecutions} payments`,
-    adapterType: 'recurring_transfer',
-    params: {
-      token,
-      recipient: recipientMatch?.[0],
-      amountPerExecution: amount,
-      startTime: Math.floor(Date.now() / 1000) + 86400,
-      interval,
-      maxExecutions,
-      fundingMode: 0,
-    },
-  };
-}
-
 const TASK_FACTORY_ABI = [
   'function createTaskWithTokens(tuple(uint256 expiresAt,uint256 maxExecutions,uint256 recurringInterval,uint256 rewardPerExecution,bytes32 seedCommitment) taskParams, tuple(bytes4 selector,address protocol,bytes params)[] actions, tuple(address token,uint256 amount)[] deposits) payable returns (uint256 taskId,address taskCore,address taskVault)',
   'event TaskCreated(uint256 indexed taskId,address indexed creator,address indexed taskCore,address taskVault,uint256 rewardPerExecution,uint256 maxExecutions)',
@@ -172,65 +115,6 @@ function buildCalendarData(params) {
     });
   }
   return dates;
-}
-
-function buildAgentFlow(text) {
-  const l = (text || '').toLowerCase();
-  const isRecurring = l.includes('weekly') || l.includes('monthly') || l.includes('daily') || l.includes('every ') || l.includes('subscription');
-  if (isRecurring) {
-    const amountMatch = l.match(/(?:send|pay|transfer)?\s*\$?\s*(\d+(?:\.\d+)?)\s*(usdc|usdt|euro)?/i);
-    const recipientMatch = text.match(ADDRESS_RE);
-    const weeksMatch = l.match(/(?:for\s+)?(\d+)\s+weeks?/);
-    const daysMatch = l.match(/(?:for\s+)?(\d+)\s+days?/);
-    const monthsMatch = l.match(/(?:for\s+)?(\d+)\s+months?/);
-    const maxExecutions = Number(weeksMatch?.[1] || daysMatch?.[1] || monthsMatch?.[1] || 4);
-    const interval = l.includes('daily') ? 86400 : l.includes('monthly') ? 2592000 : 604800;
-    const amount = Math.round(Number(amountMatch?.[1] || 50) * 1e6);
-    const token = (amountMatch?.[2] || 'USDC').toUpperCase();
-    const recipient = recipientMatch?.[0];
-    const summary = `send ${Number(amountMatch?.[1] || 50)} ${token} ${INTERVAL_LABELS[interval].toLowerCase()} for ${maxExecutions} payments`;
-    const params = {
-      token,
-      recipient,
-      amountPerExecution: amount,
-      startTime: Math.floor(Date.now() / 1000) + 86400,
-      interval,
-      maxExecutions,
-      fundingMode: 0,
-    };
-    return [
-      { delay: 500, msg: { role: 'assistant', kind: 'thinking', content: 'Parsing recurring payment · Building schedule · Estimating deposit' } },
-      { delay: 900, replaceLast: true, msg: { role: 'assistant', kind: 'text', content: `Got it — ${summary}. Here's the task to review before deploying.` } },
-      { delay: 250, msg: { role: 'assistant', kind: 'recurring-preview', title: 'New automation · Recurring Payment',
-        lines: buildReceiptLines({ adapterType: 'recurring_transfer', params }),
-        calendarData: buildCalendarData(params),
-        footnote: 'Preview mode · Start the agent server for live contract payloads' } },
-      { delay: 200, msg: { role: 'assistant', kind: 'confirm-cta' } },
-    ];
-  }
-  const isStop = l.includes('stop') || l.includes('2000') || l.includes('below') || l.includes('usdt') || l.includes('sell') || l.includes('eth');
-  if (isStop) return [
-    { delay: 500, msg: { role: 'assistant', kind: 'thinking', content: 'Reading wallet · Quoting ETH→USDT route · Verifying oracle' } },
-    { delay: 1300, replaceLast: true, msg: { role: 'assistant', kind: 'text', content: "Got it — a price-triggered stop-loss. Here's the receipt to review before signing." } },
-    { delay: 250, msg: { role: 'assistant', kind: 'receipt', title: 'New automation · Stop-loss', status: 'pending-review',
-      lines: [
-        { k: 'Type', v: 'Conditional swap', emphasis: true },
-        { k: 'Sell', v: '4.2000 ETH' },
-        { k: 'Receive', v: 'USDT' },
-        { k: 'Trigger', v: 'ETH ≤ $2,000.00' },
-        { k: 'Slippage', v: '0.50%', editable: true },
-        { k: 'Route', v: 'Arc DEX · best of 4' },
-        { k: 'Network fee', v: '≈ $0.04' },
-        { k: 'Expires', v: 'Never', editable: true },
-      ],
-      footnote: 'Price feed: Pyth · Arc oracle · 5s heartbeat' } },
-    { delay: 200, msg: { role: 'assistant', kind: 'chart', title: 'ETH / USD · 24h', price: 2364.18, delta: -1.42, trigger: 2000 } },
-    { delay: 200, msg: { role: 'assistant', kind: 'confirm-cta' } },
-  ];
-  return [
-    { delay: 600, msg: { role: 'assistant', kind: 'thinking', content: 'Thinking' } },
-    { delay: 1200, replaceLast: true, msg: { role: 'assistant', kind: 'text', content: "I can build that. Tell me the trigger (price, time, balance) and the action you want." } },
-  ];
 }
 
 function buildSignFlow() {
@@ -322,8 +206,6 @@ function useChatEngine() {
   // Stores the parsed preview from /task/preview so confirm() can submit it
   const [pendingIntent, setPendingIntent] = useState(null);
   const [pendingPreview, setPendingPreview] = useState(null);
-  // Tracks when we're waiting for user to provide missing parameters
-  const [awaitingParam, setAwaitingParam] = useState(null); // { preview, missingParams, currentIndex }
   // Session ID for chat history persistence
   const [sessionId, setSessionId] = useState(() => {
     // Try to restore session from localStorage
@@ -363,110 +245,43 @@ function useChatEngine() {
     }
   }, []);
 
-  // Helper to show the final preview after all params are collected
-  const showPreview = useCallback((data, intentText) => {
-    const lines = buildReceiptLines(data);
-    const label = ADAPTER_LABELS[data.adapterType] || data.adapterType;
-    const isRecurring = data.adapterType === 'recurring_transfer';
-    const calendarData = isRecurring ? buildCalendarData(data.params) : null;
-    const messageKind = isRecurring ? 'recurring-preview' : 'receipt';
+  const normalizeServerMessage = useCallback((message) => ({
+    ...message,
+    id: nextId(),
+    calendarData: message.calendarData?.map(item => ({
+      ...item,
+      date: item.date ? new Date(item.date) : new Date(item.isoDate || item.timestamp * 1000),
+    })),
+  }), []);
 
-    setPendingIntent(intentText);
-    setPendingPreview(data);
-    setAwaitingParam(null);
-
+  const renderServerMessages = useCallback((serverMessages) => {
+    const rendered = (serverMessages || []).map(normalizeServerMessage);
+    if (!rendered.length) return;
     setMessages(cur => [
-      ...cur.slice(0, -1), // remove thinking
-      { id: nextId(), role: 'assistant', kind: 'text', content: `Got it — ${data.summary}. Here's the task to review before deploying.` },
-      { id: nextId(), role: 'assistant', kind: messageKind, title: `New automation · ${label}`,
-        lines,
-        calendarData,
-        footnote: `Adapter: ${data.adapterType} · Base Sepolia` },
-      { id: nextId(), role: 'assistant', kind: 'confirm-cta' },
+      ...cur.filter(m => m.kind !== 'thinking'),
+      ...rendered,
     ]);
-  }, []);
+  }, [normalizeServerMessage]);
 
   const send = useCallback(async (text) => {
     const trimmed = (text ?? input).trim();
     if (!trimmed || busy) return;
     setInput('');
     setBusy(true);
-    setMessages(cur => [...cur, { id: nextId(), role: 'user', kind: 'text', content: trimmed }]);
+    setMessages(cur => [
+      ...cur,
+      { id: nextId(), role: 'user', kind: 'text', content: trimmed },
+      { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Thinking...' },
+    ]);
 
-    // Check if we're collecting a missing parameter
-    if (awaitingParam) {
-      const { preview, missingParams, currentIndex, originalIntent } = awaitingParam;
-      const currentMissing = missingParams[currentIndex];
-
-      // Parse the user's response - look for an address or value
-      let value = trimmed;
-      // If looking for an address, try to extract it
-      if (currentMissing.key === 'recipient' || currentMissing.key === 'mintRecipient') {
-        const addrMatch = trimmed.match(ADDRESS_RE);
-        if (!addrMatch) {
-          setMessages(cur => [...cur, {
-            id: nextId(),
-            role: 'assistant',
-            kind: 'text',
-            content: 'Please send the full 0x recipient address so I can build the task safely.',
-          }]);
-          setBusy(false);
-          return;
-        }
-        if (addrMatch) value = addrMatch[0];
-      }
-
-      // Update the preview params with the user's answer
-      const updatedParams = { ...preview.params, [currentMissing.key]: value };
-      const updatedPreview = { ...preview, params: updatedParams };
-
-      // Check if there are more missing params
-      if (currentIndex + 1 < missingParams.length) {
-        // Ask for the next parameter
-        const nextMissing = missingParams[currentIndex + 1];
-        setAwaitingParam({ ...awaitingParam, preview: updatedPreview, currentIndex: currentIndex + 1 });
-        setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'text', content: nextMissing.question }]);
-        setBusy(false);
-        return;
-      }
-
-      // All params collected - rebuild the payload and show preview
-      setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Building task preview...' }]);
-
-      try {
-        // Re-call preview with complete params
-        const completeIntent = `${originalIntent} to ${updatedParams.recipient || updatedParams.mintRecipient}`;
-        const res = await fetch(`${UARC_API_BASE}/task/preview`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ intent: completeIntent, userAddress: wallet.address }),
-          signal: AbortSignal.timeout(20000),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
-
-        // Merge collected params into the response
-        data.params = { ...data.params, ...updatedParams };
-        showPreview(data, completeIntent);
-      } catch (err) {
-        // Fallback: use the preview we built up
-        showPreview(updatedPreview, originalIntent);
-      }
-      setBusy(false);
-      return;
-    }
-
-    // Use conversational /chat endpoint
     try {
-      setMessages(cur => [...cur, { id: nextId(), role: 'assistant', kind: 'thinking', content: 'Thinking...' }]);
-
       const res = await fetch(`${UARC_API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: trimmed,
           sessionId,
-          userAddress: wallet.address
+          userAddress: wallet.address,
         }),
         signal: AbortSignal.timeout(30000),
       });
@@ -474,81 +289,35 @@ function useChatEngine() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
 
-      // Update session ID if server assigned one
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
       }
 
-      // Handle based on response type
-      if (data.type === 'automation' && data.taskPreview) {
-        // It's an automation intent - check for missing params
-        const missingParams = getMissingParams(data.taskPreview.adapterType, data.taskPreview.params);
-
-        if (missingParams.length > 0) {
-          // Store the preview and start asking for missing params
-          setAwaitingParam({
-            preview: data.taskPreview,
-            missingParams,
-            currentIndex: 0,
-            originalIntent: trimmed,
-          });
-
-          // Show AI message then ask for first missing param
-          setMessages(cur => [
-            ...cur.slice(0, -1), // remove thinking
-            { id: nextId(), role: 'assistant', kind: 'text', content: `${data.message} ${missingParams[0].question}` },
-          ]);
-          setBusy(false);
-          return;
-        }
-
-        // All params present - show preview
-        showPreview(data.taskPreview, trimmed);
-      } else {
-        // It's a conversational response - just show the message
-        setMessages(cur => [
-          ...cur.slice(0, -1), // remove thinking
-          {
-            id: nextId(),
-            role: 'assistant',
-            kind: 'text',
-            content: data.message,
-            suggestions: data.suggestions,
-          },
-        ]);
+      if (data.pendingPreview?.payload) {
+        setPendingIntent(trimmed);
+        setPendingPreview(data.pendingPreview);
       }
-    } catch (_err) {
-      // API unavailable — fall back to local parsing
-      console.error('[Chat] API error:', _err);
-      const localPreview = parseLocalIntent(trimmed);
-      if (localPreview) {
-        const missingParams = getMissingParams(localPreview.adapterType, localPreview.params);
-        if (missingParams.length > 0) {
-          setAwaitingParam({
-            preview: localPreview,
-            missingParams,
-            currentIndex: 0,
-            originalIntent: trimmed,
-          });
-          setMessages(cur => [
-            ...cur.filter(m => m.kind !== 'thinking'),
-            { id: nextId(), role: 'assistant', kind: 'text', content: `I can help with that! ${missingParams[0].question}` },
-          ]);
-          setBusy(false);
-          return;
-        }
-        showPreview(localPreview, trimmed);
+
+      if (data.messages?.length) {
+        renderServerMessages(data.messages);
       } else {
-        // For non-automation messages when API is down, show a fallback response
-        setMessages(cur => [
-          ...cur.filter(m => m.kind !== 'thinking'),
-          { id: nextId(), role: 'assistant', kind: 'text', content: "I'm here to help you automate blockchain tasks! You can ask me to set up recurring payments, price alerts, or scheduled transfers. What would you like to do?" },
-        ]);
+        renderServerMessages([{
+          role: 'assistant',
+          kind: 'text',
+          content: data.message || 'I received your message, but the backend did not return a renderable response.',
+          suggestions: data.suggestions,
+        }]);
       }
+    } catch (err) {
+      console.error('[Chat] API error:', err);
+      setMessages(cur => [
+        ...cur.filter(m => m.kind !== 'thinking'),
+        { id: nextId(), role: 'assistant', kind: 'text', content: `The UARC backend is unavailable: ${err.message}` },
+      ]);
     }
 
     setBusy(false);
-  }, [input, busy, runFlow, wallet.address, awaitingParam, showPreview, sessionId]);
+  }, [input, busy, wallet.address, sessionId, renderServerMessages]);
 
   const confirmServer = useCallback(async () => {
     if (busy) return;
@@ -662,7 +431,6 @@ function useChatEngine() {
     setBusy(false);
     setPendingIntent(null);
     setPendingPreview(null);
-    setAwaitingParam(null);
     // Create new session
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     setSessionId(newSessionId);
