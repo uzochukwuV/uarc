@@ -34,8 +34,12 @@ export async function connectDB(mongoUri: string) {
   if (isConnected) return;
 
   try {
-    await mongoose.connect(mongoUri);
+    const clientOptions = { serverApi: { version: "1", strict: true, deprecationErrors: true } } as any;
+    await mongoose.connect(mongoUri, clientOptions);
+    await mongoose?.connection?.db?.admin().command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
     isConnected = true;
+
     console.log("[MongoDB] Connected successfully");
   } catch (err) {
     console.error("[MongoDB] Connection failed:", err);
@@ -101,57 +105,52 @@ export interface ChatResponse {
     adapterType: string;
     params: Record<string, any>;
   };
+  missingFields?: string[];
+  nextQuestion?: string | null;
   suggestions?: string[];
 }
 
 const CHAT_SYSTEM_PROMPT = (manifest: any) => `
-You are UARC — a friendly AI assistant for blockchain automation on Arc network.
+You are UARC — a blockchain automation assistant. You handle both conversation and task creation in a single response.
 
-You have two modes:
-1. CHAT MODE: Normal conversation, answering questions, being helpful
-2. AUTOMATION MODE: When the user wants to create an on-chain automation task
+TOKEN ADDRESSES:
+- USDC: ${manifest.tokens?.USDC?.address || manifest.tokens?.MockUSDC?.address || manifest.tokens?.MockUSDC || "<USDC>"}
+- WETH: ${manifest.tokens?.WETH?.address || "<WETH>"}
+- EURO: ${manifest.tokens?.MockEURO?.address || manifest.tokens?.MockEURO || "<EURO>"}
 
-IMPORTANT RULES:
-- If the user is greeting you (hi, hello, hey, etc.) or making small talk, respond naturally and friendly
-- If the user is asking questions about UARC, crypto, or how the system works, explain helpfully
-- Switch to automation mode when the user clearly expresses intent to:
-  - Send/transfer tokens (weekly, monthly, scheduled)
-  - Create stop-loss or price alerts
-  - Create limit orders or DCA swaps
-  - Bridge tokens cross-chain
-  - Set up recurring payments
-  - Create any automated task
+ADAPTER TYPES:
+1. recurring_transfer — Params: { token, recipient, amountPerExecution (6 dec), startTime, interval (86400/604800/2592000), maxExecutions, fundingMode (0=vault,1=pull), fundingSource }
+2. time_based_transfer — Params: { token, recipient, amount (6 dec), executeAfter }
+3. cctp_bridge — Params: { token, amount (6 dec), destinationDomain (0=ETH,1=AVAX,2=OP,3=ARB,6=Base), mintRecipient, executeAfter }
+4. stork_price_transfer — Params: { storkOracle, token, amount (6 dec), targetPrice (8 dec), isBelow, recipient }
+5. uniswap_dca — Params: { tokenIn, tokenOut, fee, amountPerSwap, interval, totalSwaps, minAmountOut, recipient }
+6. uniswap_limit_order — Params: { tokenIn, tokenOut, fee, amountIn, targetPrice, orderType (0=BUY,1=SELL,2=STOP,3=TP), minAmountOut, recipient, expiry }
 
-EXAMPLES OF CHAT (respond conversationally):
-- "hi" → "Hey! I'm UARC, your blockchain automation assistant. What would you like to automate today?"
-- "what can you do?" → Explain your capabilities
-- "how does this work?" → Explain the automation system
-- "thanks" → "You're welcome!"
+RULES:
+- Use prior conversation turns as memory. When a user answers a follow-up, merge it with the earlier request.
+- For recurring/scheduled intents, prefer recurring_transfer over time_based_transfer.
+- Convert amounts to 6-decimal integers (100 USDC = 100000000).
+- Convert relative times to absolute unix timestamps (current + offset).
+- If a field is still missing after checking conversation history, set missingFields to list it and set nextQuestion.
+- Do NOT ask for information already provided in the conversation history.
+- For pure chat (greetings, questions), set type="chat", automationIntent=null, missingFields=[].
 
-EXAMPLES OF AUTOMATION (extract intent):
-- "DCA 5 USDC into ETH weekly" -> AUTOMATION
-- "try a 3 USDC limit order to ETH" -> AUTOMATION
-- "send 50 USDC weekly to 0x123..." → AUTOMATION
-- "create a stop loss at $2000" → AUTOMATION
-- "pay my friend monthly" → AUTOMATION
-
-PROTOCOL CAPABILITIES (from manifest):
-${JSON.stringify(manifest?.adapters || {}, null, 2)}
-
-RESPONSE FORMAT (JSON):
+RESPONSE FORMAT (strict JSON):
 {
   "type": "chat" | "automation",
-  "message": "Your response to the user",
-  "automationIntent": null | { "summary": "...", "adapterType": "...", "params": {...} },
-  "suggestions": ["optional", "suggestions", "for", "user"]
+  "message": "concise response or confirmation",
+  "automationIntent": null | {
+    "summary": "human-readable summary",
+    "adapterType": "<one of the 6 types>",
+    "params": { ...all known params... }
+  },
+  "missingFields": [],
+  "nextQuestion": null | "single question for the one most important missing field",
+  "suggestions": []
 }
 
-For CHAT type: message is your conversational response, automationIntent is null
-For AUTOMATION type: message confirms what you understood, automationIntent contains parsed task details.
-If an automation request is missing information (for example a named person without an address), still return type="automation" with the fields you know and let the backend tool ask the missing follow-up. Do not downgrade incomplete automation requests to chat.
-When a user answers a follow-up (for example by giving an address or saying "yes"), use prior conversation context to continue the same automation instead of starting over.
-
-Always be helpful, concise, and friendly. If you're not sure if it's an automation request, ask for clarification.
+When type="automation" and missingFields is empty, the task is ready to deploy — do not ask further questions.
+When type="automation" and missingFields is non-empty, set nextQuestion to ask only the SINGLE most important missing field.
 `;
 
 function sessionTitleFromMessage(message: string): string {
@@ -178,15 +177,15 @@ export async function processChat(
 ): Promise<ChatResponse> {
   const client = await createMistralClient(apiKey);
 
-  // Get recent chat history for context
+  // Get recent chat history for context (ascending order)
   const history = isConnected
     ? await ChatMessage.find({ sessionId })
-      .sort({ createdAt: -1 })
-      .limit(10)
+      .sort({ createdAt: 1 })
+      .limit(12)
       .lean()
-    : (memoryMessages.get(sessionId) || []).slice(-10).reverse();
+    : (memoryMessages.get(sessionId) || []).slice(-12);
 
-  const historyMessages = history.reverse().map((m) => ({
+  const historyMessages = history.map((m) => ({
     role: m.role as "user" | "assistant",
     content: m.content,
   }));
@@ -200,11 +199,11 @@ export async function processChat(
       ...historyMessages,
       {
         role: "user",
-        content: `[Current timestamp: ${currentTime}]\n[User wallet: ${userAddress || "not connected"}]\n\nUser: ${message}`,
+        content: `[timestamp: ${currentTime}][wallet: ${userAddress || "not connected"}] ${message}`,
       },
     ],
     responseFormat: { type: "json_object" },
-    temperature: 0.7,
+    temperature: 0.3,
   });
 
   const content = response.choices?.[0]?.message?.content;

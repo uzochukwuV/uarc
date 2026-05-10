@@ -283,3 +283,76 @@ export function formatTaskSummary(intent: TaskIntent): string {
 
     return `${summary}\n  Adapter: ${adapterType}\n  Details: ${details}`;
 }
+
+export interface ValidationResult {
+    isValid: boolean;
+    missingInfo: string[];
+    nextQuestion?: string;
+}
+
+/**
+ * Validate task intent using AI
+ * Returns what information is missing and what to ask the user next
+ */
+export async function validateTaskIntentWithAI(
+    intent: TaskIntent,
+    conversationHistory: Array<{ role: string; content: string }>,
+    manifest: any,
+    apiKey: string
+): Promise<ValidationResult> {
+    const client = await createMistralClient(apiKey);
+
+    const historyContext = conversationHistory
+        .slice(-6)
+        .map(m => `${m.role}: ${m.content}`)
+        .join("\n");
+
+    const validationPrompt = `
+You are validating a blockchain automation task intent.
+
+ADAPTER: ${intent.adapterType}
+SUMMARY: ${intent.summary}
+CURRENT PARAMS: ${JSON.stringify(intent.params, null, 2)}
+
+CONVERSATION HISTORY:
+${historyContext}
+
+Analyze the task and determine:
+1. Is this task complete and ready to deploy? (has all required info)
+2. What information is still missing? (list each missing piece)
+3. What should you ask the user next to clarify?
+
+Return ONLY valid JSON with this structure:
+{
+  "isValid": boolean,
+  "missingInfo": ["item1", "item2"],
+  "nextQuestion": "What would you like to ask next?" or null if valid
+}
+
+Be conversational and natural in nextQuestion. Don't ask about things the user already provided.
+`;
+
+    const response = await client.chat.complete({
+        model: "mistral-large-latest",
+        messages: [
+            {
+                role: "user",
+                content: validationPrompt,
+            },
+        ],
+        responseFormat: { type: "json_object" },
+        temperature: 0.1,
+    });
+
+    const content = response.choices?.[0]?.message?.content;
+    if (!content) {
+        throw new Error("AI validation returned empty response");
+    }
+
+    const raw = typeof content === "string" ? content : JSON.stringify(content);
+    try {
+        return JSON.parse(raw);
+    } catch {
+        throw new Error(`AI validation returned invalid JSON: ${raw.slice(0, 200)}`);
+    }
+}

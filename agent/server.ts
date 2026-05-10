@@ -27,12 +27,12 @@ import cors from "cors";
 import {
   connectDB,
   processChat,
-  getChatHistory,
   getUserSessions,
   saveChatTurn,
   createSession,
   updateSessionTitle,
   deleteSession,
+  getChatHistory,
 } from "./chat-handler";
 import { configDotenv } from "dotenv";
 configDotenv();
@@ -104,12 +104,6 @@ type ChatUiMessage = {
   suggestions?: string[];
 };
 
-type MissingParam = {
-  key: string;
-  label: string;
-  question: string;
-};
-
 type PendingChatPreview = {
   taskPreview: {
     success?: boolean;
@@ -118,8 +112,7 @@ type PendingChatPreview = {
     params: Record<string, any>;
     payload?: any;
   };
-  missingParams: MissingParam[];
-  currentIndex: number;
+  conversationHistory: Array<{ role: string; content: string }>;
   originalIntent: string;
   userAddress?: string;
 };
@@ -137,65 +130,6 @@ const ADAPTER_LABELS: Record<string, string> = {
 const DOMAIN_NAMES: Record<number, string> = { 0: "Ethereum", 1: "Avalanche", 2: "OP Mainnet", 3: "Arbitrum", 6: "Base" };
 const INTERVAL_LABELS: Record<number, string> = { 86400: "Daily", 604800: "Weekly", 2592000: "Monthly" };
 const FUNDING_MODES: Record<number, string> = { 0: "Vault (Deposit)", 1: "Pull (Subscription)" };
-
-function isMissingAddress(value: any): boolean {
-  return !value || value === ethers.ZeroAddress || !ethers.isAddress(String(value));
-}
-
-function getMissingTaskParams(adapterType: string, params: Record<string, any>): MissingParam[] {
-  const missing: MissingParam[] = [];
-  switch (adapterType) {
-    case "recurring_transfer":
-    case "time_based_transfer":
-      if (isMissingAddress(params.recipient)) missing.push({ key: "recipient", label: "recipient address", question: "What full 0x recipient address should receive the transfer?" });
-      if (!params.amountPerExecution && !params.amount) missing.push({ key: "amount", label: "amount", question: "How much should I send per transfer?" });
-      break;
-    case "cctp_bridge":
-      if (isMissingAddress(params.mintRecipient)) missing.push({ key: "mintRecipient", label: "destination address", question: "What full 0x address should receive the tokens on the destination chain?" });
-      break;
-    case "stork_price_transfer":
-      if (isMissingAddress(params.recipient)) missing.push({ key: "recipient", label: "recipient address", question: "What full 0x address should receive the tokens?" });
-      if (!params.targetPrice) missing.push({ key: "targetPrice", label: "target price", question: "At what price should this trigger?" });
-      break;
-    case "uniswap_dca":
-    case "uniswap_limit_order":
-      if (isMissingAddress(params.recipient)) {
-        // Swap adapters can safely default to the connected user wallet in buildTaskPayload.
-        delete params.recipient;
-      }
-      break;
-  }
-  return missing;
-}
-
-function extractParamAnswer(key: string, answer: string): any {
-  const trimmed = String(answer || "").trim();
-  if (key === "recipient" || key === "mintRecipient" || key === "fundingSource") {
-    const addressMatch = trimmed.match(/0x[a-fA-F0-9]{40}/);
-    const candidate = addressMatch?.[0] || trimmed;
-    if (!ethers.isAddress(candidate)) {
-      throw new Error("Please send the full 0x address so I can build the task safely.");
-    }
-    return ethers.getAddress(candidate);
-  }
-  if (key === "amount" || key === "amountPerExecution") {
-    const cleaned = trimmed.replace(/[$,]/g, "").split(/\s+/)[0];
-    const parsed = Number(cleaned);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      throw new Error("Please send a positive token amount, for example: 50 USDC.");
-    }
-    return Math.round(parsed * 1e6).toString();
-  }
-  if (key === "targetPrice") {
-    const cleaned = trimmed.replace(/[$,]/g, "").split(/\s+/)[0];
-    const parsed = Number(cleaned);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      throw new Error("Please send a positive price, for example: 0.99.");
-    }
-    return Math.round(parsed * 1e8).toString();
-  }
-  return trimmed;
-}
 
 function fmt6(v: any): string {
   const n = Number(v || 0) / 1e6;
@@ -280,7 +214,7 @@ function buildCalendarData(params: Record<string, any>) {
   });
 }
 
-function buildPreviewMessages(taskPreview: { summary: string; adapterType: string; params: Record<string, any> }): ChatUiMessage[] {
+function buildPreviewMessages(taskPreview: TaskIntent): ChatUiMessage[] {
   const label = ADAPTER_LABELS[taskPreview.adapterType] || taskPreview.adapterType;
   const isRecurring = taskPreview.adapterType === "recurring_transfer" || taskPreview.adapterType === "uniswap_dca";
   return [
@@ -295,25 +229,6 @@ function buildPreviewMessages(taskPreview: { summary: string; adapterType: strin
     },
     { role: "assistant", kind: "confirm-cta" },
   ];
-}
-
-async function buildPreviewFromIntent(intent: string, userAddress?: string, sessionId?: string) {
-  const history = sessionId ? await getChatHistory(sessionId, 12) : [];
-  const contextLines = history
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => `${m.role}: ${m.content}`)
-    .join("\n");
-  const contextualIntent = contextLines
-    ? `Conversation so far:\n${contextLines}\n\nLatest user message: ${intent}\n\nUse the previous turns as memory. If the latest message answers a follow-up, merge it with the earlier automation request and return the complete task intent.`
-    : intent;
-
-  const taskIntent = await parseIntent(contextualIntent, manifest, MISTRAL_API_KEY);
-  return {
-    success: true,
-    summary: taskIntent.summary,
-    adapterType: taskIntent.adapterType,
-    params: taskIntent.params,
-  };
 }
 
 // ============================================================
@@ -635,160 +550,51 @@ app.post("/chat", async (req: Request, res: Response) => {
 
   try {
     const activeSessionId = sessionId || (await createSession(userAddress));
-    const pending = pendingChatPreviews.get(activeSessionId);
 
-    if (pending) {
-      const missing = pending.missingParams[pending.currentIndex];
-      let updatedPreview = pending.taskPreview;
+    // Single AI call handles classification + task parsing + missing field detection
+    const response = await processChat(message, activeSessionId, manifest, MISTRAL_API_KEY, userAddress);
 
-      try {
-        const value = extractParamAnswer(missing.key, message);
-        const params = { ...updatedPreview.params };
-        if (missing.key === "amount") {
-          if (updatedPreview.adapterType === "recurring_transfer") params.amountPerExecution = value;
-          else params.amount = value;
-        } else {
-          params[missing.key] = value;
-        }
-        updatedPreview = { ...updatedPreview, params };
-      } catch (err: any) {
-        await saveChatTurn(activeSessionId, message, err.message, userAddress || pending.userAddress, "text");
-        res.json({
-          success: true,
-          sessionId: activeSessionId,
-          type: "chat",
-          message: err.message,
-          messages: [{ role: "assistant", kind: "text", content: err.message }],
-          toolTrace: [
-            { thought: `Need ${missing.label} before task preview can be finalized.`, action: "validate_missing_parameter", observation: err.message },
-          ],
-        });
-        return;
-      }
-
-      if (pending.currentIndex + 1 < pending.missingParams.length) {
-        const nextPending = {
-          ...pending,
-          taskPreview: updatedPreview,
-          currentIndex: pending.currentIndex + 1,
-        };
-        pendingChatPreviews.set(activeSessionId, nextPending);
-        const nextMissing = nextPending.missingParams[nextPending.currentIndex];
-        await saveChatTurn(activeSessionId, message, nextMissing.question, userAddress || pending.userAddress, "text");
-        res.json({
-          success: true,
-          sessionId: activeSessionId,
-          type: "chat",
-          message: nextMissing.question,
-          messages: [{ role: "assistant", kind: "text", content: nextMissing.question }],
-          toolTrace: [
-            { thought: `Captured ${missing.label}; more required fields remain.`, action: "ask_missing_parameter", observation: nextMissing.label },
-          ],
-        });
-        return;
-      }
-
-      const completedIntent: TaskIntent = {
-        summary: updatedPreview.summary,
-        adapterType: updatedPreview.adapterType as TaskIntent["adapterType"],
-        params: updatedPreview.params,
-      };
-      const payload = await buildTaskPayload(completedIntent, userAddress || pending.userAddress || wallet.address);
-      const taskPreview = { ...updatedPreview, payload };
-      pendingChatPreviews.delete(activeSessionId);
-      const completionMessage = `Got it — ${taskPreview.summary}. Here's the task to review before deploying.`;
-      await saveChatTurn(
-        activeSessionId,
-        message,
-        completionMessage,
-        userAddress || pending.userAddress,
-        "automation-intent",
-        { intent: completedIntent }
-      );
-
-      res.json({
-        success: true,
-        sessionId: activeSessionId,
-        type: "automation",
-        message: completionMessage,
-        taskPreview,
-        pendingPreview: taskPreview,
-        messages: buildPreviewMessages(taskPreview),
-        toolTrace: [
-          { thought: `Captured ${missing.label}; all required fields are available.`, action: "build_task_payload", observation: taskPreview.adapterType },
-          { thought: "Frontend should render backend-provided components instead of parsing intent locally.", action: "render_components", observation: "preview + confirm CTA" },
-        ],
-      });
-      return;
-    }
-
-    const response = await processChat(
-      message,
-      activeSessionId,
-      manifest,
-      MISTRAL_API_KEY,
-      userAddress,
-    );
-
-    let taskPreview = null;
+    let taskPreview: TaskIntent | null = null;
     let messages: ChatUiMessage[] = [];
-    const toolTrace: Array<Record<string, string>> = [
-      { thought: "Classify the user turn and decide whether an automation tool is needed.", action: "classify_chat_intent", observation: response.type },
-    ];
 
-    if (response.type === "automation") {
+    if (response.type === "automation" && response.automationIntent) {
+      const intent = response.automationIntent as TaskIntent;
+
+      // Still missing required fields — ask the single next question
+      if (response.missingFields?.length && response.nextQuestion) {
+        await saveChatTurn(activeSessionId, message, response.nextQuestion, userAddress, "text");
+        res.json({
+          success: true,
+          sessionId: activeSessionId,
+          type: "chat",
+          message: response.nextQuestion,
+          messages: [{ role: "assistant", kind: "text", content: response.nextQuestion }],
+        });
+        return;
+      }
+
+      // All fields present — build payload and show preview
       try {
-        taskPreview = await buildPreviewFromIntent(message, userAddress, activeSessionId);
-        const missingParams = getMissingTaskParams(taskPreview.adapterType, taskPreview.params);
-        toolTrace.push({ thought: "Automation detected; parse structured task intent and validate required fields.", action: "build_task_preview", observation: taskPreview.adapterType });
-
-        if (missingParams.length > 0) {
-          pendingChatPreviews.set(activeSessionId, {
-            taskPreview,
-            missingParams,
-            currentIndex: 0,
-            originalIntent: message,
-            userAddress,
-          });
-          const question = `${response.message} ${missingParams[0].question}`;
-          messages = [{ role: "assistant", kind: "text", content: question }];
-          toolTrace.push({ thought: "Preview needs more user input before wallet signing.", action: "ask_missing_parameter", observation: missingParams[0].label });
-
-          res.json({
-            success: true,
-            sessionId: activeSessionId,
-            type: "chat",
-            message: question,
-            suggestions: response.suggestions,
-            automationIntent: response.automationIntent,
-            taskPreview,
-            missingParams,
-            messages,
-            toolTrace,
-          });
-          return;
-        }
-
-        const completeIntent: TaskIntent = {
-          summary: taskPreview.summary,
-          adapterType: taskPreview.adapterType as TaskIntent["adapterType"],
-          params: taskPreview.params,
-        };
-        taskPreview = {
-          ...taskPreview,
-          payload: await buildTaskPayload(completeIntent, userAddress || wallet.address),
-        };
-
-        messages = buildPreviewMessages(taskPreview);
-        toolTrace.push({ thought: "Task payload is ready; return UI components for direct rendering.", action: "render_components", observation: "preview + confirm CTA" });
+        const payload = await buildTaskPayload(intent, userAddress || wallet.address);
+        taskPreview = { ...intent, params: { ...intent.params, ...payload } } as any;
+        // Store the real payload separately so confirm() can use it
+        pendingChatPreviews.set(activeSessionId, {
+          taskPreview: { ...intent, payload },
+          conversationHistory: [],
+          originalIntent: message,
+          userAddress,
+        });
+        messages = buildPreviewMessages(intent);
       } catch (err: any) {
-        console.log("[Chat] Automation tool failed:", err.message);
+        console.log("[Chat] buildTaskPayload failed:", err.message);
         messages = [{ role: "assistant", kind: "text", content: response.message }];
-        toolTrace.push({ thought: "Automation tool failed; fall back to conversational response.", action: "tool_error", observation: err.message });
       }
     } else {
       messages = [{ role: "assistant", kind: "text", content: response.message, suggestions: response.suggestions }];
     }
+
+    // Determine pendingPreview for the frontend confirm() button
+    const pending = pendingChatPreviews.get(activeSessionId);
 
     res.json({
       success: true,
@@ -796,11 +602,9 @@ app.post("/chat", async (req: Request, res: Response) => {
       type: response.type,
       message: response.message,
       suggestions: response.suggestions,
-      automationIntent: response.automationIntent,
       taskPreview,
-      pendingPreview: taskPreview,
+      pendingPreview: pending?.taskPreview ?? null,
       messages,
-      toolTrace,
     });
   } catch (err: any) {
     console.error("[Chat Error]", err.message);
@@ -856,6 +660,7 @@ app.post("/chat/session", async (req: Request, res: Response) => {
   const { userAddress, title } = req.body;
 
   try {
+    console.log(`[Chat] Creating session for ${userAddress} with title "${title}"`);
     const sessionId = await createSession(userAddress, title);
     res.json({ success: true, sessionId });
   } catch (err: any) {
@@ -1670,13 +1475,16 @@ async function submitTask(
 // Start Server
 // ============================================================
 
-if (!process.env.VERCEL) {
-  // Connect to MongoDB before starting server
-  connectDB(MONGODB_URI)
+
+app.listen(PORT, () => {
+
+    // Connect to MongoDB before starting server
+
+     connectDB(MONGODB_URI)
     .then(() => console.log("[MongoDB] Connected"))
     .catch((err) => console.warn("[MongoDB] Connection failed, chat history disabled:", err.message));
 
-  app.listen(PORT, () => {
+ 
   console.log(`\n🤖 UARC Agent Server running on http://localhost:${PORT}`);
   console.log(`   Wallet: ${wallet.address}`);
   console.log(`   Network: ${activeNetwork.name} (${activeNetwork.chainId})`);
@@ -1702,6 +1510,8 @@ if (!process.env.VERCEL) {
   );
   console.log(`  POST /task/create-from-prompt-x402   — x402-gated AI prompt`);
   });
-}
+
+
+
 
 export default app;

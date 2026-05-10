@@ -156,7 +156,7 @@ If you are missing critical information, use placeholders like '<USDC_ADDRESS>' 
     console.log(`Condition Contract (${parsedData.condition.id}): ${conditionManifest.address}`);
     console.log(`Params:`, parsedData.condition.params);
     
-    console.log(`Action Contract (${parsedData.action.id}): ${actionManifest.address}`);
+    console.log(`Action Contract (${parsedData.action.id}): ${actionManifest.adapter}`);
     console.log(`Params:`, parsedData.action.params);
 
     // In a real scenario, we would use abiCoder.encode() using the types from the manifest
