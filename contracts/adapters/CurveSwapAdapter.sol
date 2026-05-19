@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IActionAdapter } from "../interfaces/IActionAdapter.sol";
+import { IStrategyAdapter } from "../interfaces/IStrategyAdapter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -18,7 +18,7 @@ interface ICurvePool {
  * @title CurveSwapAdapter
  * @dev Adapter to swap tokens on Curve Finance
  */
-contract CurveSwapAdapter is IActionAdapter {
+contract CurveSwapAdapter is IStrategyAdapter {
     using SafeERC20 for IERC20;
 
     /**
@@ -54,7 +54,8 @@ contract CurveSwapAdapter is IActionAdapter {
 
         // Execute swap
         uint256 amountOut = ICurvePool(pool).exchange(i, j, amountIn, minAmountOut);
-        
+        IERC20(tokenIn).forceApprove(pool, 0);
+
         require(amountOut >= minAmountOut, "Slippage tolerance exceeded");
 
         // Transfer the received tokenOut to the recipient
@@ -88,11 +89,11 @@ contract CurveSwapAdapter is IActionAdapter {
         amounts[0] = amountIn;
     }
 
-    function isProtocolSupported(address /*protocol*/) external pure override returns (bool) {
+    function isProtocolSupported(address /*protocol*/) external pure returns (bool) {
         return true;
     }
 
-    function name() external pure override returns (string memory) {
+    function name() external pure returns (string memory) {
         return "CurveSwapAdapter";
     }
 

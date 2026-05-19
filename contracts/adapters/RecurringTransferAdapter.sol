@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "../interfaces/IActionAdapter.sol";
+import "../interfaces/IStrategyAdapter.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -19,7 +19,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * - Subscriptions: "Pay my Netflix subscription monthly"
  * - DCA: "Buy $100 ETH every day from my USDC balance"
  */
-contract RecurringTransferAdapter is IActionAdapter {
+contract RecurringTransferAdapter is IStrategyAdapter {
     using SafeERC20 for IERC20;
 
     // ============ Types ============
@@ -66,20 +66,20 @@ contract RecurringTransferAdapter is IActionAdapter {
         FundingMode fundingMode
     );
 
-    // ============ IActionAdapter Implementation ============
+    // ============ IStrategyAdapter Implementation ============
 
-    /// @inheritdoc IActionAdapter
-    function name() external pure override returns (string memory) {
+    /// @notice Adapter name for identification
+    function name() external pure returns (string memory) {
         return "RecurringTransferAdapter";
     }
 
-    /// @inheritdoc IActionAdapter
-    function isProtocolSupported(address) external pure override returns (bool) {
+    /// @notice Check if a protocol is supported
+    function isProtocolSupported(address) external pure returns (bool) {
         return true; // Supports any ERC20
     }
 
     /**
-     * @inheritdoc IActionAdapter
+     * @inheritdoc IStrategyAdapter
      * @notice Returns per-execution token requirements
      * @dev For VAULT mode, tokens come from vault. For PULL mode, from fundingSource.
      */
@@ -106,7 +106,7 @@ contract RecurringTransferAdapter is IActionAdapter {
     }
 
     /**
-     * @inheritdoc IActionAdapter
+     * @inheritdoc IStrategyAdapter
      * @notice Check if execution conditions are met
      */
     function canExecute(bytes calldata params)
@@ -162,7 +162,7 @@ contract RecurringTransferAdapter is IActionAdapter {
     }
 
     /**
-     * @inheritdoc IActionAdapter
+     * @inheritdoc IStrategyAdapter
      * @notice Execute the recurring transfer
      * @param vault Address of TaskVault (used for VAULT funding mode)
      * @param params ABI-encoded RecurringParams
@@ -245,7 +245,7 @@ contract RecurringTransferAdapter is IActionAdapter {
         );
     }
 
-    /// @inheritdoc IActionAdapter
+    /// @inheritdoc IStrategyAdapter
     function validateParams(bytes calldata params)
         external
         view

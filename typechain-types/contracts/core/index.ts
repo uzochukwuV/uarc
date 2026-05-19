@@ -2,8 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ExecutorHub } from "./ExecutorHub";
-export type { GlobalRegistry } from "./GlobalRegistry";
-export type { TaskCore } from "./TaskCore";
-export type { TaskFactory } from "./TaskFactory";
-export type { TaskLogicV2 } from "./TaskLogicV2";
-export type { TaskVault } from "./TaskVault";
+export type { UserVault } from "./UserVault";
+export type { UserVaultFactory } from "./UserVaultFactory";

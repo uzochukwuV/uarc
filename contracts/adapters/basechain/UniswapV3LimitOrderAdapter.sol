@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IActionAdapter } from "../../interfaces/IActionAdapter.sol";
+import { IStrategyAdapter } from "../../interfaces/IStrategyAdapter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -54,7 +54,7 @@ interface IUniswapV3Factory {
  * - SwapRouter02: 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4
  * - Factory: 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
  */
-contract UniswapV3LimitOrderAdapter is IActionAdapter {
+contract UniswapV3LimitOrderAdapter is IStrategyAdapter {
     using SafeERC20 for IERC20;
 
     /// @notice Uniswap V3 SwapRouter
@@ -254,11 +254,11 @@ contract UniswapV3LimitOrderAdapter is IActionAdapter {
         amounts[0] = orderExecuted[orderId] ? 0 : amountIn;
     }
 
-    function isProtocolSupported(address protocol) external view override returns (bool) {
+    function isProtocolSupported(address protocol) external view returns (bool) {
         return protocol == swapRouter || protocol == factory;
     }
 
-    function name() external pure override returns (string memory) {
+    function name() external pure returns (string memory) {
         return "UniswapV3LimitOrderAdapter-Base";
     }
 
@@ -379,6 +379,7 @@ contract UniswapV3LimitOrderAdapter is IActionAdapter {
             amountOutMinimum: orderParams.minAmountOut,
             sqrtPriceLimitX96: 0
         }));
+        IERC20(orderParams.tokenIn).forceApprove(swapRouter, 0);
 
         require(amountOut >= orderParams.minAmountOut, "Slippage exceeded");
     }

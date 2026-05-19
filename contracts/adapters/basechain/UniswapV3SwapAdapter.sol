@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IActionAdapter } from "../../interfaces/IActionAdapter.sol";
+import { IStrategyAdapter } from "../../interfaces/IStrategyAdapter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -40,7 +40,7 @@ interface ISwapRouter {
  * Base Sepolia Addresses:
  * - SwapRouter02: 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4
  */
-contract UniswapV3SwapAdapter is IActionAdapter {
+contract UniswapV3SwapAdapter is IStrategyAdapter {
     using SafeERC20 for IERC20;
 
     /// @notice Default Uniswap V3 SwapRouter on Base Sepolia
@@ -103,6 +103,7 @@ contract UniswapV3SwapAdapter is IActionAdapter {
 
         // Execute swap
         uint256 amountOut = ISwapRouter(swapRouter).exactInputSingle(swapParams);
+        IERC20(tokenIn).forceApprove(swapRouter, 0);
 
         require(amountOut >= amountOutMin, "Slippage exceeded");
 
@@ -146,11 +147,11 @@ contract UniswapV3SwapAdapter is IActionAdapter {
         amounts[0] = amountIn;
     }
 
-    function isProtocolSupported(address protocol) external view override returns (bool) {
+    function isProtocolSupported(address protocol) external view returns (bool) {
         return protocol == swapRouter;
     }
 
-    function name() external pure override returns (string memory) {
+    function name() external pure returns (string memory) {
         return "UniswapV3SwapAdapter-Base";
     }
 

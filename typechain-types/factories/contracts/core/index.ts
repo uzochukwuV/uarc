@@ -2,8 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export { ExecutorHub__factory } from "./ExecutorHub__factory";
-export { GlobalRegistry__factory } from "./GlobalRegistry__factory";
-export { TaskCore__factory } from "./TaskCore__factory";
-export { TaskFactory__factory } from "./TaskFactory__factory";
-export { TaskLogicV2__factory } from "./TaskLogicV2__factory";
-export { TaskVault__factory } from "./TaskVault__factory";
+export { UserVault__factory } from "./UserVault__factory";
+export { UserVaultFactory__factory } from "./UserVaultFactory__factory";

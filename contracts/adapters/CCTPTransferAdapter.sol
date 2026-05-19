@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IActionAdapter } from "../interfaces/IActionAdapter.sol";
+import { IStrategyAdapter } from "../interfaces/IStrategyAdapter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -18,7 +18,7 @@ interface ITokenMessenger {
  * @title CCTPTransferAdapter
  * @dev Adapter to execute a time-based or immediate cross-chain bridge using Circle CCTP
  */
-contract CCTPTransferAdapter is IActionAdapter {
+contract CCTPTransferAdapter is IStrategyAdapter {
     using SafeERC20 for IERC20;
 
     /**
@@ -58,6 +58,8 @@ contract CCTPTransferAdapter is IActionAdapter {
             token
         );
 
+        IERC20(token).forceApprove(cctpMessenger, 0);
+
         emit ActionExecuted(vault, cctpMessenger, true, abi.encode(nonce));
 
         return (true, abi.encode(nonce));
@@ -79,11 +81,11 @@ contract CCTPTransferAdapter is IActionAdapter {
         amounts[0] = amount;
     }
 
-    function isProtocolSupported(address /*protocol*/) external pure override returns (bool) {
+    function isProtocolSupported(address /*protocol*/) external pure returns (bool) {
         return true; // We don't limit protocols natively
     }
 
-    function name() external pure override returns (string memory) {
+    function name() external pure returns (string memory) {
         return "CCTPTransferAdapter";
     }
 

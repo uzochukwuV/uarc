@@ -77,21 +77,21 @@ export interface CurveSwapAdapterInterface extends Interface {
 export namespace ActionExecutedEvent {
   export type InputTuple = [
     vault: AddressLike,
-    protocol: AddressLike,
+    target: AddressLike,
     success: boolean,
-    result: BytesLike
+    data: BytesLike
   ];
   export type OutputTuple = [
     vault: string,
-    protocol: string,
+    target: string,
     success: boolean,
-    result: string
+    data: string
   ];
   export interface OutputObject {
     vault: string;
-    protocol: string;
+    target: string;
     success: boolean;
-    result: string;
+    data: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;

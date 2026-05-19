@@ -4,43 +4,93 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../interfaces/IRewardManager.sol";
-import "../interfaces/ITaskVault.sol";
 import "../interfaces/IExecutorHub.sol";
+import "../interfaces/IUserVault.sol";
 
 /**
  * @title RewardManager
- * @notice Calculates and distributes rewards to executors
- * @dev Applies reputation multipliers and collects platform fees
+ * @notice Calculates and distributes rewards to executors.
+ *
+ * @dev V3: Works with UserVault instead of TaskVault.
+ *      Executors are paid from vault's native ETH balance.
+ *      The vault transfers ETH to the executor via its transferNative() function.
+ *
+ *      Reward flow:
+ *      1. ExecutorHub.executeAutomation() triggers vault
+ *      2. ExecutorHub calls RewardManager.distributeReward()
+ *      3. RewardManager calls vault.transferNative() to pay executor
+ *
+ *      Note: vault.transferNative() is owner-only. We need a separate function
+ *      for the vault to release rewards. This will be added to UserVault
+ *      as releaseReward().
  */
 contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
 
-    // ============ State Variables ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // State
+    // ─────────────────────────────────────────────────────────────────────────
 
-    address public taskLogic;
     address public executorHub;
 
     uint256 public platformFeePercentage = 100; // 1% (basis points)
-    uint256 public constant MAX_PLATFORM_FEE = 500; // 5% maximum
+    uint256 public constant MAX_PLATFORM_FEE = 500;
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant BASE_REPUTATION_SCORE = 5000;
-    uint256 public constant MAX_REPUTATION_MULTIPLIER = 12500; // 125%
+    uint256 public constant MAX_REPUTATION_MULTIPLIER = 12500;
 
     uint256 public totalFeesCollected;
-    uint256 public gasReimbursementMultiplier = 120; // 120% of gas used
+    uint256 public gasReimbursementMultiplier = 120;
     uint256 public maxGasReimbursement = 0.002 ether;
 
-    // ============ Constructor ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // Constructor
+    // ─────────────────────────────────────────────────────────────────────────
 
     constructor(address _owner) Ownable(_owner) {}
 
-    // ============ Modifiers ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // Modifiers
+    // ─────────────────────────────────────────────────────────────────────────
 
-    modifier onlyTaskLogic() {
-        if (msg.sender != taskLogic) revert OnlyTaskLogic();
+    modifier onlyExecutorHub() {
+        if (msg.sender != executorHub) revert OnlyExecutorHub();
         _;
     }
 
-    // ============ Core Functions ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // Core Functions
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// @notice Distribute reward to executor for triggering an automation
+    /// @dev Called by ExecutorHub after successful automation execution.
+    ///      The vault must have a releaseReward() function that only ExecutorHub
+    ///      (or RewardManager) can call.
+    function distributeReward(
+        address vault,
+        address executor,
+        uint256 baseReward,
+        uint256 gasUsed
+    ) external onlyExecutorHub nonReentrant returns (uint256 totalPaid) {
+        RewardCalculation memory calc = this.calculateReward(baseReward, executor, gasUsed);
+
+        // Check vault has sufficient ETH
+        uint256 available = address(vault).balance;
+        if (available < calc.totalFromVault) revert InsufficientVaultBalance();
+
+        // Pay executor directly from vault's ETH balance
+        // UserVault.releaseReward() is callable only by this contract
+        IUserVault(vault).releaseReward(executor, calc.executorReward + calc.gasReimbursement);
+
+        // Collect platform fee
+        if (calc.platformFee > 0) {
+            IUserVault(vault).releaseReward(address(this), calc.platformFee);
+            totalFeesCollected += calc.platformFee;
+        }
+
+        emit RewardDistributed(0, executor, calc.executorReward, calc.platformFee, calc.gasReimbursement);
+
+        return calc.totalFromVault;
+    }
 
     /// @inheritdoc IRewardManager
     function calculateReward(
@@ -48,22 +98,14 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         address executor,
         uint256 gasUsed
     ) external view returns (RewardCalculation memory) {
-        // Get reputation multiplier
         uint256 multiplier = getReputationMultiplier(executor);
-
-        // Calculate executor reward with multiplier
         uint256 executorReward = (baseReward * multiplier) / BASIS_POINTS;
-
-        // Calculate platform fee (on base reward, not multiplied)
         uint256 platformFee = (baseReward * platformFeePercentage) / BASIS_POINTS;
-
-        // Calculate gas reimbursement and cap it to a configured ceiling.
         uint256 gasReimbursement = (gasUsed * tx.gasprice * gasReimbursementMultiplier) / 100;
         if (gasReimbursement > maxGasReimbursement) {
             gasReimbursement = maxGasReimbursement;
         }
 
-        // Total amount needed from vault
         uint256 totalFromVault = executorReward + platformFee + gasReimbursement;
 
         return RewardCalculation({
@@ -74,73 +116,27 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         });
     }
 
-    event Calcuated(uint256 calc);
-
-    /// @inheritdoc IRewardManager
-    function distributeReward(
-        address vault,
-        address executor,
-        uint256 baseReward,
-        uint256 gasUsed
-    ) external onlyTaskLogic nonReentrant returns (uint256 totalPaid) {
-        // Calculate reward breakdown
-        RewardCalculation memory calc = this.calculateReward(baseReward, executor, gasUsed);
-
-        // Check vault has sufficient balance
-        uint256 available = ITaskVault(vault).getAvailableForRewards();
-        emit Calcuated(calc.totalFromVault);
-        
-        if (available < calc.totalFromVault) revert InsufficientVaultBalance();
-
-        // Release total payment to executor (includes gas reimbursement)
-        uint256 executorTotal = calc.executorReward + calc.gasReimbursement;
-        ITaskVault(vault).releaseReward(executor, executorTotal);
-
-        // Collect platform fee
-        if (calc.platformFee > 0) {
-            ITaskVault(vault).releaseReward(address(this), calc.platformFee);
-            totalFeesCollected += calc.platformFee;
-        }
-
-        emit RewardDistributed(
-            0, // taskId would come from context
-            executor,
-            calc.executorReward,
-            calc.platformFee,
-            calc.gasReimbursement
-        );
-
-        return calc.totalFromVault;
-    }
-
     /// @inheritdoc IRewardManager
     function collectFees(address recipient) external onlyOwner nonReentrant returns (uint256 amount) {
         require(recipient != address(0), "Invalid recipient");
-
         amount = totalFeesCollected;
         totalFeesCollected = 0;
 
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, "Transfer failed");
 
         emit PlatformFeeCollected(recipient, amount);
     }
 
-    // ============ Admin Functions ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // Admin
+    // ─────────────────────────────────────────────────────────────────────────
 
-    /// @inheritdoc IRewardManager
     function setPlatformFee(uint256 feePercentage) external onlyOwner {
         if (feePercentage > MAX_PLATFORM_FEE) revert InvalidFeePercentage();
-
         uint256 oldFee = platformFeePercentage;
         platformFeePercentage = feePercentage;
-
         emit PlatformFeeUpdated(oldFee, feePercentage);
-    }
-
-    function setTaskLogic(address _taskLogic) external onlyOwner {
-        require(_taskLogic != address(0), "Invalid logic");
-        taskLogic = _taskLogic;
     }
 
     function setExecutorHub(address _executorHub) external onlyOwner {
@@ -157,28 +153,15 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         maxGasReimbursement = _maxGasReimbursement;
     }
 
-    // ============ View Functions ============
-
-    
-
-   
+    // ─────────────────────────────────────────────────────────────────────────
+    // View Functions
+    // ─────────────────────────────────────────────────────────────────────────
 
     /// @inheritdoc IRewardManager
-    function getReputationMultiplier(address executor) public view returns (uint256) {
-        if (executorHub == address(0)) {
-            return BASIS_POINTS; // 100% (no multiplier)
-        }
-
-        IExecutorHub.Executor memory exec = IExecutorHub(executorHub).getExecutor(executor);
-
-        // Reputation score is 0-10000.
-        // 5000 is the neutral baseline (100%), 10000 maps to 125%.
-        if (exec.reputationScore <= BASE_REPUTATION_SCORE) {
-            return BASIS_POINTS;
-        }
-
-        uint256 bonus = ((exec.reputationScore - BASE_REPUTATION_SCORE) * 2500) / BASE_REPUTATION_SCORE;
-        return BASIS_POINTS + bonus;
+    function getReputationMultiplier(address) public pure returns (uint256) {
+        // Reputation multipliers are disabled in the simplified ExecutorHub V4.
+        // All active executors receive the base multiplier.
+        return BASIS_POINTS;
     }
 
     /// @inheritdoc IRewardManager
@@ -189,9 +172,9 @@ contract RewardManager is IRewardManager, Ownable, ReentrancyGuard {
         return maxExecutorReward + platformFee + gasReserve;
     }
 
-    // ============ Receive Function ============
+    // ─────────────────────────────────────────────────────────────────────────
+    // Receive
+    // ─────────────────────────────────────────────────────────────────────────
 
-    receive() external payable {
-        // Accept platform fees
-    }
+    receive() external payable {}
 }

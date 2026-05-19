@@ -168,21 +168,21 @@ export namespace PlatformFeeUpdatedEvent {
 
 export namespace RewardDistributedEvent {
   export type InputTuple = [
-    taskId: BigNumberish,
+    automationId: BigNumberish,
     executor: AddressLike,
     executorReward: BigNumberish,
     platformFee: BigNumberish,
     gasReimbursement: BigNumberish
   ];
   export type OutputTuple = [
-    taskId: bigint,
+    automationId: bigint,
     executor: string,
     executorReward: bigint,
     platformFee: bigint,
     gasReimbursement: bigint
   ];
   export interface OutputObject {
-    taskId: bigint;
+    automationId: bigint;
     executor: string;
     executorReward: bigint;
     platformFee: bigint;

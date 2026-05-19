@@ -66,15 +66,12 @@ export interface RewardManagerInterface extends Interface {
       | "setGasReimbursementMultiplier"
       | "setMaxGasReimbursement"
       | "setPlatformFee"
-      | "setTaskLogic"
-      | "taskLogic"
       | "totalFeesCollected"
       | "transferOwnership"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "Calcuated"
       | "OwnershipTransferred"
       | "PlatformFeeCollected"
       | "PlatformFeeUpdated"
@@ -154,11 +151,6 @@ export interface RewardManagerInterface extends Interface {
     functionFragment: "setPlatformFee",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "setTaskLogic",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "taskLogic", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalFeesCollected",
     values?: undefined
@@ -242,11 +234,6 @@ export interface RewardManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setTaskLogic",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "taskLogic", data: BytesLike): Result;
-  decodeFunctionResult(
     functionFragment: "totalFeesCollected",
     data: BytesLike
   ): Result;
@@ -254,18 +241,6 @@ export interface RewardManagerInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-}
-
-export namespace CalcuatedEvent {
-  export type InputTuple = [calc: BigNumberish];
-  export type OutputTuple = [calc: bigint];
-  export interface OutputObject {
-    calc: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace OwnershipTransferredEvent {
@@ -309,21 +284,21 @@ export namespace PlatformFeeUpdatedEvent {
 
 export namespace RewardDistributedEvent {
   export type InputTuple = [
-    taskId: BigNumberish,
+    automationId: BigNumberish,
     executor: AddressLike,
     executorReward: BigNumberish,
     platformFee: BigNumberish,
     gasReimbursement: BigNumberish
   ];
   export type OutputTuple = [
-    taskId: bigint,
+    automationId: bigint,
     executor: string,
     executorReward: bigint,
     platformFee: bigint,
     gasReimbursement: bigint
   ];
   export interface OutputObject {
-    taskId: bigint;
+    automationId: bigint;
     executor: string;
     executorReward: bigint;
     platformFee: bigint;
@@ -420,7 +395,7 @@ export interface RewardManager extends BaseContract {
   >;
 
   getReputationMultiplier: TypedContractMethod<
-    [executor: AddressLike],
+    [arg0: AddressLike],
     [bigint],
     "view"
   >;
@@ -456,14 +431,6 @@ export interface RewardManager extends BaseContract {
     [void],
     "nonpayable"
   >;
-
-  setTaskLogic: TypedContractMethod<
-    [_taskLogic: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  taskLogic: TypedContractMethod<[], [string], "view">;
 
   totalFeesCollected: TypedContractMethod<[], [bigint], "view">;
 
@@ -522,7 +489,7 @@ export interface RewardManager extends BaseContract {
   ): TypedContractMethod<[baseReward: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "getReputationMultiplier"
-  ): TypedContractMethod<[executor: AddressLike], [bigint], "view">;
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "maxGasReimbursement"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -552,25 +519,12 @@ export interface RewardManager extends BaseContract {
     nameOrSignature: "setPlatformFee"
   ): TypedContractMethod<[feePercentage: BigNumberish], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "setTaskLogic"
-  ): TypedContractMethod<[_taskLogic: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "taskLogic"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "totalFeesCollected"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
-  getEvent(
-    key: "Calcuated"
-  ): TypedContractEvent<
-    CalcuatedEvent.InputTuple,
-    CalcuatedEvent.OutputTuple,
-    CalcuatedEvent.OutputObject
-  >;
   getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
@@ -601,17 +555,6 @@ export interface RewardManager extends BaseContract {
   >;
 
   filters: {
-    "Calcuated(uint256)": TypedContractEvent<
-      CalcuatedEvent.InputTuple,
-      CalcuatedEvent.OutputTuple,
-      CalcuatedEvent.OutputObject
-    >;
-    Calcuated: TypedContractEvent<
-      CalcuatedEvent.InputTuple,
-      CalcuatedEvent.OutputTuple,
-      CalcuatedEvent.OutputObject
-    >;
-
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,

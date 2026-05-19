@@ -21,7 +21,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "OnlyTaskLogic",
+    name: "OnlyExecutorHub",
     type: "error",
   },
   {
@@ -68,7 +68,7 @@ const _abi = [
       {
         indexed: true,
         internalType: "uint256",
-        name: "taskId",
+        name: "automationId",
         type: "uint256",
       },
       {
