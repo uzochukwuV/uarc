@@ -417,14 +417,14 @@ describe("Composability Integration Tests", function () {
       expect(automation.maxExecutions).to.equal(5);
     });
 
-    it("Executor can register in ExecutorHub", async function () {
-      await expect(executorHub.connect(executor).registerExecutor())
-        .to.emit(executorHub, "ExecutorRegistered")
-        .withArgs(executor.address, 0);
+    it("Executor can be added by owner in ExecutorHub", async function () {
+      await expect(executorHub.connect(deployer).addExecutor(executor.address))
+        .to.emit(executorHub, "ExecutorAdded")
+        .withArgs(executor.address);
 
       const execInfo = await executorHub.getExecutor(executor.address);
       expect(execInfo.isActive).to.be.true;
-      expect(execInfo.reputationScore).to.equal(5000);
+      expect(execInfo.totalExecutions).to.equal(0);
     });
 
     it("Registered executor can trigger automation via ExecutorHub", async function () {
@@ -438,8 +438,8 @@ describe("Composability Integration Tests", function () {
         .connect(user)
         .createAutomation(await mockAdapter.getAddress(), params, 5, "auto-1");
 
-      // Register executor
-      await executorHub.connect(executor).registerExecutor();
+      // Register executor (owner adds executor)
+      await executorHub.connect(deployer).addExecutor(executor.address);
 
       const recipientBalBefore = await mockToken.balanceOf(recipient.address);
 
@@ -449,7 +449,7 @@ describe("Composability Integration Tests", function () {
           .connect(executor)
           .executeAutomation(vaultAddress, 0)
       )
-        .to.emit(executorHub, "AutomationTriggered")
+        .to.emit(executorHub, "AutomationExecuted")
         .withArgs(vaultAddress, 0, executor.address, true);
 
       const recipientBalAfter = await mockToken.balanceOf(recipient.address);
@@ -459,7 +459,7 @@ describe("Composability Integration Tests", function () {
       expect(automation.executionCount).to.equal(1);
     });
 
-    it("Non-registered executor can trigger automation on testnet", async function () {
+    it("Registered executor can trigger automation (verified access control)", async function () {
       // Create automation
       const params = buildParams(
         await mockToken.getAddress(),
@@ -470,7 +470,9 @@ describe("Composability Integration Tests", function () {
         .connect(user)
         .createAutomation(await mockAdapter.getAddress(), params, 5, "auto-2");
 
-      // Do NOT register executor — testnet allows anyone
+      // Only admin-added executors can call executeAutomation
+      await executorHub.connect(deployer).addExecutor(nonOwner.address);
+
       const recipientBalBefore = await mockToken.balanceOf(recipient.address);
 
       await executorHub.connect(nonOwner).executeAutomation(vaultAddress, 0);
@@ -489,7 +491,7 @@ describe("Composability Integration Tests", function () {
         .connect(user)
         .createAutomation(await mockAdapter.getAddress(), params, 2, "auto-3");
 
-      await executorHub.connect(executor).registerExecutor();
+      await executorHub.connect(deployer).addExecutor(executor.address);
 
       // First execution
       await executorHub.connect(executor).executeAutomation(vaultAddress, 0);
@@ -519,12 +521,17 @@ describe("Composability Integration Tests", function () {
 
       await vault.connect(user).cancelAutomation(0);
 
+      // Register executor
+      await executorHub.connect(deployer).addExecutor(executor.address);
+
+      // After cancel, the task is removed from ExecutorHub, so executeAutomation
+      // will call triggerAutomation on the vault, which reverts AutomationNotActive
       await expect(
         executorHub.connect(executor).executeAutomation(vaultAddress, 0)
       ).to.be.revertedWithCustomError(vault, "AutomationNotActive");
     });
 
-    it("Executor reputation updates after execution", async function () {
+    it("Executor stats update after execution", async function () {
       const params = buildParams(
         await mockToken.getAddress(),
         EXECUTE_AMOUNT,
@@ -534,10 +541,11 @@ describe("Composability Integration Tests", function () {
         .connect(user)
         .createAutomation(await mockAdapter.getAddress(), params, 10, "auto-5");
 
-      await executorHub.connect(executor).registerExecutor();
+      await executorHub.connect(deployer).addExecutor(executor.address);
 
       let execInfo = await executorHub.getExecutor(executor.address);
-      expect(execInfo.reputationScore).to.equal(5000);
+      expect(execInfo.totalExecutions).to.equal(0);
+      expect(execInfo.successfulExecutions).to.equal(0);
 
       // Execute once successfully
       await executorHub.connect(executor).executeAutomation(vaultAddress, 0);
@@ -545,8 +553,7 @@ describe("Composability Integration Tests", function () {
       execInfo = await executorHub.getExecutor(executor.address);
       expect(execInfo.totalExecutions).to.equal(1);
       expect(execInfo.successfulExecutions).to.equal(1);
-      // Reputation should have increased from 5000
-      expect(execInfo.reputationScore).to.be.gt(5000);
+      expect(execInfo.failedExecutions).to.equal(0);
     });
   });
 
@@ -575,10 +582,10 @@ describe("Composability Integration Tests", function () {
         .connect(user)
         .createAutomation(await mockAdapter.getAddress(), params, 10, "fee-auto");
 
-      // Register executor
-      await executorHub.connect(executor).registerExecutor();
+      // Register executor (owner adds executor)
+      await executorHub.connect(deployer).addExecutor(executor.address);
 
-      // Execute automation so executor has reputation stats
+      // Execute automation so executor has execution stats
       await executorHub.connect(executor).executeAutomation(vaultAddress, 0);
     });
 
@@ -665,15 +672,16 @@ describe("Composability Integration Tests", function () {
       expect(deployerBalAfter).to.be.gt(deployerBalBefore);
     });
 
-    it("Reward calculation reflects executor reputation", async function () {
+    it("Reward calculation returns base multiplier for all executors", async function () {
       await rewardManager.setExecutorHub(await executorHub.getAddress());
 
       const baseReward = ethers.parseEther("0.01");
       const gasUsed = 100000;
 
-      // Get executor reputation info
+      // In the current simplified RewardManager, getReputationMultiplier returns BASIS_POINTS (10000)
+      // for all executors regardless of execution history
       const execInfo = await executorHub.getExecutor(executor.address);
-      expect(execInfo.reputationScore).to.be.gt(5000);
+      expect(execInfo.totalExecutions).to.be.gte(1); // from beforeEach execution
 
       const calc = await rewardManager.calculateReward(
         baseReward,
@@ -681,14 +689,12 @@ describe("Composability Integration Tests", function () {
         gasUsed
       );
 
-      // With reputation > 5000, multiplier > 10000 (BASIS_POINTS)
-      // So executorReward should be > baseReward
-      expect(calc.executorReward).to.be.gt(baseReward);
+      // With base multiplier (10000 = 100%), executorReward equals baseReward
+      expect(calc.executorReward).to.equal(baseReward);
 
-      // Verify multiplier logic: default is 10000, with reputation bonus it increases
-      const multiplier =
-        (calc.executorReward * 10000n) / baseReward;
-      expect(multiplier).to.be.gt(10000);
+      // Verify multiplier is exactly BASIS_POINTS (flat rate)
+      const multiplier = (calc.executorReward * 10000n) / baseReward;
+      expect(multiplier).to.equal(10000);
     });
   });
 });

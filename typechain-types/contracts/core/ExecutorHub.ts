@@ -73,6 +73,7 @@ export interface ExecutorHubInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "addExecutor"
+      | "baseRewardPerExecution"
       | "canExecute"
       | "executeAutomation"
       | "executeAutomationBatch"
@@ -92,6 +93,7 @@ export interface ExecutorHubInterface extends Interface {
       | "removeTask"
       | "renounceOwnership"
       | "rewardManager"
+      | "setBaseReward"
       | "setRewardManager"
       | "transferOwnership"
       | "updateTaskParams"
@@ -100,6 +102,7 @@ export interface ExecutorHubInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "AutomationExecuted"
+      | "BaseRewardUpdated"
       | "ExecutorAdded"
       | "ExecutorRemoved"
       | "OwnershipTransferred"
@@ -111,6 +114,10 @@ export interface ExecutorHubInterface extends Interface {
   encodeFunctionData(
     functionFragment: "addExecutor",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "baseRewardPerExecution",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "canExecute",
@@ -183,6 +190,10 @@ export interface ExecutorHubInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setBaseReward",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setRewardManager",
     values: [AddressLike]
   ): string;
@@ -197,6 +208,10 @@ export interface ExecutorHubInterface extends Interface {
 
   decodeFunctionResult(
     functionFragment: "addExecutor",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "baseRewardPerExecution",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "canExecute", data: BytesLike): Result;
@@ -258,6 +273,10 @@ export interface ExecutorHubInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setBaseReward",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setRewardManager",
     data: BytesLike
   ): Result;
@@ -289,6 +308,18 @@ export namespace AutomationExecutedEvent {
     automationId: bigint;
     executor: string;
     success: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace BaseRewardUpdatedEvent {
+  export type InputTuple = [newReward: BigNumberish];
+  export type OutputTuple = [newReward: bigint];
+  export interface OutputObject {
+    newReward: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -430,6 +461,8 @@ export interface ExecutorHub extends BaseContract {
     "nonpayable"
   >;
 
+  baseRewardPerExecution: TypedContractMethod<[], [bigint], "view">;
+
   canExecute: TypedContractMethod<
     [vault: AddressLike, automationId: BigNumberish],
     [[boolean, string] & { canExec: boolean; reason: string }],
@@ -516,6 +549,12 @@ export interface ExecutorHub extends BaseContract {
 
   rewardManager: TypedContractMethod<[], [string], "view">;
 
+  setBaseReward: TypedContractMethod<
+    [_reward: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   setRewardManager: TypedContractMethod<
     [_rewardManager: AddressLike],
     [void],
@@ -541,6 +580,9 @@ export interface ExecutorHub extends BaseContract {
   getFunction(
     nameOrSignature: "addExecutor"
   ): TypedContractMethod<[executor: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "baseRewardPerExecution"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "canExecute"
   ): TypedContractMethod<
@@ -635,6 +677,9 @@ export interface ExecutorHub extends BaseContract {
     nameOrSignature: "rewardManager"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "setBaseReward"
+  ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setRewardManager"
   ): TypedContractMethod<[_rewardManager: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -654,6 +699,13 @@ export interface ExecutorHub extends BaseContract {
     AutomationExecutedEvent.InputTuple,
     AutomationExecutedEvent.OutputTuple,
     AutomationExecutedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BaseRewardUpdated"
+  ): TypedContractEvent<
+    BaseRewardUpdatedEvent.InputTuple,
+    BaseRewardUpdatedEvent.OutputTuple,
+    BaseRewardUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "ExecutorAdded"
@@ -708,6 +760,17 @@ export interface ExecutorHub extends BaseContract {
       AutomationExecutedEvent.InputTuple,
       AutomationExecutedEvent.OutputTuple,
       AutomationExecutedEvent.OutputObject
+    >;
+
+    "BaseRewardUpdated(uint256)": TypedContractEvent<
+      BaseRewardUpdatedEvent.InputTuple,
+      BaseRewardUpdatedEvent.OutputTuple,
+      BaseRewardUpdatedEvent.OutputObject
+    >;
+    BaseRewardUpdated: TypedContractEvent<
+      BaseRewardUpdatedEvent.InputTuple,
+      BaseRewardUpdatedEvent.OutputTuple,
+      BaseRewardUpdatedEvent.OutputObject
     >;
 
     "ExecutorAdded(address)": TypedContractEvent<

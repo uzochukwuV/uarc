@@ -50,6 +50,12 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     address public rewardManager;
 
     // ─────────────────────────────────────────────────────────────────────────
+    // State: Reward Configuration
+    // ─────────────────────────────────────────────────────────────────────────
+
+    uint256 public baseRewardPerExecution = 0.0001 ether; // configurable default
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Constructor
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -188,7 +194,12 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         Executor storage executor = executors[msg.sender];
         executor.totalExecutions++;
 
+        // Track gas usage for reimbursement
+        uint256 gasBefore = gasleft();
+
         bool success = IUserVault(vault).triggerAutomation(automationId);
+
+        uint256 gasUsed = gasBefore - gasleft();
 
         if (success) {
             executor.successfulExecutions++;
@@ -204,8 +215,8 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
             try IRewardManager(rewardManager).distributeReward(
                 vault,
                 msg.sender,
-                0, // baseReward — calculated by RewardManager
-                0  // gasUsed — calculated by RewardManager
+                baseRewardPerExecution,
+                gasUsed
             ) {
                 // Reward distributed successfully
             } catch {
@@ -228,7 +239,12 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
 
             executor.totalExecutions++;
 
+            // Track gas usage for reimbursement
+            uint256 gasBefore = gasleft();
+
             bool success = IUserVault(vaults[i]).triggerAutomation(automationIds[i]);
+
+            uint256 gasUsed = gasBefore - gasleft();
 
             if (success) {
                 executor.successfulExecutions++;
@@ -242,8 +258,8 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
                 try IRewardManager(rewardManager).distributeReward(
                     vaults[i],
                     msg.sender,
-                    0,
-                    0
+                    baseRewardPerExecution,
+                    gasUsed
                 ) {
                     // Reward distributed successfully
                 } catch {
@@ -309,47 +325,32 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
     /// @inheritdoc IExecutorHub
     /// @dev Gas-heavy — intended for off-chain use by executor bots
     function getExecutableTasks() external view returns (Task[] memory) {
-        // First pass: count executable tasks
-        uint256 count;
-        for (uint256 i = 0; i < _taskKeys.length; i++) {
-            TaskKey memory key = _taskKeys[i];
+        // Single-pass: collect executable tasks into a temp array, then resize
+        uint256 len = _taskKeys.length;
+        Task[] memory temp = new Task[](len);
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < len; i++) {
+            TaskKey storage key = _taskKeys[i];
             Task storage task = _tasks[key.vault][key.automationId];
+            if (!task.active) continue;
 
-            bool execReady;
             try IStrategyAdapter(task.strategy).canExecute(task.params)
-                returns (bool canExecResult, string memory)
+                returns (bool canExec, string memory)
             {
-                execReady = canExecResult;
-            } catch {
-                execReady = false;
-            }
-
-            if (execReady) {
-                count++;
-            }
+                if (canExec) {
+                    temp[count] = task;
+                    count++;
+                }
+            } catch {}
         }
 
-        // Second pass: collect executable tasks
-        Task[] memory tasks = new Task[](count);
-        uint256 idx;
-        for (uint256 i = 0; i < _taskKeys.length; i++) {
-            TaskKey memory key = _taskKeys[i];
-            Task storage task = _tasks[key.vault][key.automationId];
-
-            bool execReady;
-            try IStrategyAdapter(task.strategy).canExecute(task.params)
-                returns (bool canExecResult, string memory)
-            {
-                execReady = canExecResult;
-            } catch {
-                execReady = false;
-            }
-
-            if (execReady) {
-                tasks[idx++] = task;
-            }
+        // Resize to exact count
+        Task[] memory result = new Task[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = temp[i];
         }
-        return tasks;
+        return result;
     }
 
     /// @inheritdoc IExecutorHub
@@ -376,8 +377,20 @@ contract ExecutorHub is IExecutorHub, Ownable, ReentrancyGuard {
         rewardManager = _rewardManager;
     }
 
+    /// @notice Set the base reward per execution (in native ETH)
+    function setBaseReward(uint256 _reward) external onlyOwner {
+        baseRewardPerExecution = _reward;
+        emit BaseRewardUpdated(_reward);
+    }
+
     /// @notice Get all executor addresses (kept for backward compatibility)
     function getAllExecutors() external view returns (address[] memory) {
         return executorList;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Events (additional beyond interface)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    event BaseRewardUpdated(uint256 newReward);
 }

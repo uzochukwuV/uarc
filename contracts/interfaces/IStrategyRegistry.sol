@@ -62,9 +62,4 @@ interface IStrategyRegistry {
     /// @notice Is this strategy automation-only (not executable via execute())?
     function isAutomation(address adapter) external view returns (bool);
 
-    /// @notice Get selector for a strategy adapter address
-    function getSelector(address adapter) external view returns (bytes4);
-
-    /// @notice Get adapter address for a selector
-    function getAdapter(bytes4 selector) external view returns (address);
 }

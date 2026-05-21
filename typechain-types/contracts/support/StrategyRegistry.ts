@@ -58,9 +58,7 @@ export interface StrategyRegistryInterface extends Interface {
     nameOrSignature:
       | "activateStrategy"
       | "deactivateStrategy"
-      | "getAdapter"
       | "getAllStrategies"
-      | "getSelector"
       | "getStrategyCount"
       | "getStrategyInfo"
       | "getStrategyOutputTokens"
@@ -90,16 +88,8 @@ export interface StrategyRegistryInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAdapter",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getAllStrategies",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getSelector",
-    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getStrategyCount",
@@ -154,13 +144,8 @@ export interface StrategyRegistryInterface extends Interface {
     functionFragment: "deactivateStrategy",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getAdapter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getAllStrategies",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getSelector",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -313,11 +298,7 @@ export interface StrategyRegistry extends BaseContract {
     "nonpayable"
   >;
 
-  getAdapter: TypedContractMethod<[selector: BytesLike], [string], "view">;
-
   getAllStrategies: TypedContractMethod<[], [string[]], "view">;
-
-  getSelector: TypedContractMethod<[adapter: AddressLike], [string], "view">;
 
   getStrategyCount: TypedContractMethod<[], [bigint], "view">;
 
@@ -377,14 +358,8 @@ export interface StrategyRegistry extends BaseContract {
     nameOrSignature: "deactivateStrategy"
   ): TypedContractMethod<[adapter: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "getAdapter"
-  ): TypedContractMethod<[selector: BytesLike], [string], "view">;
-  getFunction(
     nameOrSignature: "getAllStrategies"
   ): TypedContractMethod<[], [string[]], "view">;
-  getFunction(
-    nameOrSignature: "getSelector"
-  ): TypedContractMethod<[adapter: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "getStrategyCount"
   ): TypedContractMethod<[], [bigint], "view">;

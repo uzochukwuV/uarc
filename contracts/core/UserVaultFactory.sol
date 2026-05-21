@@ -61,8 +61,9 @@ contract UserVaultFactory is Ownable {
             return _userVaults[msg.sender];
         }
 
-        // Deploy minimal proxy clone
-        vault = vaultImplementation.clone();
+        // Deploy minimal proxy clone (deterministic so predictVaultAddress matches)
+        bytes32 salt = keccak256(abi.encodePacked(msg.sender));
+        vault = vaultImplementation.cloneDeterministic(salt);
 
         // Initialize the vault
         UserVault(payable(vault)).initialize(
@@ -91,7 +92,7 @@ contract UserVaultFactory is Ownable {
         }
         // EIP-1167 deterministic address calculation
         bytes32 salt = keccak256(abi.encodePacked(user));
-        predicted = vaultImplementation.predictDeterministicAddress(salt);
+        predicted = vaultImplementation.predictDeterministicAddress(salt, address(this));
     }
 
     // ─────────────────────────────────────────────────────────────────────────

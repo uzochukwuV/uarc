@@ -118,21 +118,6 @@ contract StrategyRegistry is IStrategyRegistry, Ownable {
         return info.automationOnly;
     }
 
-    /// @notice Get selector for a strategy adapter address (compatibility)
-    function getSelector(address adapter) external view returns (bytes4) {
-        // In the new model, we address by address not selector
-        // This returns a pseudo-selector for compatibility if needed
-        if (!_isRegistered[adapter]) revert StrategyNotFound();
-        return bytes4(uint32(uint160(adapter)));
-    }
-
-    /// @notice Get adapter address for a selector (compatibility)
-    function getAdapter(bytes4 selector) external view returns (address) {
-        // In the new model, we don't use selectors as keys
-        // This is kept for compatibility but not the primary lookup
-        revert StrategyNotFound();
-    }
-
     /// @notice Get all registered strategies
     function getAllStrategies() external view returns (address[] memory) {
         return _strategyList;

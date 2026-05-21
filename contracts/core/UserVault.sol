@@ -256,7 +256,8 @@ contract UserVault is IUserVault, ReentrancyGuard {
         _automationIds.push(automationId);
 
         // Register task with ExecutorHub (push-based task registry)
-        IExecutorHub(executorHub).registerTask(automationId, strategy, params);
+        // Defensive try/catch: if registerTask reverts, automation is still created locally
+        try IExecutorHub(executorHub).registerTask(automationId, strategy, params) {} catch {}
 
         emit AutomationCreated(automationId, strategy, label);
     }
@@ -279,8 +280,8 @@ contract UserVault is IUserVault, ReentrancyGuard {
 
         auto_.params = newParams;
 
-        // Update task params in ExecutorHub
-        IExecutorHub(executorHub).updateTaskParams(automationId, newParams);
+        // Update task params in ExecutorHub (defensive try/catch)
+        try IExecutorHub(executorHub).updateTaskParams(automationId, newParams) {} catch {}
 
         emit AutomationUpdated(automationId, newParams);
     }
@@ -297,8 +298,8 @@ contract UserVault is IUserVault, ReentrancyGuard {
         if (auto_.status != AutomationStatus.ACTIVE) revert AutomationNotActive(automationId);
         auto_.status = AutomationStatus.CANCELLED;
 
-        // Remove task from ExecutorHub
-        IExecutorHub(executorHub).removeTask(automationId);
+        // Remove task from ExecutorHub (defensive try/catch: won't block cancellation if task wasn't registered)
+        try IExecutorHub(executorHub).removeTask(automationId) {} catch {}
 
         emit AutomationCancelled(automationId);
     }
@@ -311,6 +312,13 @@ contract UserVault is IUserVault, ReentrancyGuard {
      * @notice ExecutorHub triggers a ready automation.
      *         This is the ONLY function ExecutorHub calls on the vault.
      *         Not called by owner or operator — keepers trigger it.
+     *
+     * @dev SAFETY NOTE: This function calls executorHub.removeTask() inside the
+     *      executeAutomation call frame (via ExecutorHub → triggerAutomation → removeTask).
+     *      This is safe because ExecutorHub.removeTask() uses swap-and-pop on _taskKeys
+     *      and does NOT iterate _taskKeys after the triggerAutomation call returns.
+     *      The only iteration point is in getExecutableTasks(), which is a view function
+     *      called externally — never during this execution path.
      */
     function triggerAutomation(uint256 automationId)
         external
@@ -325,8 +333,8 @@ contract UserVault is IUserVault, ReentrancyGuard {
         if (auto_.maxExecutions > 0 && auto_.executionCount >= auto_.maxExecutions) {
             auto_.status = AutomationStatus.COMPLETED;
 
-            // Remove completed task from ExecutorHub
-            IExecutorHub(executorHub).removeTask(automationId);
+            // Remove completed task from ExecutorHub (defensive try/catch)
+            try IExecutorHub(executorHub).removeTask(automationId) {} catch {}
 
             emit AutomationCompleted(automationId);
             return false;
@@ -346,8 +354,8 @@ contract UserVault is IUserVault, ReentrancyGuard {
         if (auto_.maxExecutions > 0 && auto_.executionCount >= auto_.maxExecutions) {
             auto_.status = AutomationStatus.COMPLETED;
 
-            // Remove completed task from ExecutorHub
-            IExecutorHub(executorHub).removeTask(automationId);
+            // Remove completed task from ExecutorHub (defensive try/catch)
+            try IExecutorHub(executorHub).removeTask(automationId) {} catch {}
 
             emit AutomationCompleted(automationId);
         }
@@ -439,7 +447,11 @@ contract UserVault is IUserVault, ReentrancyGuard {
             // If no rule set, operator can't spend this token
             if (rule.maxTotal == 0) revert SpendingLimitExceeded(tokens[i], amounts[i], 0);
 
-            // Reset daily counter if day has passed
+            // Reset daily counter if rolling 24-hour window has elapsed
+            // NOTE: This is intentionally a rolling 24-hour window (not calendar-day aligned).
+            //       lastDayReset is set to block.timestamp on each reset, so the "day" boundary
+            //       slides forward with each reset. This means partial spending within a day
+            //       is carried forward until a full 24h elapses since the last reset.
             if (block.timestamp >= rule.lastDayReset + 1 days) {
                 rule.spentToday = 0;
                 rule.lastDayReset = block.timestamp;
@@ -495,10 +507,13 @@ contract UserVault is IUserVault, ReentrancyGuard {
             (success, result) = strategy.call(
                 abi.encodeWithSelector(IStrategyAdapter.execute.selector, address(this), params)
             );
+        }
 
-            if (success && result.length > 0) {
-                (success, result) = abi.decode(result, (bool, bytes));
-            }
+        // Only decode the ABI-encoded (bool, bytes) return if the low-level call succeeded.
+        // If success=false, result contains raw revert data — decoding it as (bool, bytes)
+        // would either revert again or produce a misleading error.
+        if (success && result.length > 0) {
+            (success, result) = abi.decode(result, (bool, bytes));
         }
 
         // Step 4: Revoke all approvals

@@ -56,8 +56,6 @@ export interface IStrategyRegistryInterface extends Interface {
     nameOrSignature:
       | "activateStrategy"
       | "deactivateStrategy"
-      | "getAdapter"
-      | "getSelector"
       | "getStrategyInfo"
       | "getStrategyOutputTokens"
       | "isAutomation"
@@ -72,14 +70,6 @@ export interface IStrategyRegistryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "deactivateStrategy",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getAdapter",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getSelector",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -120,11 +110,6 @@ export interface IStrategyRegistryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "deactivateStrategy",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getAdapter", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getSelector",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -205,10 +190,6 @@ export interface IStrategyRegistry extends BaseContract {
     "nonpayable"
   >;
 
-  getAdapter: TypedContractMethod<[selector: BytesLike], [string], "view">;
-
-  getSelector: TypedContractMethod<[adapter: AddressLike], [string], "view">;
-
   getStrategyInfo: TypedContractMethod<
     [adapter: AddressLike],
     [IStrategyRegistry.StrategyInfoStructOutput],
@@ -254,12 +235,6 @@ export interface IStrategyRegistry extends BaseContract {
   getFunction(
     nameOrSignature: "deactivateStrategy"
   ): TypedContractMethod<[adapter: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "getAdapter"
-  ): TypedContractMethod<[selector: BytesLike], [string], "view">;
-  getFunction(
-    nameOrSignature: "getSelector"
-  ): TypedContractMethod<[adapter: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "getStrategyInfo"
   ): TypedContractMethod<
